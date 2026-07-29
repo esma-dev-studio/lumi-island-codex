@@ -1,0 +1,229 @@
+import type {
+  CharacterPalette,
+  ItemDefinition,
+  ItemId,
+  QuestDefinition,
+  QuestId,
+  RecipeDefinition,
+} from "@/src/game/types";
+
+export const ITEMS: Record<ItemId, ItemDefinition> = {
+  wood: {
+    id: "wood",
+    name: "木のえだ",
+    reading: "きのえだ",
+    description: "工作につかえる、かるい木。",
+    color: "#a46943",
+    category: "resource",
+  },
+  stone: {
+    id: "stone",
+    name: "ひかり石",
+    reading: "ひかりいし",
+    description: "夕方になると、ほんのり光る石。",
+    color: "#8ea7a0",
+    category: "resource",
+  },
+  berry: {
+    id: "berry",
+    name: "あかい実",
+    reading: "あかいみ",
+    description: "あまずっぱい島の実。",
+    color: "#b85d4c",
+    category: "resource",
+  },
+  herb: {
+    id: "herb",
+    name: "月のハーブ",
+    reading: "つきのはーぶ",
+    description: "よい香りのする葉。",
+    color: "#7f9a65",
+    category: "resource",
+  },
+  shell: {
+    id: "shell",
+    name: "しま貝",
+    reading: "しまがい",
+    description: "波のあとにのこる、うすい貝。",
+    color: "#d6a88c",
+    category: "resource",
+  },
+  glowcap: {
+    id: "glowcap",
+    name: "ほたるキノコ",
+    reading: "ほたるきのこ",
+    description: "夜にだけ、やさしく光る。",
+    color: "#e6bf65",
+    category: "resource",
+  },
+  reed: {
+    id: "reed",
+    name: "水べの草",
+    reading: "みずべのくさ",
+    description: "しなやかで、あみものにむく。",
+    color: "#8b9855",
+    category: "resource",
+  },
+  fish: {
+    id: "fish",
+    name: "銀の小魚",
+    reading: "ぎんのこざかな",
+    description: "池をすばやくおよぐ魚。",
+    color: "#6e99a4",
+    category: "resource",
+  },
+  "twig-stool": furniture("twig-stool", "小えだのいす", "こえだのいす", "#9b6647"),
+  "stone-lantern": furniture("stone-lantern", "石あかり", "いしあかり", "#8da39c"),
+  "garden-box": furniture("garden-box", "草花のはこ", "くさばなのはこ", "#718b57"),
+  "picnic-table": furniture("picnic-table", "ピクニック台", "ぴくにっくだい", "#a06a42"),
+  "shell-mobile": furniture("shell-mobile", "貝のかざり", "かいのかざり", "#d3aa90"),
+  "firefly-jar": furniture("firefly-jar", "ほたるびん", "ほたるびん", "#e6b85c"),
+  "reed-mat": furniture("reed-mat", "水草マット", "みずくさまっと", "#97965d"),
+  "tea-basket": furniture("tea-basket", "お茶のかご", "おちゃのかご", "#9b7650"),
+  "cedar-bench": furniture("cedar-bench", "杉のベンチ", "すぎのべんち", "#8f5d3d"),
+  "harbor-sign": furniture("harbor-sign", "港のしるべ", "みなとのしるべ", "#5e7d77"),
+};
+
+function furniture(
+  id: ItemId,
+  name: string,
+  reading: string,
+  color: string,
+): ItemDefinition {
+  return {
+    id,
+    name,
+    reading,
+    description: "島における、手づくりの家具。",
+    color,
+    category: "furniture",
+  };
+}
+
+export const RECIPES: RecipeDefinition[] = [
+  recipe("twig-stool", "小えだのいす", "ちょこんと休めるいす。", { wood: 3 }),
+  recipe("stone-lantern", "石あかり", "夕方の道をてらす。", { stone: 2, glowcap: 1 }),
+  recipe("garden-box", "草花のはこ", "島の草花をそだてる。", { wood: 2, herb: 2 }),
+  recipe("picnic-table", "ピクニック台", "みんなで集まれる大きな台。", { wood: 5, berry: 2 }),
+  recipe("shell-mobile", "貝のかざり", "風がふくと、かすかに鳴る。", { shell: 3, wood: 1 }),
+  recipe("firefly-jar", "ほたるびん", "夜の庭に小さな灯り。", { glowcap: 2, herb: 1 }),
+  recipe("reed-mat", "水草マット", "すずしい水べのしきもの。", { reed: 3, shell: 1 }),
+  recipe("tea-basket", "お茶のかご", "香りのよいお茶の道具。", { berry: 2, herb: 2 }),
+];
+
+function recipe(
+  id: RecipeDefinition["id"],
+  name: string,
+  description: string,
+  cost: RecipeDefinition["cost"],
+): RecipeDefinition {
+  return { id, result: id, name, description, cost };
+}
+
+export const QUESTS: Record<QuestId, QuestDefinition> = {
+  "first-kindling": {
+    id: "first-kindling",
+    resident: "ノラ",
+    title: "はじめの木しごと",
+    reading: "はじめのきしごと",
+    description: "ノラが広場をなおす木をさがしています。",
+    goalLabel: "木のえだを 3こ あつめる",
+    target: 3,
+    reward: 80,
+  },
+  "warm-light": {
+    id: "warm-light",
+    resident: "ノラ",
+    title: "夕ぐれの道あかり",
+    reading: "ゆうぐれのみちあかり",
+    description: "石あかりをつくって、広場におこう。",
+    goalLabel: "石あかりを 1こ つくる",
+    target: 1,
+    reward: 120,
+  },
+  "sea-letter": {
+    id: "sea-letter",
+    resident: "カイ",
+    title: "海からの手紙",
+    reading: "うみからのてがみ",
+    description: "カイは音のちがう貝をさがしています。",
+    goalLabel: "しま貝を 3こ あつめる",
+    target: 3,
+    reward: 140,
+  },
+  "herbal-tea": {
+    id: "herbal-tea",
+    resident: "セラ",
+    title: "月の葉のお茶",
+    reading: "つきのはのおちゃ",
+    description: "セラとお茶のかごをつくろう。",
+    goalLabel: "お茶のかごを 1こ つくる",
+    target: 1,
+    reward: 180,
+  },
+  "lighthouse-picnic": {
+    id: "lighthouse-picnic",
+    resident: "カイ",
+    title: "灯台のピクニック",
+    reading: "とうだいのぴくにっく",
+    description: "みんなが集まれる台を灯台のそばにおこう。",
+    goalLabel: "ピクニック台を 1こ おく",
+    target: 1,
+    reward: 260,
+  },
+};
+
+export const QUEST_ORDER: QuestId[] = [
+  "first-kindling",
+  "warm-light",
+  "sea-letter",
+  "herbal-tea",
+  "lighthouse-picnic",
+];
+
+export const CHARACTERS: CharacterPalette[] = [
+  {
+    id: "mira",
+    name: "ミラ",
+    role: "島にやってきた つくり手",
+    skin: "#c98258",
+    hair: "#2f2925",
+    primary: "#5e7750",
+    secondary: "#564439",
+    accent: "#d69a42",
+    silhouette: "curious",
+  },
+  {
+    id: "nolla",
+    name: "ノラ",
+    role: "木しごとの名人",
+    skin: "#c88e65",
+    hair: "#5c3926",
+    primary: "#914f3b",
+    secondary: "#e0d1b3",
+    accent: "#c38948",
+    silhouette: "sturdy",
+  },
+  {
+    id: "kai",
+    name: "カイ",
+    role: "海と池のものしり",
+    skin: "#8d553c",
+    hair: "#1d2424",
+    primary: "#294153",
+    secondary: "#547a79",
+    accent: "#c59650",
+    silhouette: "nimble",
+  },
+  {
+    id: "sera",
+    name: "セラ",
+    role: "草花をそだてる人",
+    skin: "#d3a17e",
+    hair: "#7a3c25",
+    primary: "#654455",
+    secondary: "#7d8658",
+    accent: "#d0a45c",
+    silhouette: "gentle",
+  },
+];
