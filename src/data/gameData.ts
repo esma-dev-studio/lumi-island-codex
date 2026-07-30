@@ -109,6 +109,8 @@ export const RECIPES: RecipeDefinition[] = [
   recipe("firefly-jar", "ほたるびん", "夜の庭に小さな灯り。", { glowcap: 2, herb: 1 }),
   recipe("reed-mat", "水草マット", "すずしい水べのしきもの。", { reed: 3, shell: 1 }),
   recipe("tea-basket", "お茶のかご", "香りのよいお茶の道具。", { berry: 2, herb: 2 }),
+  recipe("cedar-bench", "杉のベンチ", "森をながめて休めるベンチ。", { wood: 5, stone: 1 }),
+  recipe("harbor-sign", "港のしるべ", "海辺へつづく道の目じるし。", { wood: 4, shell: 2 }),
 ];
 
 function recipe(

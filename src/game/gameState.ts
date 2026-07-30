@@ -10,8 +10,17 @@ import type {
   ResourceId,
 } from "@/src/game/types";
 import { sanitizeResourceStates } from "@/src/resources/ResourceStateSystem";
-import { migrateCollectionCounts } from "@/src/collection/CollectionSystem";
+import {
+  migrateCollectionCounts,
+  migrateCollectionIds,
+} from "@/src/collection/CollectionSystem";
 import { createTutorialProgress } from "@/src/tutorial/TutorialSystem";
+import {
+  applyJourneyEvent,
+  BASE_RECIPES,
+  createJourneyGoal,
+  withCalculatedRank,
+} from "@/src/progression/ProgressionSystem";
 
 export const SAVE_KEY = "lumi-island-save-v1";
 
@@ -43,6 +52,13 @@ export const createInitialState = (): GameState => ({
   quests: questProgress(),
   placedFurniture: [],
   islandLevel: 1,
+  unlockedRecipes: [...BASE_RECIPES],
+  collectionMilestones: [],
+  groveRepairs: 0,
+  collectionHintsBought: 0,
+  residentFriendship: { ノラ: 0, カイ: 0, セラ: 0 },
+  residentLastTalkDay: {},
+  journeyGoal: createJourneyGoal(1),
   totalGathered: 0,
   totalCrafted: 0,
   lastSavedAt: Date.now(),
@@ -172,12 +188,18 @@ export function advanceTimeWhileRunning(
 }
 
 export function applyEvent(state: GameState, event: GameEvent): GameState {
+  const journey = applyJourneyEvent(state.journeyGoal, event);
+  let next: GameState = {
+    ...state,
+    journeyGoal: journey.goal,
+    lumen: state.lumen + journey.reward,
+  };
   const activeId = QUEST_ORDER.find(
     (id) => state.quests[id].status === "active",
   );
-  if (!activeId) return state;
-  const matches = eventMatchesQuest(activeId, event);
-  if (!matches) return state;
+  if (!activeId || !eventMatchesQuest(activeId, event)) {
+    return withCalculatedRank(next);
+  }
 
   const definition = QUESTS[activeId];
   const amount =
@@ -196,19 +218,24 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
   if (complete) {
     const currentIndex = QUEST_ORDER.indexOf(activeId);
     const nextQuest = QUEST_ORDER[currentIndex + 1];
-    if (nextQuest) {
-      quests[nextQuest] = { status: "active", amount: 0 };
-    }
+    if (nextQuest) quests[nextQuest] = { status: "active", amount: 0 };
   }
 
-  return {
-    ...state,
+  const resident = definition.resident;
+  const residentFriendship = complete
+    ? {
+        ...state.residentFriendship,
+        [resident]: Math.min(3, (state.residentFriendship[resident] ?? 0) + 1),
+      }
+    : state.residentFriendship;
+  next = {
+    ...next,
     quests,
-    lumen: complete ? state.lumen + definition.reward : state.lumen,
-    islandLevel: 1 + QUEST_ORDER.filter((id) => quests[id].status === "complete").length,
+    residentFriendship,
+    lumen: complete ? next.lumen + definition.reward : next.lumen,
   };
+  return withCalculatedRank(next);
 }
-
 function eventMatchesQuest(quest: QuestId, event: GameEvent): boolean {
   if (quest === "first-kindling") {
     return event.type === "gather" && event.item === "wood";
@@ -228,7 +255,13 @@ function eventMatchesQuest(quest: QuestId, event: GameEvent): boolean {
 export function advanceTime(state: GameState, minutes: number): GameState {
   const total = state.dayMinute + minutes;
   if (total < 24 * 60) return { ...state, dayMinute: total };
-  return { ...state, day: state.day + 1, dayMinute: total % (24 * 60) };
+  const day = state.day + 1;
+  return {
+    ...state,
+    day,
+    dayMinute: total % (24 * 60),
+    journeyGoal: createJourneyGoal(day),
+  };
 }
 
 export function formatGameTime(dayMinute: number): string {
@@ -272,7 +305,7 @@ export function sanitizeState(value: unknown): GameState {
             createTutorialProgress(candidate.tutorialStep ?? 7),
           audioSettings: candidate.audioSettings ?? initial.audioSettings,
         };
-  return {
+  return withCalculatedRank({
     ...initial,
     ...migrated,
     version: 3,
@@ -286,8 +319,8 @@ export function sanitizeState(value: unknown): GameState {
     tutorialProgress:
       migrated.tutorialProgress ??
       createTutorialProgress(migrated.tutorialStep ?? 7),
-    discoveredItems: Array.isArray(migrated.discoveredItems) ? migrated.discoveredItems : [],
-    caughtFish: Array.isArray(migrated.caughtFish) ? migrated.caughtFish : [],
+    discoveredItems: migrateCollectionIds(migrated.discoveredItems),
+    caughtFish: migrateCollectionIds(migrated.caughtFish),
     collectionCounts: migrateCollectionCounts(
       migrated.collectionCounts,
       Array.isArray(migrated.discoveredItems)
@@ -308,5 +341,30 @@ export function sanitizeState(value: unknown): GameState {
     placedFurniture: Array.isArray(migrated.placedFurniture)
       ? migrated.placedFurniture
       : [],
-  };
+    unlockedRecipes: Array.isArray(migrated.unlockedRecipes)
+      ? migrated.unlockedRecipes
+      : [...BASE_RECIPES],
+    collectionMilestones: Array.isArray(migrated.collectionMilestones)
+      ? migrated.collectionMilestones.filter(
+          (value): value is number => value === 25 || value === 50 || value === 75,
+        )
+      : [],
+    groveRepairs:
+      typeof migrated.groveRepairs === "number"
+        ? Math.max(0, Math.min(3, Math.floor(migrated.groveRepairs)))
+        : 0,
+    collectionHintsBought:
+      typeof migrated.collectionHintsBought === "number"
+        ? Math.max(0, Math.floor(migrated.collectionHintsBought))
+        : 0,
+    residentFriendship: {
+      ...initial.residentFriendship,
+      ...(migrated.residentFriendship ?? {}),
+    },
+    residentLastTalkDay: migrated.residentLastTalkDay ?? {},
+    journeyGoal:
+      migrated.journeyGoal && migrated.journeyGoal.day === (migrated.day ?? initial.day)
+        ? migrated.journeyGoal
+        : createJourneyGoal(migrated.day ?? initial.day),
+  });
 }

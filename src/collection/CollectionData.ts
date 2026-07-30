@@ -1,4 +1,15 @@
+import { RESOURCE_WORLD_DEFINITIONS } from "@/src/resources/ResourceDefinitions";
+import type { ResourceId } from "@/src/game/types";
+
+function placeHint(item: ResourceId): string {
+  return (
+    RESOURCE_WORLD_DEFINITIONS.find((entry) => entry.item === item)?.placeHint ??
+    "島のどこか"
+  );
+}
+
 export type CollectionCategory = "fish" | "plant" | "shore";
+export type CollectionVisual = "fish" | "berry" | "leaf" | "mushroom" | "reed" | "shell";
 
 export interface CollectionEntry {
   id: string;
@@ -8,24 +19,42 @@ export interface CollectionEntry {
   description: string;
   place: string;
   timeHint: string;
-  symbol: string;
+  visual: CollectionVisual;
+  colors: readonly [string, string];
 }
 
 export const COLLECTION_ENTRIES: CollectionEntry[] = [
-  { id: "lumi-minnow", category: "fish", name: "ルミメダカ", reading: "るみ めだか", description: "しっぽが 小さく光る さかな。", place: "月の池", timeHint: "昼に 見つけやすい", symbol: "◀" },
-  { id: "moon-carp", category: "fish", name: "月コイ", reading: "つき こい", description: "月みたいな まるいうろこ。", place: "月の池", timeHint: "夕方に 見つけやすい", symbol: "◆" },
-  { id: "ripple-perch", category: "fish", name: "なみもん魚", reading: "なみもん ざかな", description: "波のような しまもよう。", place: "月の池", timeHint: "いつでも", symbol: "◁" },
-  { id: "berry-あかい実", category: "plant", name: "あかい実", reading: "あかい み", description: "あまずっぱい 森のおやつ。", place: "森の木かげ", timeHint: "昼", symbol: "●" },
-  { id: "berry-ふたごの実", category: "plant", name: "ふたごの実", reading: "ふたごの み", description: "ふたつ ならんだ めずらしい実。", place: "森の木かげ", timeHint: "昼", symbol: "●●" },
-  { id: "herb-月のハーブ", category: "plant", name: "月のハーブ", reading: "つきの はーぶ", description: "夕方に いい香りがする。", place: "草原", timeHint: "夕方", symbol: "✦" },
-  { id: "herb-星の葉", category: "plant", name: "星の葉", reading: "ほしの は", description: "小さな 星もようの 葉っぱ。", place: "草原", timeHint: "昼", symbol: "✤" },
-  { id: "glowcap-ひかりキノコ", category: "plant", name: "ひかりキノコ", reading: "ひかり きのこ", description: "夜道を やさしく照らす。", place: "森の奥", timeHint: "夕方", symbol: "♢" },
-  { id: "glowcap-ほたるキノコ", category: "plant", name: "ほたるキノコ", reading: "ほたる きのこ", description: "ほたるのような 光をまとう。", place: "森の奥", timeHint: "夜", symbol: "✧" },
-  { id: "reed-みずべ草", category: "plant", name: "みずべ草", reading: "みずべ ぐさ", description: "しなやかな 水べの草。", place: "月の池のそば", timeHint: "いつでも", symbol: "〽" },
-  { id: "reed-銀のあし", category: "plant", name: "銀のあし", reading: "ぎんの あし", description: "風で 銀色にゆれる草。", place: "月の池のそば", timeHint: "夕方", symbol: "⌇" },
-  { id: "shell-しましま貝", category: "shore", name: "しましま貝", reading: "しましま がい", description: "波の音が きこえる貝がら。", place: "砂浜", timeHint: "昼", symbol: "◒" },
-  { id: "shell-にじ色の貝", category: "shore", name: "にじ色の貝", reading: "にじいろの かい", description: "光にかざすと 七色にひかる。", place: "砂浜", timeHint: "夕方", symbol: "◓" },
+  { id: "lumi-minnow", category: "fish", name: "ルミメダカ", reading: "るみ めだか", description: "しっぽが 小さく光る さかな。", place: placeHint("fish"), timeHint: "昼に 見つけやすい", visual: "fish", colors: ["#f1c75b", "#4c908d"] },
+  { id: "moon-carp", category: "fish", name: "月コイ", reading: "つき こい", description: "月みたいな まるいうろこ。", place: placeHint("fish"), timeHint: "夕方に 見つけやすい", visual: "fish", colors: ["#dc8d68", "#657ba5"] },
+  { id: "ripple-perch", category: "fish", name: "なみもん魚", reading: "なみもん ざかな", description: "波のような しまもよう。", place: placeHint("fish"), timeHint: "いつでも", visual: "fish", colors: ["#75b8ad", "#315f71"] },
+  { id: "berry-red", category: "plant", name: "あかい実", reading: "あかい み", description: "あまずっぱい 森のおやつ。", place: placeHint("berry"), timeHint: "昼", visual: "berry", colors: ["#c75b4d", "#6f925c"] },
+  { id: "berry-twin", category: "plant", name: "ふたごの実", reading: "ふたごの み", description: "ふたつ ならんだ めずらしい実。", place: placeHint("berry"), timeHint: "昼", visual: "berry", colors: ["#8f4561", "#75965d"] },
+  { id: "herb-moon", category: "plant", name: "月のハーブ", reading: "つきの はーぶ", description: "夕方に いい香りがする。", place: placeHint("herb"), timeHint: "夕方", visual: "leaf", colors: ["#8ab46f", "#e8c268"] },
+  { id: "herb-star", category: "plant", name: "星の葉", reading: "ほしの は", description: "小さな 星もようの 葉っぱ。", place: placeHint("herb"), timeHint: "昼", visual: "leaf", colors: ["#5d9976", "#f3db83"] },
+  { id: "glowcap-light", category: "plant", name: "ひかりキノコ", reading: "ひかり きのこ", description: "夜道を やさしく照らす。", place: placeHint("glowcap"), timeHint: "夕方", visual: "mushroom", colors: ["#ecc864", "#9d6a52"] },
+  { id: "glowcap-firefly", category: "plant", name: "ほたるキノコ", reading: "ほたる きのこ", description: "ほたるのような 光をまとう。", place: placeHint("glowcap"), timeHint: "夜", visual: "mushroom", colors: ["#b9d86b", "#6b5677"] },
+  { id: "reed-water", category: "plant", name: "みずべ草", reading: "みずべ ぐさ", description: "しなやかな 水べの草。", place: placeHint("reed"), timeHint: "いつでも", visual: "reed", colors: ["#789b65", "#4b7f75"] },
+  { id: "reed-silver", category: "plant", name: "銀のあし", reading: "ぎんの あし", description: "風で 銀色にゆれる草。", place: placeHint("reed"), timeHint: "夕方", visual: "reed", colors: ["#aebcb3", "#66856c"] },
+  { id: "shell-striped", category: "shore", name: "しましま貝", reading: "しましま がい", description: "波の音が きこえる貝がら。", place: placeHint("shell"), timeHint: "昼", visual: "shell", colors: ["#dfa78f", "#8e655c"] },
+  { id: "shell-rainbow", category: "shore", name: "にじ色の貝", reading: "にじいろの かい", description: "光にかざすと 七色にひかる。", place: placeHint("shell"), timeHint: "夕方", visual: "shell", colors: ["#d9a9c2", "#6fa9a1"] },
 ];
+
+const LEGACY_COLLECTION_IDS: Record<string, string> = {
+  "berry-あかい実": "berry-red",
+  "berry-ふたごの実": "berry-twin",
+  "herb-月のハーブ": "herb-moon",
+  "herb-星の葉": "herb-star",
+  "glowcap-ひかりキノコ": "glowcap-light",
+  "glowcap-ほたるキノコ": "glowcap-firefly",
+  "reed-みずべ草": "reed-water",
+  "reed-銀のあし": "reed-silver",
+  "shell-しましま貝": "shell-striped",
+  "shell-にじ色の貝": "shell-rainbow",
+};
+
+export function stableCollectionId(id: string): string {
+  return LEGACY_COLLECTION_IDS[id] ?? id;
+}
 
 export const COLLECTION_CATEGORIES: Array<{
   id: CollectionCategory | "all";

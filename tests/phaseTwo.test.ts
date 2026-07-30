@@ -10,14 +10,7 @@ import {
   timingConfig,
   timingProgress,
 } from "@/src/gathering/TimingGatheringGame";
-import { gatheringReward } from "@/src/gathering/GatheringSystem";
 import { discoverForage } from "@/src/gathering/ForagingSystem";
-import {
-  advanceFishingGame,
-  createFishingGame,
-  tryCatchFish,
-} from "@/src/fishing/FishingMiniGame";
-import { resolveFishing } from "@/src/fishing/FishingSystem";
 import { easyModeSettings } from "@/src/accessibility/EasyModeSettings";
 import {
   createInitialState,
@@ -94,11 +87,6 @@ describe("gathering timing and easy mode", () => {
     );
   });
 
-  it("never removes every reward on a miss", () => {
-    expect(gatheringReward("wood", "normal").amount).toBe(1);
-    expect(gatheringReward("stone", "good").amount).toBe(2);
-    expect(gatheringReward("stone", "great", 0.1).bonusItem).toBe("glowcap");
-  });
 });
 
 describe("foraging and fishing discoveries", () => {
@@ -114,23 +102,7 @@ describe("foraging and fishing discoveries", () => {
     expect(variants.size).toBeGreaterThan(1);
   });
 
-  it("waits, opens a bite window, and catches only during that window", () => {
-    const initial = createFishingGame(false, 0);
-    const waiting = advanceFishingGame(initial, 1);
-    expect(waiting.phase).toBe("waiting");
-    const biting = advanceFishingGame(waiting, 1);
-    expect(biting.phase).toBe("bite");
-    const caught = tryCatchFish(biting);
-    expect(resolveFishing(caught, 0).caught).toBe(true);
-    expect(resolveFishing(caught, 0).fish?.id).toBe("lumi-minnow");
-  });
 
-  it("allows an immediate retry after the bite window is missed", () => {
-    const initial = createFishingGame(false, 0);
-    const missed = advanceFishingGame(initial, 4);
-    expect(missed.phase).toBe("missed");
-    expect(createFishingGame(false, 0).phase).toBe("waiting");
-  });
 });
 
 describe("world source, NPC collision, pause, and save migration", () => {

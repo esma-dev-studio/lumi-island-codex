@@ -1,3 +1,4 @@
+import { RESOURCE_WORLD_DEFINITIONS } from "@/src/resources/ResourceDefinitions";
 import type { WorldCollider } from "@/src/world/CollisionWorld";
 
 type ColliderShape =
@@ -69,24 +70,30 @@ export const HOUSE_LAYOUT = [
   }),
 ] as const;
 
-export const TREE_LAYOUT = [
-  [-13, -4], [-11, -7], [-7, -8.8], [-4, -9.4], [10.8, -5.8],
-  [13.2, -2.5], [-14, 1], [14.5, 2], [-7.7, 7.6],
-].map(([x, z], index) =>
-  object(`tree-${index}`, "tree", x, z, 0, { kind: "circle", radius: 1.05 }),
+export const TREE_LAYOUT = RESOURCE_WORLD_DEFINITIONS
+  .filter((entry) => entry.visualType === "cedar-tree")
+  .map((entry) =>
+    object(entry.id, "tree", entry.position.x, entry.position.z, entry.rotation ?? 0, entry.collider ?? { kind: "circle", radius: 1.05 }),
+  );
+
+export const ROCK_LAYOUT = RESOURCE_WORLD_DEFINITIONS
+  .filter((entry) => entry.visualType === "moon-rock")
+  .map((entry) =>
+    object(entry.id, "rock", entry.position.x, entry.position.z, entry.rotation ?? 0, entry.collider ?? { kind: "circle", radius: 0.95 }),
+  );
+
+const fishingSpot = RESOURCE_WORLD_DEFINITIONS.find(
+  (entry) => entry.visualType === "fishing-spot",
 );
 
-export const ROCK_LAYOUT = [
-  [-5.3, 4.5], [8, 7], [11.4, -0.8], [-3, -7.2],
-].map(([x, z], index) =>
-  object(`rock-${index}`, "rock", x, z, 0, { kind: "circle", radius: 0.95 }),
+export const POND_LAYOUT = object(
+  "moon-pond",
+  "pond",
+  (fishingSpot?.position.x ?? -8) + (fishingSpot?.collider?.offset?.x ?? 0),
+  (fishingSpot?.position.z ?? 1.2) + (fishingSpot?.collider?.offset?.z ?? -3.2),
+  0,
+  fishingSpot?.collider ?? { kind: "ellipse", radiusX: 3.55, radiusZ: 2.55 },
 );
-
-export const POND_LAYOUT = object("moon-pond", "pond", -8, -2, 0, {
-  kind: "ellipse",
-  radiusX: 3.55,
-  radiusZ: 2.55,
-});
 
 export const ISLAND_LAYOUT: IslandObjectDefinition[] = [
   ...HOUSE_LAYOUT,

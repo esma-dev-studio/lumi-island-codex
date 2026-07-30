@@ -21,6 +21,7 @@ export type FurnitureId =
   | "harbor-sign";
 
 export type ItemId = ResourceId | FurnitureId;
+export type ResidentId = "ノラ" | "カイ" | "セラ";
 export type QuestId =
   | "first-kindling"
   | "warm-light"
@@ -79,6 +80,18 @@ export interface QuestProgress {
   amount: number;
 }
 
+export type IslandRank = 1 | 2 | 3;
+export type JourneyGoalKind = "gather" | "craft" | "place";
+
+export interface JourneyGoalState {
+  day: number;
+  kind: JourneyGoalKind;
+  amount: number;
+  target: number;
+  reward: number;
+  complete: boolean;
+}
+
 export interface GameState {
   version: 3;
   playerPosition: Position2D;
@@ -98,7 +111,14 @@ export interface GameState {
   day: number;
   quests: Record<QuestId, QuestProgress>;
   placedFurniture: PlacedFurniture[];
-  islandLevel: number;
+  islandLevel: IslandRank;
+  unlockedRecipes: FurnitureId[];
+  collectionMilestones: number[];
+  groveRepairs: number;
+  collectionHintsBought: number;
+  residentFriendship: Record<ResidentId, number>;
+  residentLastTalkDay: Partial<Record<ResidentId, number>>;
+  journeyGoal: JourneyGoalState;
   totalGathered: number;
   totalCrafted: number;
   lastSavedAt: number;

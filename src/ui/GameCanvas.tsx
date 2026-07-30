@@ -5,7 +5,8 @@ import {
   createIslandScene,
   type InteractionHint,
   type IslandController,
-} from "@/src/scenes/LumiScenes";
+  type TutorialGuideTarget,
+} from "@/src/scenes/IslandScene";
 import type { GameState } from "@/src/game/types";
 import type {
   PlacementMode,
@@ -18,6 +19,7 @@ interface GameCanvasProps {
   state: GameState;
   paused: boolean;
   placementMode: PlacementMode | null;
+  tutorialGuideTarget: TutorialGuideTarget | null;
   pendingActivityResult: ActivityResult | null;
   cameraResetToken: number;
   onHint: (hint: InteractionHint | null) => void;
@@ -37,6 +39,7 @@ export function GameCanvas({
   state,
   paused,
   placementMode,
+  tutorialGuideTarget,
   pendingActivityResult,
   cameraResetToken,
   onHint,
@@ -142,6 +145,14 @@ export function GameCanvas({
   }, [state.dayMinute]);
 
   useEffect(() => {
+    controllerRef.current?.setProgression(
+      state.islandLevel,
+      state.groveRepairs,
+      state.collectionMilestones,
+    );
+  }, [state.collectionMilestones, state.groveRepairs, state.islandLevel]);
+
+  useEffect(() => {
     controllerRef.current?.syncFurniture(state.placedFurniture);
   }, [state.placedFurniture]);
 
@@ -156,6 +167,10 @@ export function GameCanvas({
   useEffect(() => {
     controllerRef.current?.setPlacementMode(placementMode);
   }, [placementMode]);
+
+  useEffect(() => {
+    controllerRef.current?.setTutorialGuide(tutorialGuideTarget);
+  }, [tutorialGuideTarget]);
 
   useEffect(() => {
     if (cameraResetToken > 0) controllerRef.current?.resetCamera();

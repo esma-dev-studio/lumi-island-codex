@@ -1,0 +1,38 @@
+.activity-card:focus {
+  outline: none;
+}
+
+.activity-card button:focus-visible {
+  outline: 4px solid #f2b84f;
+  outline-offset: 4px;
+}
+
+.rock-cracks button.is-selected,
+.fish-shadows button.is-selected {
+  border-color: #f2b84f;
+  box-shadow:
+    0 0 0 4px rgba(242, 184, 79, 0.34),
+    0 12px 28px rgba(22, 70, 68, 0.22);
+  transform: translateY(-4px);
+}
+
+.rock-cracks button.is-selected::after,
+.fish-shadows button.is-selected::after {
+  position: absolute;
+  top: 0.45rem;
+  left: 50%;
+  padding: 0.2rem 0.55rem;
+  color: #173a38;
+  background: #ffd66f;
+  border-radius: 999px;
+  content: "えらんでいるよ";
+  font-size: 0.875rem;
+  font-weight: 800;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.rock-cracks button,
+.fish-shadows button {
+  position: relative;
+}

@@ -1,63 +1,179 @@
-import type { ResourceId } from "@/src/game/types";
+import type { Position2D, ResourceId } from "@/src/game/types";
+
+export type ResourceVisualType =
+  | "cedar-tree"
+  | "moon-rock"
+  | "berry-bush"
+  | "herb-patch"
+  | "shell-patch"
+  | "glowcap-patch"
+  | "reed-patch"
+  | "fishing-spot";
+
+export type ResourceColliderDefinition = (
+  | { kind: "circle"; radius: number }
+  | { kind: "ellipse"; radiusX: number; radiusZ: number }
+) & { offset?: Position2D };
 
 export interface ResourceDefinition {
+  id: string;
   item: ResourceId;
+  position: Position2D;
+  rotation?: number;
+  visualType: ResourceVisualType;
+  visualIndex: number;
+  collider?: ResourceColliderDefinition;
+  interactionRadius: number;
   recoverySeconds: number;
+  placeHint: string;
+  legacyIds: readonly string[];
   depletedLabel: string;
   recoveringLabel: string;
 }
 
-export const RESOURCE_DEFINITIONS: Record<ResourceId, ResourceDefinition> = {
-  wood: {
-    item: "wood",
-    recoverySeconds: 180,
-    depletedLabel: "えだを集めた木",
-    recoveringLabel: "えだが育っている木",
-  },
-  stone: {
-    item: "stone",
-    recoverySeconds: 150,
-    depletedLabel: "ひびの入った石",
-    recoveringLabel: "きらめきが戻っている石",
-  },
-  berry: {
-    item: "berry",
-    recoverySeconds: 90,
-    depletedLabel: "実をつんだ木",
-    recoveringLabel: "実が育っている木",
-  },
-  herb: {
-    item: "herb",
-    recoverySeconds: 75,
-    depletedLabel: "つんだあとの草",
-    recoveringLabel: "葉が育っている草",
-  },
-  shell: {
-    item: "shell",
-    recoverySeconds: 100,
-    depletedLabel: "貝をひろった浜",
-    recoveringLabel: "波が貝を運んでいる浜",
-  },
-  glowcap: {
-    item: "glowcap",
-    recoverySeconds: 90,
-    depletedLabel: "つんだあとのキノコ",
-    recoveringLabel: "光が戻っているキノコ",
-  },
-  reed: {
-    item: "reed",
-    recoverySeconds: 80,
-    depletedLabel: "刈ったあとの水べ草",
-    recoveringLabel: "水べ草が育っている",
-  },
-  fish: {
-    item: "fish",
-    recoverySeconds: 75,
-    depletedLabel: "魚がいない水面",
-    recoveringLabel: "魚が戻ってきている水面",
-  },
+const recovery: Record<ResourceId, number> = {
+  wood: 180,
+  stone: 150,
+  berry: 90,
+  herb: 75,
+  shell: 100,
+  glowcap: 90,
+  reed: 80,
+  fish: 75,
 };
 
+const labels: Record<ResourceId, { depleted: string; recovering: string }> = {
+  wood: { depleted: "えだを集めた木", recovering: "えだが育っている木" },
+  stone: { depleted: "ひびの入った石", recovering: "きらめきが戻っている石" },
+  berry: { depleted: "実をつんだ木", recovering: "実が育っている木" },
+  herb: { depleted: "つんだあとの草", recovering: "葉が育っている草" },
+  shell: { depleted: "貝をひろった浜", recovering: "波が貝を運んでいる浜" },
+  glowcap: { depleted: "つんだあとのキノコ", recovering: "光が戻っているキノコ" },
+  reed: { depleted: "刈ったあとの水べ草", recovering: "水べ草が育っている" },
+  fish: { depleted: "魚がいない水面", recovering: "魚が戻ってきている水面" },
+};
+
+function definition(
+  item: ResourceId,
+  visualType: ResourceVisualType,
+  visualIndex: number,
+  position: Position2D,
+  interactionRadius: number,
+  placeHint: string,
+  legacyId: string,
+  collider?: ResourceColliderDefinition,
+): ResourceDefinition {
+  const prefix: Record<ResourceVisualType, string> = {
+    "cedar-tree": "wood-cedar",
+    "moon-rock": "stone-moon",
+    "berry-bush": "berry-grove",
+    "herb-patch": "herb-meadow",
+    "shell-patch": "shell-beach",
+    "glowcap-patch": "glowcap-forest",
+    "reed-patch": "reed-pond",
+    "fishing-spot": "fish-moon-pond",
+  };
+  return {
+    id: `${prefix[visualType]}-${String(visualIndex + 1).padStart(2, "0")}`,
+    item,
+    position,
+    visualType,
+    visualIndex,
+    collider,
+    interactionRadius,
+    recoverySeconds: recovery[item],
+    placeHint,
+    legacyIds: [legacyId],
+    depletedLabel: labels[item].depleted,
+    recoveringLabel: labels[item].recovering,
+  };
+}
+
+const points = (
+  item: ResourceId,
+  visualType: ResourceVisualType,
+  positions: readonly (readonly [number, number])[],
+  interactionRadius: number,
+  placeHint: string,
+  legacyPrefix: string,
+  collider?: ResourceColliderDefinition,
+): ResourceDefinition[] =>
+  positions.map(([x, z], index) =>
+    definition(
+      item,
+      visualType,
+      index,
+      { x, z },
+      interactionRadius,
+      placeHint,
+      `${legacyPrefix}-${index}`,
+      collider,
+    ),
+  );
+
+export const RESOURCE_WORLD_DEFINITIONS: readonly ResourceDefinition[] = [
+  ...points("wood", "cedar-tree", [
+    [-13, -4], [-11, -7], [-7, -8.8], [-4, -9.4], [10.8, -5.8],
+    [13.2, -2.5], [-14, 1], [14.5, 2], [-7.7, 7.6],
+  ], 2.2, "島の外がわにある大きな木", "cedar-tree", { kind: "circle", radius: 1.05 }),
+  ...points("stone", "moon-rock", [
+    [-5.3, 4.5], [8, 7], [11.4, -0.8], [-3, -7.2],
+  ], 2, "広場や森の近く", "rock-cluster", { kind: "circle", radius: 0.95 }),
+  ...points("berry", "berry-bush", [
+    [-7.5, 1.6], [5, 4.9], [7.5, -4.2],
+  ], 1.8, "森の木かげ", "berry-bush"),
+  ...points("herb", "herb-patch", [
+    [-1.8, 3.2], [3.6, -2], [1.8, -7.2],
+  ], 1.6, "草原", "herb-patch"),
+  ...points("shell", "shell-patch", [
+    [-13.6, 6.6], [13.8, 6.2], [9.4, 9],
+  ], 1.6, "砂浜", "shell-patch"),
+  ...points("glowcap", "glowcap-patch", [
+    [-10.2, -4.2], [-5.4, -5.7], [8.5, -6.3],
+  ], 1.6, "森の奥", "glowcap-patch"),
+  ...points("reed", "reed-patch", [
+    [-10.7, -2], [-6.4, -4.2],
+  ], 1.7, "月の池のそば", "reed-patch"),
+  definition(
+    "fish",
+    "fishing-spot",
+    0,
+    { x: -8, z: 1.2 },
+    2.2,
+    "月の池",
+    "fishing-spot",
+    {
+      kind: "ellipse",
+      radiusX: 3.55,
+      radiusZ: 2.55,
+      offset: { x: 0, z: -3.2 },
+    },
+  ),
+];
+
+const byId = new Map(RESOURCE_WORLD_DEFINITIONS.map((entry) => [entry.id, entry]));
+const legacyToStable = new Map(
+  RESOURCE_WORLD_DEFINITIONS.flatMap((entry) => {
+    const layoutLegacy =
+      entry.visualType === "cedar-tree"
+        ? [`tree-${entry.visualIndex}`]
+        : entry.visualType === "moon-rock"
+          ? [`rock-${entry.visualIndex}`]
+          : [];
+    return [...entry.legacyIds, ...layoutLegacy].map(
+      (legacyId) => [legacyId, entry.id] as const,
+    );
+  }),
+);
+
+export function resourceDefinitionById(id: string): ResourceDefinition | undefined {
+  return byId.get(id);
+}
+
+export function stableResourceId(id: string): string {
+  return legacyToStable.get(id) ?? id;
+}
+
 export function recoverySecondsFor(item: ResourceId): number {
-  return RESOURCE_DEFINITIONS[item].recoverySeconds;
+  return recovery[item];
 }

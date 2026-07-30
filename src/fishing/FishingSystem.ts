@@ -1,5 +1,9 @@
 import { chooseFish, type FishDefinition } from "@/src/fishing/FishData";
-import type { FishingGameState } from "@/src/fishing/FishingMiniGame";
+
+export interface FishingResolutionState {
+  phase: string;
+  [key: string]: unknown;
+}
 
 export interface FishingResult {
   caught: boolean;
@@ -8,7 +12,7 @@ export interface FishingResult {
 }
 
 export function resolveFishing(
-  state: FishingGameState,
+  state: FishingResolutionState,
   fishRoll = Math.random(),
 ): FishingResult {
   if (state.phase !== "caught") {

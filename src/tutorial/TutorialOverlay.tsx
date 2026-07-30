@@ -1,15 +1,21 @@
+"use client";
+
+import { useState } from "react";
 import { TUTORIAL_STEPS } from "@/src/tutorial/TutorialSteps";
 import type { TutorialProgress } from "@/src/tutorial/TutorialSystem";
 
 export function TutorialOverlay({
   progress,
   easyMode,
-  onDismiss,
+  onHide,
+  onQuit,
 }: {
   progress: TutorialProgress;
   easyMode: boolean;
-  onDismiss: () => void;
+  onHide: () => void;
+  onQuit: () => void;
 }) {
+  const [confirmQuit, setConfirmQuit] = useState(false);
   const step = TUTORIAL_STEPS[progress.step];
   if (!step) return null;
   const distance = Math.min(3, progress.walkedDistance);
@@ -19,23 +25,36 @@ export function TutorialOverlay({
       aria-live="polite"
       data-testid="tutorial-coach"
     >
-      <div className="tutorial-coach__step">
+      <div className="tutorial-coach__step" aria-label={`${progress.step + 1}ばんめ` }>
         {progress.step + 1}<small>/{TUTORIAL_STEPS.length}</small>
       </div>
-      <div>
+      <div className="tutorial-coach__goal">
         <span>いま やること</span>
         <h2>{easyMode ? step.easyTitle : step.title}</h2>
         {step.id === "move" && (
           <div
             className="tutorial-distance"
-            aria-label={`${distance.toFixed(1)} / 3メートル`}
+            aria-label="歩いたぶん"
           >
             <i style={{ width: `${(distance / 3) * 100}%` }} />
           </div>
         )}
       </div>
-      <kbd>{step.keyLabel}</kbd>
-      <button onClick={onDismiss}>あとで</button>
+      {!easyMode && <kbd>{step.keyLabel}</kbd>}
+      {!confirmQuit ? (
+        <div className="tutorial-coach__actions">
+          <button onClick={onHide}>いったん隠す</button>
+          <button className="tutorial-quit-link" onClick={() => setConfirmQuit(true)}>
+            チュートリアルをやめる
+          </button>
+        </div>
+      ) : (
+        <div className="tutorial-quit-confirm" role="alert">
+          <strong>ほんとうに やめる？</strong>
+          <button onClick={() => setConfirmQuit(false)}>つづける</button>
+          <button onClick={onQuit}>やめる</button>
+        </div>
+      )}
     </aside>
   );
 }

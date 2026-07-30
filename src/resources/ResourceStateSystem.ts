@@ -1,4 +1,7 @@
-import { recoverySecondsFor } from "@/src/resources/ResourceDefinitions";
+import {
+  recoverySecondsFor,
+  stableResourceId,
+} from "@/src/resources/ResourceDefinitions";
 import type { ResourceId, ResourceState } from "@/src/game/types";
 
 export function availableResourceState(resourceId: string): ResourceState {
@@ -73,8 +76,10 @@ export function sanitizeResourceStates(
 ): Record<string, ResourceState> {
   if (!value || typeof value !== "object") return {};
   const result: Record<string, ResourceState> = {};
-  for (const [resourceId, raw] of Object.entries(value)) {
+  for (const [storedId, raw] of Object.entries(value)) {
     if (!raw || typeof raw !== "object") continue;
+    const resourceId = stableResourceId(storedId);
+    if (result[resourceId] && storedId !== resourceId) continue;
     const candidate = raw as Partial<ResourceState> & {
       availableAt?: number;
       visualVariant?: number;

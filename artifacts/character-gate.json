@@ -1,0 +1,291 @@
+{
+  "gate": "production-character-glb",
+  "passed": false,
+  "visualReviewRequired": true,
+  "models": [
+    {
+      "file": "mira.glb",
+      "assetStatus": "integration-placeholder",
+      "bytes": 310480,
+      "meshes": 4,
+      "primitives": 7,
+      "triangles": 7751,
+      "materials": 6,
+      "images": 0,
+      "textures": 0,
+      "joints": 12,
+      "animations": 9,
+      "multiJointVertices": 0,
+      "errors": [
+        "primitive 1 has no UV0/TEXCOORD_0",
+        "primitive 2 has no UV0/TEXCOORD_0",
+        "primitive 3 has no UV0/TEXCOORD_0",
+        "primitive 4 has no UV0/TEXCOORD_0",
+        "primitive 5 has no UV0/TEXCOORD_0",
+        "primitive 5 has no skin weights",
+        "primitive 6 has no UV0/TEXCOORD_0",
+        "primitive 6 has no skin weights",
+        "primitive 7 has no UV0/TEXCOORD_0",
+        "primitive 7 has no skin weights",
+        "too few vertices are weighted to multiple joints: 0/4108 (minimum 42)",
+        "model has no embedded/external image texture",
+        "manifest assetStatus is not production-reviewed",
+        "Khronos glTF Validator errors: 4"
+      ],
+      "warnings": [],
+      "passed": false,
+      "khronos": {
+        "file": "C:\\Users\\2016k\\.codex\\worktrees\\4c4a\\繧｢繝励Μ髢狗匱竭ｰ_闍ｱ莨夊ｩｱ\\lumi-island\\public\\assets\\characters\\models\\mira.glb",
+        "errors": 4,
+        "warnings": 1,
+        "infos": 0,
+        "hints": 0,
+        "messages": [
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/6/children"
+          },
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/8/children"
+          },
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/10/children"
+          },
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/12/children"
+          },
+          {
+            "code": "NODE_SKINNED_MESH_NON_ROOT",
+            "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+            "severity": 1,
+            "pointer": "/nodes/13"
+          }
+        ]
+      }
+    },
+    {
+      "file": "nolla.glb",
+      "assetStatus": "integration-placeholder",
+      "bytes": 311164,
+      "meshes": 4,
+      "primitives": 7,
+      "triangles": 7767,
+      "materials": 6,
+      "images": 0,
+      "textures": 0,
+      "joints": 12,
+      "animations": 9,
+      "multiJointVertices": 0,
+      "errors": [
+        "primitive 1 has no UV0/TEXCOORD_0",
+        "primitive 2 has no UV0/TEXCOORD_0",
+        "primitive 3 has no UV0/TEXCOORD_0",
+        "primitive 4 has no UV0/TEXCOORD_0",
+        "primitive 5 has no UV0/TEXCOORD_0",
+        "primitive 5 has no skin weights",
+        "primitive 6 has no UV0/TEXCOORD_0",
+        "primitive 6 has no skin weights",
+        "primitive 7 has no UV0/TEXCOORD_0",
+        "primitive 7 has no skin weights",
+        "too few vertices are weighted to multiple joints: 0/4118 (minimum 42)",
+        "model has no embedded/external image texture",
+        "manifest assetStatus is not production-reviewed",
+        "Khronos glTF Validator errors: 4"
+      ],
+      "warnings": [],
+      "passed": false,
+      "khronos": {
+        "file": "C:\\Users\\2016k\\.codex\\worktrees\\4c4a\\繧｢繝励Μ髢狗匱竭ｰ_闍ｱ莨夊ｩｱ\\lumi-island\\public\\assets\\characters\\models\\nolla.glb",
+        "errors": 4,
+        "warnings": 1,
+        "infos": 0,
+        "hints": 0,
+        "messages": [
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/6/children"
+          },
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/8/children"
+          },
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/10/children"
+          },
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/12/children"
+          },
+          {
+            "code": "NODE_SKINNED_MESH_NON_ROOT",
+            "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+            "severity": 1,
+            "pointer": "/nodes/13"
+          }
+        ]
+      }
+    },
+    {
+      "file": "kai.glb",
+      "assetStatus": "integration-placeholder",
+      "bytes": 270856,
+      "meshes": 4,
+      "primitives": 7,
+      "triangles": 6691,
+      "materials": 6,
+      "images": 0,
+      "textures": 0,
+      "joints": 12,
+      "animations": 9,
+      "multiJointVertices": 0,
+      "errors": [
+        "primitive 1 has no UV0/TEXCOORD_0",
+        "primitive 2 has no UV0/TEXCOORD_0",
+        "primitive 3 has no UV0/TEXCOORD_0",
+        "primitive 4 has no UV0/TEXCOORD_0",
+        "primitive 5 has no UV0/TEXCOORD_0",
+        "primitive 5 has no skin weights",
+        "primitive 6 has no UV0/TEXCOORD_0",
+        "primitive 6 has no skin weights",
+        "primitive 7 has no UV0/TEXCOORD_0",
+        "primitive 7 has no skin weights",
+        "too few vertices are weighted to multiple joints: 0/3548 (minimum 36)",
+        "model has no embedded/external image texture",
+        "manifest assetStatus is not production-reviewed",
+        "Khronos glTF Validator errors: 4"
+      ],
+      "warnings": [],
+      "passed": false,
+      "khronos": {
+        "file": "C:\\Users\\2016k\\.codex\\worktrees\\4c4a\\繧｢繝励Μ髢狗匱竭ｰ_闍ｱ莨夊ｩｱ\\lumi-island\\public\\assets\\characters\\models\\kai.glb",
+        "errors": 4,
+        "warnings": 1,
+        "infos": 0,
+        "hints": 0,
+        "messages": [
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/6/children"
+          },
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/8/children"
+          },
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/10/children"
+          },
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/12/children"
+          },
+          {
+            "code": "NODE_SKINNED_MESH_NON_ROOT",
+            "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+            "severity": 1,
+            "pointer": "/nodes/13"
+          }
+        ]
+      }
+    },
+    {
+      "file": "sera.glb",
+      "assetStatus": "integration-placeholder",
+      "bytes": 207668,
+      "meshes": 4,
+      "primitives": 7,
+      "triangles": 5031,
+      "materials": 6,
+      "images": 0,
+      "textures": 0,
+      "joints": 12,
+      "animations": 9,
+      "multiJointVertices": 0,
+      "errors": [
+        "primitive 1 has no UV0/TEXCOORD_0",
+        "primitive 2 has no UV0/TEXCOORD_0",
+        "primitive 3 has no UV0/TEXCOORD_0",
+        "primitive 4 has no UV0/TEXCOORD_0",
+        "primitive 5 has no UV0/TEXCOORD_0",
+        "primitive 5 has no skin weights",
+        "primitive 6 has no UV0/TEXCOORD_0",
+        "primitive 6 has no skin weights",
+        "primitive 7 has no UV0/TEXCOORD_0",
+        "primitive 7 has no skin weights",
+        "too few vertices are weighted to multiple joints: 0/2646 (minimum 27)",
+        "model has no embedded/external image texture",
+        "manifest assetStatus is not production-reviewed",
+        "Khronos glTF Validator errors: 4"
+      ],
+      "warnings": [],
+      "passed": false,
+      "khronos": {
+        "file": "C:\\Users\\2016k\\.codex\\worktrees\\4c4a\\繧｢繝励Μ髢狗匱竭ｰ_闍ｱ莨夊ｩｱ\\lumi-island\\public\\assets\\characters\\models\\sera.glb",
+        "errors": 4,
+        "warnings": 1,
+        "infos": 0,
+        "hints": 0,
+        "messages": [
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/6/children"
+          },
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/8/children"
+          },
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/10/children"
+          },
+          {
+            "code": "EMPTY_ENTITY",
+            "message": "Entity cannot be empty.",
+            "severity": 0,
+            "pointer": "/nodes/12/children"
+          },
+          {
+            "code": "NODE_SKINNED_MESH_NON_ROOT",
+            "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+            "severity": 1,
+            "pointer": "/nodes/13"
+          }
+        ]
+      }
+    }
+  ]
+}

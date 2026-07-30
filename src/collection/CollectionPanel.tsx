@@ -4,6 +4,7 @@ import {
   COLLECTION_ENTRIES,
   type CollectionCategory,
 } from "@/src/collection/CollectionData";
+import { CollectionThumbnail } from "@/src/collection/CollectionThumbnail";
 import {
   collectionCategoryCompletion,
   collectionCompletion,
@@ -68,9 +69,7 @@ export function CollectionPanel({
               className={found ? "is-found" : "is-missing"}
               data-testid={`collection-entry-${entry.id}`}
             >
-              <div className="collection-symbol" aria-hidden="true">
-                {found ? entry.symbol : "?"}
-              </div>
+              <CollectionThumbnail entry={entry} found={found} />
               <div>
                 <h3>
                   {found ? (

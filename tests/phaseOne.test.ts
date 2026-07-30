@@ -251,6 +251,6 @@ describe("pause and request regression", () => {
     ).state;
 
     expect(Object.values(state.quests).every((quest) => quest.status === "complete")).toBe(true);
-    expect(state.islandLevel).toBe(6);
+    expect(state.islandLevel).toBe(3);
   });
 });

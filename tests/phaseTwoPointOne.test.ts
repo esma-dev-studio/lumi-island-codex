@@ -51,7 +51,7 @@ describe("Phase 2.1 event tutorial", () => {
 
   it("ignores an event that does not match the current step", () => {
     const progress = createTutorialProgress();
-    expect(applyTutorialEvent(progress, { type: "craft" })).toBe(progress);
+    expect(applyTutorialEvent(progress, { type: "craft", item: "twig-stool" })).toBe(progress);
   });
 });
 
@@ -140,7 +140,7 @@ describe("collection, animation ordering, and save migration", () => {
   it("restores old discovery arrays into collection counts", () => {
     expect(
       migrateCollectionCounts(undefined, ["shell-しましま貝"], ["moon-carp"]),
-    ).toEqual({ "shell-しましま貝": 1, "moon-carp": 1 });
+    ).toEqual({ "shell-striped": 1, "moon-carp": 1 });
   });
 
   it("maps activity results to real character actions before settlement", () => {
@@ -179,6 +179,6 @@ describe("collection, animation ordering, and save migration", () => {
     expect(migrated.lumen).toBe(432);
     expect(migrated.tutorialProgress.step).toBe(5);
     expect(migrated.collectionCounts["lumi-minnow"]).toBe(1);
-    expect(migrated.resourceStates["tree-1"].state).toBe("depleted");
+    expect(migrated.resourceStates["wood-cedar-02"].state).toBe("depleted");
   });
 });

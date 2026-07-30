@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./phase21.css";
 @import "./phase21-panels.css";
+@import "./phase22-input.css";
 
 :root {
   --ink: #243c3c;

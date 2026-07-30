@@ -44,13 +44,13 @@ function monitorErrors(page: Page) {
 
 async function openMenu(page: Page) {
   await page.getByRole("button", { name: "メニュー" }).click();
-  await expect(page.getByRole("heading", { name: "ひと休み" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "メニュー" })).toBeVisible();
 }
 
 async function interactWithNearbyTarget(page: Page) {
-  const action = page.locator(".touch-action");
-  await expect(action).toBeVisible();
-  await action.click();
+  const canvas = page.locator("canvas.game-canvas");
+  await canvas.click();
+  await page.keyboard.press("KeyE");
 }
 
 test.describe.serial("Lumi Island Phase 2.1", () => {
@@ -72,7 +72,7 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
     await page.getByRole("button", { name: /あたらしく始める/ }).click();
     await expect(page.locator("canvas.game-canvas")).toBeVisible();
     const tutorial = page.getByTestId("tutorial-coach");
-    await expect(tutorial).toContainText("3m");
+    await expect(tutorial).toContainText("矢印で すこし歩こう");
     await page.screenshot({
       path: "screenshots/phase2-1-tutorial-walk.png",
       fullPage: true,
@@ -85,7 +85,7 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
     await page.waitForTimeout(6_000);
     await page.keyboard.up("ArrowDown");
     await page.keyboard.up("Shift");
-    await expect(tutorial).toContainText("光っている");
+    await expect(tutorial).toContainText("金色に光る");
     await page.screenshot({
       path: "screenshots/phase2-1-tutorial-gather.png",
       fullPage: true,
@@ -96,10 +96,13 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
       fullPage: true,
     });
     await openMenu(page);
-    const pausedClock = await page.locator(".day-clock strong").textContent();
+    const canvasClock = page.locator("canvas.game-canvas");
+    await expect(canvasClock).toHaveAttribute("data-debug-paused", "true");
+    const pausedTime = await canvasClock.getAttribute("data-debug-game-elapsed-time");
     await page.waitForTimeout(1_300);
-    await expect(page.locator(".day-clock strong")).toHaveText(
-      pausedClock ?? "",
+    await expect(canvasClock).toHaveAttribute(
+      "data-debug-game-elapsed-time",
+      pausedTime ?? "",
     );
 
     await page
@@ -137,7 +140,7 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
       tutorialProgress: { step: 2, walkedDistance: 3.2 },
     });
 
-    await expect(page.locator(".touch-action")).toContainText("えだを集める");
+    await expect(page.locator(".interaction-hint")).toContainText("えだを集める");
     await page.screenshot({
       path: "screenshots/phase2-1-wood-before.png",
       fullPage: true,
@@ -158,7 +161,7 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
     await expect(page.getByRole("status")).toContainText("木のえだ");
     await page.waitForTimeout(900);
     await expect(page.getByTestId("activity-wood")).toHaveCount(0);
-    await expect(page.locator(".touch-action")).toHaveCount(0);
+    await expect(page.locator(".interaction-hint")).toHaveCount(0);
     await expect(page.locator("canvas.game-canvas")).toBeVisible();
     await page.screenshot({
       path: "screenshots/phase2-1-wood-after.png",
@@ -171,9 +174,9 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
       const raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : null;
     }, SAVE_KEY);
-    expect(saved.resourceStates["cedar-tree-1"].state).toBe("depleted");
+    expect(saved.resourceStates["wood-cedar-02"].state).toBe("depleted");
     expect(
-      saved.resourceStates["cedar-tree-1"].recoverAt - saved.playSeconds,
+      saved.resourceStates["wood-cedar-02"].recoverAt - saved.playSeconds,
     ).toBeGreaterThan(100);
     expect(saved.inventory.wood).toBeGreaterThanOrEqual(1);
 
@@ -183,9 +186,9 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
     await page.waitForTimeout(650);
     await expect(page.locator("canvas.game-canvas")).not.toHaveAttribute(
       "data-debug-available-resources",
-      /cedar-tree-1/,
+      /wood-cedar-02/,
     );
-    await expect(page.locator(".touch-action")).toHaveCount(0);
+    await expect(page.locator(".interaction-hint")).toHaveCount(0);
     expect(errors).toEqual([]);
   });
 
@@ -228,11 +231,12 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
     await expect(page.getByRole("status")).toBeVisible();
     await page.waitForTimeout(800);
 
-    await page.getByRole("button", { name: "ずかん" }).click();
+    await page.getByRole("button", { name: "ずかんを見る" }).click();
     const collection = page.getByTestId("collection-panel");
     await expect(collection).toBeVisible();
     await expect(collection).toContainText(discoveryName.trim());
     await expect(collection).toContainText("%");
+    await expect(collection.locator(".collection-thumbnail").first()).toBeVisible();
     await page.screenshot({
       path: "screenshots/phase2-1-collection.png",
       fullPage: true,
@@ -278,8 +282,7 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
       (await fishing.locator(".discovery-copy h3").textContent()) ?? "";
     await page.getByRole("button", { name: "つづける" }).click();
     await expect(page.getByRole("status")).toBeVisible();
-    await page.waitForTimeout(1_200);
-    await page.getByRole("button", { name: "ずかん" }).click();
+    await page.getByRole("button", { name: "ずかんを見る" }).click();
     await expect(page.getByTestId("collection-panel")).toContainText(
       fishName.trim(),
     );

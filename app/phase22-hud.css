@@ -1,0 +1,264 @@
+.game-topbar {
+  grid-template-columns: 1fr auto;
+}
+
+.top-resources {
+  grid-column: 2;
+}
+
+.guide-rail {
+  display: none !important;
+}
+
+.quest-ribbon p,
+.quest-ribbon small,
+.tutorial-coach button,
+.menu-list span,
+.menu-status small {
+  font-size: 14px;
+}
+
+.quest-ribbon h2,
+.tutorial-coach h2 {
+  font-size: max(18px, 1.125rem);
+}
+
+.menu-button,
+.game-tools button,
+.tutorial-coach button,
+.resident-dialog button {
+  min-height: 44px;
+  font-size: 16px;
+}
+
+.touch-controls {
+  display: none;
+}
+
+.tutorial-coach {
+  grid-template-columns: auto minmax(12rem, 1fr) auto auto;
+}
+
+.tutorial-coach__goal > span {
+  color: #8a6a3a;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.tutorial-coach__actions {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.tutorial-coach__actions button,
+.tutorial-quit-confirm button {
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  border-radius: 0.65rem;
+  color: #355b52;
+  background: #e8f1e8;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.tutorial-coach__actions .tutorial-quit-link {
+  min-height: 32px;
+  color: #766b58;
+  background: transparent;
+  font-size: 14px;
+}
+
+.tutorial-quit-confirm {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.tutorial-quit-confirm strong {
+  grid-column: 1 / -1;
+  font-size: 14px;
+}
+
+.menu-status {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.menu-status > span {
+  display: grid;
+  min-height: 68px;
+  place-items: center;
+  padding: 0.5rem;
+  border: 1px solid #d8ddcd;
+  border-radius: 0.9rem;
+  background: #f0f2e9;
+}
+
+.menu-status small,
+.menu-status strong {
+  display: block;
+}
+
+.menu-status strong {
+  color: #315f56;
+  font-size: 20px;
+}
+
+.game-screen.is-easy .tutorial-coach {
+  border-width: 3px;
+}
+
+.game-screen.is-easy .tutorial-coach h2 {
+  font-size: max(20px, 1.25rem);
+}
+
+.game-screen.is-easy .game-tools button,
+.game-screen.is-easy .interaction-hint {
+  min-height: 52px;
+}
+
+.game-screen.is-easy .resident-dialog {
+  font-size: 18px;
+}
+
+@media (pointer: coarse), (hover: none) {
+  .touch-controls {
+    display: flex;
+  }
+}
+
+@media (max-width: 720px) {
+  .tutorial-coach {
+    top: 5rem;
+    grid-template-columns: auto 1fr;
+  }
+
+  .tutorial-coach kbd {
+    display: none;
+  }
+
+  .tutorial-coach__actions,
+  .tutorial-quit-confirm {
+    grid-column: 1 / -1;
+  }
+}
+.collection-thumbnail {
+  width: 64px;
+  height: 64px;
+  overflow: visible;
+  border-radius: 18px;
+  filter: drop-shadow(0 5px 8px rgba(30, 64, 58, 0.16));
+}
+
+.collection-thumbnail__back {
+  fill: #e7eee3;
+  stroke: rgba(49, 95, 86, 0.2);
+  stroke-width: 1.5;
+}
+
+.collection-thumbnail__primary {
+  fill: var(--collection-primary);
+}
+
+.collection-thumbnail__secondary {
+  fill: var(--collection-secondary);
+}
+
+.collection-thumbnail.is-silhouette > :not(.collection-thumbnail__back) {
+  fill: #75827b !important;
+  stroke: #75827b !important;
+  opacity: 0.42 !important;
+}
+
+.collection-thumbnail.is-silhouette .collection-thumbnail__back {
+  fill: #dfe4dc;
+}
+
+.collection-grid article {
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+}
+
+.toast button {
+  min-height: 36px;
+  margin-left: 0.75rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 0.6rem;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.progression-card,
+.lumen-shop {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid rgba(66, 93, 76, 0.2);
+  border-radius: 18px;
+  background: rgba(247, 241, 220, 0.72);
+}
+
+.progression-card > div:first-child {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.progression-card small,
+.progression-card span,
+.lumen-shop span {
+  color: #53675a;
+  font-size: 0.9rem;
+}
+
+.friendship-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.friendship-row span {
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #315244;
+}
+
+.lumen-shop {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.lumen-shop h3 {
+  grid-column: 1 / -1;
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+
+.lumen-shop button {
+  display: grid;
+  gap: 0.25rem;
+  min-height: 72px;
+  padding: 0.7rem;
+  border: 1px solid rgba(66, 93, 76, 0.2);
+  border-radius: 14px;
+  background: #fffdf5;
+  text-align: left;
+}
+
+.lumen-shop button:disabled,
+.recipe-list .is-locked {
+  opacity: 0.55;
+}
+
+@media (max-width: 720px) {
+  .lumen-shop {
+    grid-template-columns: 1fr;
+  }
+}

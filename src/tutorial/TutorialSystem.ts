@@ -1,5 +1,8 @@
 import {
+  TUTORIAL_FURNITURE_ID,
+  TUTORIAL_RESIDENT_ID,
   TUTORIAL_STEPS,
+  TUTORIAL_TREE_SOURCE_ID,
   type TutorialEvent,
 } from "@/src/tutorial/TutorialSteps";
 import type { GameState } from "@/src/game/types";
@@ -11,6 +14,22 @@ export interface TutorialProgress {
 
 export function createTutorialProgress(step = 0): TutorialProgress {
   return { step, walkedDistance: 0 };
+}
+
+function matchesTutorialTarget(event: TutorialEvent): boolean {
+  if (event.type === "hint") {
+    return event.sourceId === TUTORIAL_TREE_SOURCE_ID && event.item === "wood";
+  }
+  if (event.type === "gather") {
+    return event.sourceId === TUTORIAL_TREE_SOURCE_ID && event.item === "wood";
+  }
+  if (event.type === "craft" || event.type === "place") {
+    return event.item === TUTORIAL_FURNITURE_ID;
+  }
+  if (event.type === "talk") {
+    return event.resident === TUTORIAL_RESIDENT_ID;
+  }
+  return true;
 }
 
 export function applyTutorialEvent(
@@ -25,7 +44,7 @@ export function applyTutorialEvent(
       ? { step: progress.step + 1, walkedDistance }
       : { ...progress, walkedDistance };
   }
-  if (active.id === event.type) {
+  if (active.id === event.type && matchesTutorialTarget(event)) {
     return { ...progress, step: progress.step + 1 };
   }
   return progress;

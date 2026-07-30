@@ -1,5 +1,6 @@
 import {
   COLLECTION_ENTRIES,
+  stableCollectionId,
   type CollectionCategory,
 } from "@/src/collection/CollectionData";
 import type { ActivityResult } from "@/src/activities/ActivityResult";
@@ -36,12 +37,14 @@ export function migrateCollectionCounts(
   if (value && typeof value === "object") {
     Object.entries(value).forEach(([id, amount]) => {
       if (typeof amount === "number" && amount > 0) {
-        counts[id] = Math.floor(amount);
+        const stableId = stableCollectionId(id);
+        counts[stableId] = (counts[stableId] ?? 0) + Math.floor(amount);
       }
     });
   }
   [...discoveredItems, ...caughtFish].forEach((id) => {
-    counts[id] = Math.max(1, counts[id] ?? 0);
+    const stableId = stableCollectionId(id);
+    counts[stableId] = Math.max(1, counts[stableId] ?? 0);
 
   });
   return counts;
@@ -62,4 +65,18 @@ export function collectionCategoryCompletion(
     total,
     percent: total ? Math.round((found / total) * 100) : 0,
   };
+}
+export function migrateCollectionIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter((id): id is string => typeof id === "string").map(stableCollectionId))];
+}
+
+export function crossedCollectionMilestone(
+  beforePercent: number,
+  afterPercent: number,
+): 25 | 50 | 75 | null {
+  const thresholds = [75, 50, 25] as const;
+  return thresholds.find(
+    (threshold) => beforePercent < threshold && afterPercent >= threshold,
+  ) ?? null;
 }

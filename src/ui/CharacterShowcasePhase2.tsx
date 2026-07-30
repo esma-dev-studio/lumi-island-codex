@@ -12,7 +12,7 @@ import {
   type ShowcaseController,
   type ShowcaseTime,
   type ShowcaseView,
-} from "@/src/scenes/LumiScenes";
+} from "@/src/scenes/ShowcaseScene";
 
 const ANIMATIONS: { id: AnimationName; label: string }[] = [
   { id: "idle", label: "待つ" },
