@@ -6,7 +6,10 @@ import {
   Skeleton,
   TransformNode,
 } from "@babylonjs/core";
-import "@babylonjs/loaders/glTF";
+// Register only the glTF 2.0 loader used by our original character assets.
+// Importing the package-wide barrel also bundles glTF 1.0 and every optional
+// extension into the server worker, which is unnecessary for these plain GLBs.
+import "@babylonjs/loaders/glTF/2.0/glTFLoader";
 import type { CharacterConfig } from "@/src/characters/CharacterConfig";
 
 export interface LoadedCharacterAsset {
