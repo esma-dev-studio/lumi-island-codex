@@ -16,6 +16,20 @@ import {
 } from "@babylonjs/core";
 import { createCharacter } from "@/src/characters/CharacterFactory";
 import { CHARACTERS, ITEMS } from "@/src/data/gameData";
+import { cameraRelativeMovement } from "@/src/world/CameraRelativeMovement";
+import {
+  resolveWorldMovement,
+  STATIC_WORLD_COLLIDERS,
+  type WorldCollider,
+} from "@/src/world/CollisionWorld";
+import {
+  rotatedFootprint,
+  validateFurniturePlacement,
+} from "@/src/placement/PlacementValidator";
+import type {
+  PlacementMode,
+  PlacementPreview,
+} from "@/src/placement/PlacementController";
 import type {
   AnimationName,
   PlacedFurniture,
@@ -31,6 +45,11 @@ export interface IslandSceneCallbacks {
   onHint: (hint: InteractionHint | null) => void;
   onGather: (item: ResourceId) => void;
   onTalk: (resident: "ノラ" | "カイ" | "セラ") => void;
+  onEditFurniture: (id: string) => void;
+  onPlacementPreview: (preview: PlacementPreview | null) => void;
+  onPlacementConfirm: (preview: PlacementPreview) => void;
+  onPlacementRotate: () => void;
+  onPlacementRemove: (id: string) => void;
   onPlayerMove: (position: { x: number; z: number }) => void;
   onFps: (fps: number) => void;
 }
@@ -40,14 +59,17 @@ export interface IslandController {
   setPaused: (paused: boolean) => void;
   setDayMinute: (minute: number) => void;
   syncFurniture: (placed: PlacedFurniture[]) => void;
+  setPlacementMode: (mode: PlacementMode | null) => void;
+  resetCamera: () => void;
   dispose: () => void;
 }
 
 interface Interactable {
   node: TransformNode;
-  kind: "resource" | "resident";
+  kind: "resource" | "resident" | "furniture";
   item?: ResourceId;
   resident?: "ノラ" | "カイ" | "セラ";
+  furnitureId?: string;
   label: string;
   radius: number;
   available: boolean;
@@ -658,10 +680,16 @@ export function createIslandScene(
   };
 
   createIslandBase(scene);
-  createHouse(scene, new Vector3(0, 0.42, 8.7), 0, mats.cream, mats.wood, mats.roof, "mira");
-  createHouse(scene, new Vector3(-10.5, 0.42, 5.4), 0.55, mats.cream, mats.wood, mats.roof, "nolla");
-  createHouse(scene, new Vector3(10.5, 0.42, 3.9), -0.55, mats.cream, mats.wood, mats.roof, "kai");
-  createHouse(scene, new Vector3(5.8, 0.42, -7.8), 2.55, mats.cream, mats.wood, mats.roof, "sera");
+  const occluderNodes: TransformNode[] = [
+    createHouse(scene, new Vector3(0, 0.42, 8.7), 0, mats.cream, mats.wood, mats.roof, "mira"),
+    createHouse(scene, new Vector3(-10.5, 0.42, 5.4), 0.55, mats.cream, mats.wood, mats.roof, "nolla"),
+    createHouse(scene, new Vector3(10.5, 0.42, 3.9), -0.55, mats.cream, mats.wood, mats.roof, "kai"),
+    createHouse(scene, new Vector3(5.8, 0.42, -7.8), 2.55, mats.cream, mats.wood, mats.roof, "sera"),
+  ];
+  const ghostValid = makeMaterial(scene, "placement-valid", "#65b875", "#173c25");
+  const ghostInvalid = makeMaterial(scene, "placement-invalid", "#d65d51", "#501511");
+  ghostValid.alpha = 0.58;
+  ghostInvalid.alpha = 0.62;
 
   const treePositions = [
     [-13, -4],
@@ -708,6 +736,7 @@ export function createIslandScene(
   const interactables: Interactable[] = [];
   treePositions.forEach(([x, z], index) => {
     const node = createTree(scene, new Vector3(x, 0.42, z), mats, index);
+    occluderNodes.push(node);
     interactables.push({
       node,
       kind: "resource",
@@ -820,6 +849,7 @@ export function createIslandScene(
     new Vector3(startPosition.x, 0.44, startPosition.z),
     0.78,
   );
+  player.root.rotation.y = Math.PI;
   player.root.getChildMeshes().forEach((mesh) => shadows.addShadowCaster(mesh));
 
   const npcData = [
@@ -862,17 +892,74 @@ export function createIslandScene(
   let footstepTimer = 0;
   const velocity = new Vector3();
   const furnitureMeshes = new Map<string, TransformNode>();
+  const furnitureTargets = new Map<string, Interactable>();
+  let currentFurniture = [...initialFurniture];
+  let placementMode: PlacementMode | null = null;
+  let placementPreview: PlacementPreview | null = null;
+  let placementGhost: TransformNode | null = null;
+
+  const resetCamera = () => {
+    camera.alpha = -Math.PI / 4;
+    camera.beta = 0.95;
+    camera.radius = 20;
+  };
+
+  const clearPlacementGhost = () => {
+    placementGhost?.dispose(false, true);
+    placementGhost = null;
+    placementPreview = null;
+    callbacks.onPlacementPreview(null);
+    furnitureMeshes.forEach((node) => node.setEnabled(true));
+  };
+
+  const setPlacementMode = (mode: PlacementMode | null) => {
+    clearPlacementGhost();
+    placementMode = mode;
+    if (!mode) return;
+    const ghostPlaced: PlacedFurniture = {
+      id: "placement-preview",
+      type: mode.type,
+      position: { x: player.root.position.x, z: player.root.position.z },
+      rotation: mode.rotation,
+    };
+    placementGhost = createFurnitureMesh(scene, ghostPlaced, mats);
+    placementGhost.getChildMeshes().forEach((mesh) => {
+      mesh.material = ghostInvalid;
+      mesh.isPickable = false;
+    });
+    if (mode.editingId) {
+      furnitureMeshes.get(mode.editingId)?.setEnabled(false);
+    }
+  };
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.code === "Space") event.preventDefault();
+    if (event.code === "Home") {
+      resetCamera();
+      return;
+    }
+    if (placementMode && event.code === "KeyR") {
+      callbacks.onPlacementRotate();
+      return;
+    }
+    if (placementMode && event.code === "KeyX" && placementMode.editingId) {
+      callbacks.onPlacementRemove(placementMode.editingId);
+      return;
+    }
     keys.add(event.code);
     if ((event.code === "KeyE" || event.code === "Space") && !paused) {
-      interact();
+      if (placementMode && placementPreview?.valid) {
+        callbacks.onPlacementConfirm(placementPreview);
+      } else if (!placementMode) {
+        interact();
+      }
     }
   };
   const onKeyUp = (event: KeyboardEvent) => keys.delete(event.code);
+  const onBlur = () => keys.clear();
   window.addEventListener("keydown", onKeyDown);
   window.addEventListener("keyup", onKeyUp);
+  window.addEventListener("blur", onBlur);
 
   const burst = (position: Vector3, color: string) => {
     const mat = makeMaterial(scene, `burst-${performance.now()}`, color, color);
@@ -915,6 +1002,10 @@ export function createIslandScene(
 
   const interact = () => {
     if (!closest || !closest.available) return;
+    if (closest.kind === "furniture" && closest.furnitureId) {
+      callbacks.onEditFurniture(closest.furnitureId);
+      return;
+    }
     if (closest.kind === "resident" && closest.resident) {
       callbacks.onTalk(closest.resident);
       const npc = npcs.find((entry) => entry.resident === closest?.resident);
@@ -933,17 +1024,33 @@ export function createIslandScene(
   };
 
   const syncFurniture = (placed: PlacedFurniture[]) => {
+    currentFurniture = [...placed];
     const desired = new Set(placed.map((item) => item.id));
     furnitureMeshes.forEach((node, id) => {
       if (!desired.has(id)) {
         node.dispose(false, true);
         furnitureMeshes.delete(id);
+        furnitureTargets.delete(id);
       }
     });
     placed.forEach((item) => {
-      if (!furnitureMeshes.has(item.id)) {
-        furnitureMeshes.set(item.id, createFurnitureMesh(scene, item, mats));
+      let node = furnitureMeshes.get(item.id);
+      if (!node) {
+        node = createFurnitureMesh(scene, item, mats);
+        furnitureMeshes.set(item.id, node);
+        furnitureTargets.set(item.id, {
+          node,
+          kind: "furniture",
+          furnitureId: item.id,
+          label: ITEMS[item.type].name,
+          radius: 2.25,
+          available: true,
+          respawnAt: 0,
+        });
       }
+      node.position.set(item.position.x, 0.45, item.position.z);
+      node.rotation.y = item.rotation;
+      node.setEnabled(placementMode?.editingId !== item.id);
     });
   };
   syncFurniture(initialFurniture);
@@ -963,10 +1070,16 @@ export function createIslandScene(
     const horizontal =
       (keys.has("KeyD") || keys.has("ArrowRight") ? 1 : 0) -
       (keys.has("KeyA") || keys.has("ArrowLeft") ? 1 : 0);
-    const vertical =
-      (keys.has("KeyS") || keys.has("ArrowDown") ? 1 : 0) -
-      (keys.has("KeyW") || keys.has("ArrowUp") ? 1 : 0);
-    const input = new Vector3(horizontal, 0, vertical);
+    const forwardAmount =
+      (keys.has("KeyW") || keys.has("ArrowUp") ? 1 : 0) -
+      (keys.has("KeyS") || keys.has("ArrowDown") ? 1 : 0);
+    const cameraForward = camera.target.subtract(camera.position);
+    cameraForward.y = 0;
+    const movement = cameraRelativeMovement(horizontal, forwardAmount, {
+      x: cameraForward.x,
+      z: cameraForward.z,
+    });
+    const input = new Vector3(movement.x, 0, movement.z);
     const running = keys.has("ShiftLeft") || keys.has("ShiftRight");
     const targetSpeed = running ? 6.2 : 3.8;
     if (input.lengthSquared() > 0) {
@@ -988,15 +1101,53 @@ export function createIslandScene(
       player.setAnimation("idle", elapsed);
     }
 
-    player.root.position.addInPlace(velocity.scale(delta));
-    const normalized =
-      (player.root.position.x * player.root.position.x) / (18.1 * 18.1) +
-      (player.root.position.z * player.root.position.z) / (13.2 * 13.2);
-    if (normalized > 1) {
-      const correction = 1 / Math.sqrt(normalized);
-      player.root.position.x *= correction;
-      player.root.position.z *= correction;
-      velocity.scaleInPlace(0.2);
+    const currentPosition = {
+      x: player.root.position.x,
+      z: player.root.position.z,
+    };
+    const desiredPosition = {
+      x: currentPosition.x + velocity.x * delta,
+      z: currentPosition.z + velocity.z * delta,
+    };
+    const dynamicColliders: WorldCollider[] = [
+      ...STATIC_WORLD_COLLIDERS,
+      ...npcs.map((npc, index) => ({
+        kind: "circle" as const,
+        id: `npc-${index}`,
+        x: npc.rig.root.position.x,
+        z: npc.rig.root.position.z,
+        radius: 0.52,
+      })),
+      ...currentFurniture
+        .filter((item) => item.id !== placementMode?.editingId)
+        .map((item) => {
+          const footprint = rotatedFootprint(item.type, item.rotation);
+          return {
+            kind: "box" as const,
+            id: `furniture-${item.id}`,
+            x: item.position.x,
+            z: item.position.z,
+            halfWidth: footprint.halfWidth,
+            halfDepth: footprint.halfDepth,
+            rotation: item.rotation,
+          };
+        }),
+    ];
+    const resolvedPosition = resolveWorldMovement(
+      currentPosition,
+      desiredPosition,
+      0.48,
+      dynamicColliders,
+    );
+    player.root.position.x = resolvedPosition.x;
+    player.root.position.z = resolvedPosition.z;
+    if (
+      Math.hypot(
+        resolvedPosition.x - desiredPosition.x,
+        resolvedPosition.z - desiredPosition.z,
+      ) > 0.04
+    ) {
+      velocity.scaleInPlace(0.35);
     }
     player.root.position.y = 0.44;
 
@@ -1006,10 +1157,109 @@ export function createIslandScene(
       Math.min(1, delta * 5),
     );
 
+    const cameraX = camera.position.x;
+    const cameraZ = camera.position.z;
+    const playerX = player.root.position.x;
+    const playerZ = player.root.position.z;
+    const segmentX = playerX - cameraX;
+    const segmentZ = playerZ - cameraZ;
+    const segmentLengthSquared = segmentX * segmentX + segmentZ * segmentZ;
+    occluderNodes.forEach((node) => {
+      const nodePosition = node.getAbsolutePosition();
+      const projection =
+        segmentLengthSquared > 0.0001
+          ? ((nodePosition.x - cameraX) * segmentX +
+              (nodePosition.z - cameraZ) * segmentZ) /
+            segmentLengthSquared
+          : 0;
+      const closestX = cameraX + segmentX * projection;
+      const closestZ = cameraZ + segmentZ * projection;
+      const distanceToViewLine = Math.hypot(
+        nodePosition.x - closestX,
+        nodePosition.z - closestZ,
+      );
+      const shouldFade =
+        projection > 0.08 &&
+        projection < 0.92 &&
+        distanceToViewLine < 1.45 &&
+        Math.hypot(nodePosition.x - playerX, nodePosition.z - playerZ) > 1.2;
+      const targetVisibility = shouldFade ? 0.28 : 1;
+      node.getChildMeshes().forEach((mesh) => {
+        mesh.visibility +=
+          (targetVisibility - mesh.visibility) * Math.min(1, delta * 8);
+      });
+    });
+
+    if (placementMode && placementGhost) {
+      const footprint = rotatedFootprint(
+        placementMode.type,
+        placementMode.rotation,
+      );
+      const previewDistance =
+        Math.hypot(footprint.halfWidth, footprint.halfDepth) + 1.15;
+      const previewPosition = {
+        x:
+          Math.round(
+            (player.root.position.x +
+              Math.sin(player.root.rotation.y) * previewDistance) *
+              4,
+          ) / 4,
+        z:
+          Math.round(
+            (player.root.position.z +
+              Math.cos(player.root.rotation.y) * previewDistance) *
+              4,
+          ) / 4,
+      };
+      const validation = validateFurniturePlacement(
+        {
+          type: placementMode.type,
+          position: previewPosition,
+          rotation: placementMode.rotation,
+          editingId: placementMode.editingId,
+        },
+        {
+          placedFurniture: currentFurniture,
+          playerPosition: {
+            x: player.root.position.x,
+            z: player.root.position.z,
+          },
+          npcPositions: npcs.map((npc) => ({
+            x: npc.rig.root.position.x,
+            z: npc.rig.root.position.z,
+          })),
+        },
+      );
+      const nextPreview: PlacementPreview = {
+        ...validation,
+        position: previewPosition,
+        rotation: placementMode.rotation,
+      };
+      placementGhost.position.set(previewPosition.x, 0.45, previewPosition.z);
+      placementGhost.rotation.y = placementMode.rotation;
+      placementGhost.getChildMeshes().forEach((mesh) => {
+        mesh.material = validation.valid ? ghostValid : ghostInvalid;
+      });
+      if (
+        !placementPreview ||
+        placementPreview.position.x !== nextPreview.position.x ||
+        placementPreview.position.z !== nextPreview.position.z ||
+        placementPreview.rotation !== nextPreview.rotation ||
+        placementPreview.valid !== nextPreview.valid ||
+        placementPreview.reason !== nextPreview.reason
+      ) {
+        placementPreview = nextPreview;
+        callbacks.onPlacementPreview(nextPreview);
+      }
+    }
+
     let nextClosest: Interactable | null = null;
     let closestDistance = Number.POSITIVE_INFINITY;
     const now = performance.now();
-    for (const target of interactables) {
+    const nearbyTargets = placementMode
+      ? []
+      : [...interactables, ...furnitureTargets.values()];
+    for (const target of nearbyTargets) {
       if (!target.available && target.respawnAt && now >= target.respawnAt) {
         target.available = true;
         target.respawnAt = 0;
@@ -1031,7 +1281,12 @@ export function createIslandScene(
         closest
           ? {
               label: closest.label,
-              action: closest.kind === "resident" ? "はなす" : "あつめる",
+              action:
+                closest.kind === "resident"
+                  ? "はなす"
+                  : closest.kind === "furniture"
+                    ? "ならべかえる"
+                    : "あつめる",
             }
           : null,
       );
@@ -1105,9 +1360,13 @@ export function createIslandScene(
     },
     setDayMinute,
     syncFurniture,
+    setPlacementMode,
+    resetCamera,
     dispose: () => {
+      placementGhost?.dispose(false, true);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
       window.removeEventListener("resize", resize);
       scene.dispose();
       engine.dispose();

@@ -1653,6 +1653,125 @@ kbd {
   color: #f5edda;
 }
 
+.camera-reset-button {
+  border: 1px solid rgba(242, 234, 216, 0.35);
+  padding: 0.7rem 0.85rem;
+  background: rgba(242, 234, 216, 0.88);
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 900;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+
+.camera-reset-button:hover,
+.camera-reset-button:focus-visible {
+  background: #fff8e8;
+}
+
+.placement-hud {
+  position: absolute;
+  z-index: 15;
+  bottom: 6.6rem;
+  left: 50%;
+  display: grid;
+  width: min(760px, calc(100vw - 3rem));
+  padding: 1rem 1.1rem;
+  border: 3px solid #c6554b;
+  transform: translateX(-50%);
+  background: rgba(245, 237, 218, 0.96);
+  box-shadow: 0 20px 55px rgba(17, 42, 40, 0.34);
+  grid-template-columns: minmax(170px, 1fr) auto;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  backdrop-filter: blur(14px);
+}
+
+.placement-hud.is-valid {
+  border-color: #3f8953;
+}
+
+.placement-hud p,
+.placement-hud h2 {
+  margin: 0;
+}
+
+.placement-hud p {
+  color: var(--cedar);
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.placement-hud h2 {
+  margin-top: 0.15rem;
+  font-family: Georgia, "Yu Mincho", serif;
+  font-size: 1.45rem;
+}
+
+.placement-hud strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: #9e3f38;
+  font-size: 1rem;
+}
+
+.placement-hud.is-valid strong {
+  color: #2f7744;
+}
+
+.placement-hud > small {
+  grid-column: 1 / -1;
+  color: rgba(36, 60, 60, 0.72);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.placement-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.placement-actions button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 46px;
+  padding: 0.55rem 0.72rem;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.placement-actions button:hover:not(:disabled),
+.placement-actions button:focus-visible:not(:disabled) {
+  background: rgba(53, 91, 69, 0.1);
+}
+
+.placement-actions .placement-confirm {
+  border-color: var(--forest);
+  background: var(--forest);
+  color: #f5edda;
+}
+
+.placement-actions .placement-remove {
+  border-color: #9a493f;
+  color: #8b3f37;
+}
+
+.placement-actions button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.placement-actions kbd {
+  margin-right: 0.4rem;
+  font-size: 0.78rem;
+}
+
 @media (max-width: 900px) {
   .title-screen {
     background:

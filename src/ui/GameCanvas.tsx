@@ -7,13 +7,24 @@ import {
   type IslandController,
 } from "@/src/scenes/LumiScenes";
 import type { GameState, ResourceId } from "@/src/game/types";
+import type {
+  PlacementMode,
+  PlacementPreview,
+} from "@/src/placement/PlacementController";
 
 interface GameCanvasProps {
   state: GameState;
   paused: boolean;
+  placementMode: PlacementMode | null;
+  cameraResetToken: number;
   onHint: (hint: InteractionHint | null) => void;
   onGather: (item: ResourceId) => void;
   onTalk: (resident: "ノラ" | "カイ" | "セラ") => void;
+  onEditFurniture: (id: string) => void;
+  onPlacementPreview: (preview: PlacementPreview | null) => void;
+  onPlacementConfirm: (preview: PlacementPreview) => void;
+  onPlacementRotate: () => void;
+  onPlacementRemove: (id: string) => void;
   onPlayerMove: (position: { x: number; z: number }) => void;
   onFps: (fps: number) => void;
 }
@@ -21,9 +32,16 @@ interface GameCanvasProps {
 export function GameCanvas({
   state,
   paused,
+  placementMode,
+  cameraResetToken,
   onHint,
   onGather,
   onTalk,
+  onEditFurniture,
+  onPlacementPreview,
+  onPlacementConfirm,
+  onPlacementRotate,
+  onPlacementRemove,
   onPlayerMove,
   onFps,
 }: GameCanvasProps) {
@@ -33,6 +51,11 @@ export function GameCanvas({
     onHint,
     onGather,
     onTalk,
+    onEditFurniture,
+    onPlacementPreview,
+    onPlacementConfirm,
+    onPlacementRotate,
+    onPlacementRemove,
     onPlayerMove,
     onFps,
   });
@@ -42,10 +65,26 @@ export function GameCanvas({
       onHint,
       onGather,
       onTalk,
+      onEditFurniture,
+      onPlacementPreview,
+      onPlacementConfirm,
+      onPlacementRotate,
+      onPlacementRemove,
       onPlayerMove,
       onFps,
     };
-  }, [onFps, onGather, onHint, onPlayerMove, onTalk]);
+  }, [
+    onEditFurniture,
+    onFps,
+    onGather,
+    onHint,
+    onPlacementConfirm,
+    onPlacementPreview,
+    onPlacementRemove,
+    onPlacementRotate,
+    onPlayerMove,
+    onTalk,
+  ]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -58,6 +97,16 @@ export function GameCanvas({
         onHint: (hint) => callbackRef.current.onHint(hint),
         onGather: (item) => callbackRef.current.onGather(item),
         onTalk: (resident) => callbackRef.current.onTalk(resident),
+        onEditFurniture: (id) =>
+          callbackRef.current.onEditFurniture(id),
+        onPlacementPreview: (preview) =>
+          callbackRef.current.onPlacementPreview(preview),
+        onPlacementConfirm: (preview) =>
+          callbackRef.current.onPlacementConfirm(preview),
+        onPlacementRotate: () =>
+          callbackRef.current.onPlacementRotate(),
+        onPlacementRemove: (id) =>
+          callbackRef.current.onPlacementRemove(id),
         onPlayerMove: (position) =>
           callbackRef.current.onPlayerMove(position),
         onFps: (fps) => callbackRef.current.onFps(fps),
@@ -83,6 +132,14 @@ export function GameCanvas({
   useEffect(() => {
     controllerRef.current?.syncFurniture(state.placedFurniture);
   }, [state.placedFurniture]);
+
+  useEffect(() => {
+    controllerRef.current?.setPlacementMode(placementMode);
+  }, [placementMode]);
+
+  useEffect(() => {
+    if (cameraResetToken > 0) controllerRef.current?.resetCamera();
+  }, [cameraResetToken]);
 
   return (
     <canvas

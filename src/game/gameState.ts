@@ -23,7 +23,7 @@ const questProgress = (): Record<QuestId, QuestProgress> => ({
 export const createInitialState = (): GameState => ({
   version: 1,
   playerPosition: { x: 0, z: 6 },
-  inventory: {},
+  inventory: { "twig-stool": 1 },
   lumen: 120,
   dayMinute: 8 * 60,
   day: 1,
@@ -109,6 +109,53 @@ export function placeFurniture(
     { type: "place", item: type },
   );
   return { state: next, ok: true, placed };
+}
+
+export function moveFurniture(
+  state: GameState,
+  id: string,
+  position: { x: number; z: number },
+  rotation: number,
+): { state: GameState; ok: boolean } {
+  const target = state.placedFurniture.find((item) => item.id === id);
+  if (!target) return { state, ok: false };
+  return {
+    state: {
+      ...state,
+      placedFurniture: state.placedFurniture.map((item) =>
+        item.id === id ? { ...item, position, rotation } : item,
+      ),
+    },
+    ok: true,
+  };
+}
+
+export function removeFurniture(
+  state: GameState,
+  id: string,
+): { state: GameState; ok: boolean; item?: FurnitureId } {
+  const target = state.placedFurniture.find((item) => item.id === id);
+  if (!target) return { state, ok: false };
+  return {
+    state: {
+      ...state,
+      inventory: {
+        ...state.inventory,
+        [target.type]: inventoryCount(state, target.type) + 1,
+      },
+      placedFurniture: state.placedFurniture.filter((item) => item.id !== id),
+    },
+    ok: true,
+    item: target.type,
+  };
+}
+
+export function advanceTimeWhileRunning(
+  state: GameState,
+  minutes: number,
+  paused: boolean,
+): GameState {
+  return paused ? state : advanceTime(state, minutes);
 }
 
 export function applyEvent(state: GameState, event: GameEvent): GameState {

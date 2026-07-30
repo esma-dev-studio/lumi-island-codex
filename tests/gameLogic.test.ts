@@ -14,6 +14,7 @@ describe("Lumi Island game loop", () => {
     expect(state.quests["first-kindling"].status).toBe("active");
     expect(state.quests["warm-light"].status).toBe("locked");
     expect(state.lumen).toBe(120);
+    expect(inventoryCount(state, "twig-stool")).toBe(1);
   });
 
   it("gathers resources and advances the first request", () => {

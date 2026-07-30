@@ -4,14 +4,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { ITEMS, QUEST_ORDER, QUESTS, RECIPES } from "@/src/data/gameData";
 import {
-  advanceTime,
+  advanceTimeWhileRunning,
   canCraft,
   craftItem,
   createInitialState,
   formatGameTime,
   gatherItem,
   inventoryCount,
+  moveFurniture,
   placeFurniture,
+  removeFurniture,
 } from "@/src/game/gameState";
 import type {
   FurnitureId,
@@ -28,6 +30,11 @@ import {
 } from "@/src/save/SaveSystem";
 import { TitleScreen } from "@/src/ui/TitleScreen";
 import type { InteractionHint } from "@/src/scenes/LumiScenes";
+import {
+  rotatePlacement,
+  type PlacementMode,
+  type PlacementPreview,
+} from "@/src/placement/PlacementController";
 
 const CharacterShowcase = dynamic(
   () =>
@@ -88,7 +95,11 @@ export function LumiIslandApp() {
   const [hint, setHint] = useState<InteractionHint | null>(null);
   const [fps, setFps] = useState(0);
   const [toast, setToast] = useState<Toast | null>(null);
-  const [rotation, setRotation] = useState(0);
+  const [placementMode, setPlacementMode] =
+    useState<PlacementMode | null>(null);
+  const [placementPreview, setPlacementPreview] =
+    useState<PlacementPreview | null>(null);
+  const [cameraResetToken, setCameraResetToken] = useState(0);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -122,12 +133,12 @@ export function LumiIslandApp() {
     panel !== null || tutorialOpen || dialogResident !== null;
 
   useEffect(() => {
-    if (screen !== "game") return;
+    if (screen !== "game" || isPaused) return;
     const timer = window.setInterval(() => {
-      setState((current) => advanceTime(current, 3));
+      setState((current) => advanceTimeWhileRunning(current, 3, false));
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [screen]);
+  }, [isPaused, screen]);
 
   useEffect(() => {
     if (screen !== "game") return;
@@ -146,15 +157,29 @@ export function LumiIslandApp() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.code === "Tab" || event.code === "KeyI") {
         event.preventDefault();
+        setPlacementMode(null);
+        setPlacementPreview(null);
         setPanel((current) => (current === "inventory" ? null : "inventory"));
         playSound("ui");
       } else if (event.code === "KeyC") {
+        setPlacementMode(null);
+        setPlacementPreview(null);
         setPanel((current) => (current === "craft" ? null : "craft"));
         playSound("ui");
       } else if (event.code === "KeyQ") {
+        setPlacementMode(null);
+        setPlacementPreview(null);
         setPanel((current) => (current === "quests" ? null : "quests"));
         playSound("ui");
       } else if (event.code === "Escape") {
+        if (placementMode) {
+          event.preventDefault();
+          setPlacementMode(null);
+          setPlacementPreview(null);
+          notify("家具を置くのを やめました");
+          playSound("ui");
+          return;
+        }
         setDialogResident(null);
         setTutorialOpen(false);
         setPanel((current) => (current === null ? "menu" : null));
@@ -163,12 +188,15 @@ export function LumiIslandApp() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [screen]);
+  }, [notify, placementMode, screen]);
 
   const startNewGame = () => {
     clearSave();
     setState(createInitialState());
     setPanel(null);
+    setDialogResident(null);
+    setPlacementMode(null);
+    setPlacementPreview(null);
     setTutorialOpen(true);
     setScreen("game");
     playSound("ui");
@@ -179,6 +207,9 @@ export function LumiIslandApp() {
     setState(loaded ?? createInitialState());
     setPanel(null);
     setTutorialOpen(false);
+    setDialogResident(null);
+    setPlacementMode(null);
+    setPlacementPreview(null);
     setScreen("game");
     playSound("ui");
   };
@@ -229,33 +260,117 @@ export function LumiIslandApp() {
     });
   };
 
-  const place = (item: FurnitureId) => {
-    setState((current) => {
-      const beforeQuest = QUEST_ORDER.find(
-        (id) => current.quests[id].status === "active",
+  const beginPlacement = useCallback(
+    (item: FurnitureId) => {
+      setPanel(null);
+      setPlacementPreview(null);
+      setPlacementMode({ type: item, rotation: 0 });
+      notify(`${ITEMS[item].name}を置く場所をえらぼう`);
+      playSound("ui");
+    },
+    [notify],
+  );
+
+  const editFurniture = useCallback(
+    (id: string) => {
+      const item = state.placedFurniture.find(
+        (placed) => placed.id === id,
       );
-      const result = placeFurniture(
-        current,
-        item,
-        {
-          x: Math.max(-16, Math.min(16, current.playerPosition.x + 1.7)),
-          z: Math.max(-11, Math.min(11, current.playerPosition.z + 0.6)),
-        },
-        rotation,
-      );
-      if (!result.ok) return current;
-      const completed =
-        beforeQuest && result.state.quests[beforeQuest].status === "complete";
-      notify(
-        completed
-          ? `依頼「${QUESTS[beforeQuest].title}」を達成！`
-          : `${ITEMS[item].name}を おいた`,
-        completed ? "success" : "normal",
-      );
-      playSound(completed ? "quest" : "place");
-      return result.state;
-    });
-  };
+      if (!item) return;
+      setPlacementPreview(null);
+      setPlacementMode({
+        type: item.type,
+        rotation: item.rotation,
+        editingId: item.id,
+      });
+      notify(`${ITEMS[item.type].name}をならべかえよう`);
+      playSound("ui");
+    },
+    [notify, state.placedFurniture],
+  );
+
+  const rotatePlacementPreview = useCallback(() => {
+    setPlacementMode((current) =>
+      current
+        ? {
+            ...current,
+            rotation: rotatePlacement(current.rotation, 1),
+          }
+        : current,
+    );
+    playSound("ui");
+  }, []);
+
+  const confirmPlacement = useCallback(
+    (preview: PlacementPreview) => {
+      const mode = placementMode;
+      if (!mode || !preview.valid) return;
+      setState((current) => {
+        if (mode.editingId) {
+          const moved = moveFurniture(
+            current,
+            mode.editingId,
+            preview.position,
+            preview.rotation,
+          );
+          if (moved.ok) {
+            notify(`${ITEMS[mode.type].name}を うごかした`);
+            playSound("place");
+          }
+          return moved.state;
+        }
+
+        const beforeQuest = QUEST_ORDER.find(
+          (id) => current.quests[id].status === "active",
+        );
+        const result = placeFurniture(
+          current,
+          mode.type,
+          preview.position,
+          preview.rotation,
+        );
+        if (!result.ok) return current;
+        const completed =
+          beforeQuest &&
+          result.state.quests[beforeQuest].status === "complete";
+        notify(
+          completed
+            ? `依頼「${QUESTS[beforeQuest].title}」を達成！`
+            : `${ITEMS[mode.type].name}を おいた`,
+          completed ? "success" : "normal",
+        );
+        playSound(completed ? "quest" : "place");
+        return result.state;
+      });
+      setPlacementMode(null);
+      setPlacementPreview(null);
+    },
+    [notify, placementMode],
+  );
+
+  const removePlacedFurniture = useCallback(
+    (id: string) => {
+      setState((current) => {
+        const result = removeFurniture(current, id);
+        if (result.ok && result.item) {
+          notify(`${ITEMS[result.item].name}を バッグへもどした`);
+          playSound("ui");
+        }
+        return result.state;
+      });
+      setPlacementMode(null);
+      setPlacementPreview(null);
+    },
+    [notify],
+  );
+
+  const cancelPlacement = useCallback(() => {
+    setPlacementMode(null);
+    setPlacementPreview(null);
+    notify("家具を置くのを やめました");
+    playSound("ui");
+  }, [notify]);
+
 
   const talk = useCallback((resident: "ノラ" | "カイ" | "セラ") => {
     setDialogResident(resident);
@@ -280,6 +395,8 @@ export function LumiIslandApp() {
     saveGame(state);
     setCanContinue(true);
     setPanel(null);
+    setPlacementMode(null);
+    setPlacementPreview(null);
     setScreen("title");
     playSound("ui");
   };
@@ -313,9 +430,16 @@ export function LumiIslandApp() {
       <GameCanvas
         state={state}
         paused={isPaused}
+        placementMode={placementMode}
+        cameraResetToken={cameraResetToken}
         onHint={setHint}
         onGather={gather}
         onTalk={talk}
+        onEditFurniture={editFurniture}
+        onPlacementPreview={setPlacementPreview}
+        onPlacementConfirm={confirmPlacement}
+        onPlacementRotate={rotatePlacementPreview}
+        onPlacementRemove={removePlacedFurniture}
         onPlayerMove={updatePlayerPosition}
         onFps={setFps}
       />
@@ -344,7 +468,24 @@ export function LumiIslandApp() {
               <strong>{state.lumen}</strong>
             </div>
           </div>
-          <button className="menu-button" onClick={() => setPanel("menu")}>
+          <button
+            className="camera-reset-button"
+            onClick={() => {
+              setCameraResetToken((value) => value + 1);
+              playSound("ui");
+            }}
+            aria-label="カメラをはじめの向きへもどす"
+          >
+            カメラ ↺
+          </button>
+          <button
+            className="menu-button"
+            onClick={() => {
+              setPlacementMode(null);
+              setPlacementPreview(null);
+              setPanel("menu");
+            }}
+          >
             メニュー
           </button>
         </div>
@@ -409,10 +550,59 @@ export function LumiIslandApp() {
         </div>
       )}
 
+      {placementMode && (
+        <section
+          className={`placement-hud ${
+            placementPreview?.valid ? "is-valid" : "is-invalid"
+          }`}
+          aria-label="家具配置"
+        >
+          <div>
+            <p>家具をならべる</p>
+            <h2>{ITEMS[placementMode.type].name}</h2>
+            <strong>
+              {placementPreview?.reason ?? "置ける場所をさがしています"}
+            </strong>
+          </div>
+          <div className="placement-actions">
+            <button onClick={rotatePlacementPreview}>
+              <kbd>R</kbd> 90°まわす
+            </button>
+            <button
+              className="placement-confirm"
+              disabled={!placementPreview?.valid}
+              onClick={() => {
+                if (placementPreview) confirmPlacement(placementPreview);
+              }}
+            >
+              <kbd>E</kbd> ここに置く
+            </button>
+            {placementMode.editingId && (
+              <button
+                className="placement-remove"
+                onClick={() =>
+                  removePlacedFurniture(placementMode.editingId as string)
+                }
+              >
+                <kbd>X</kbd> バッグへ
+              </button>
+            )}
+            <button onClick={cancelPlacement}>
+              <kbd>Esc</kbd> やめる
+            </button>
+          </div>
+          <small>矢印キーで歩くと、家具もいっしょに動きます。</small>
+        </section>
+      )}
+
       <nav className="game-tools" aria-label="ゲームメニュー">
         <button
           className={panel === "inventory" ? "is-active" : ""}
-          onClick={() => setPanel(panel === "inventory" ? null : "inventory")}
+          onClick={() => {
+            setPlacementMode(null);
+            setPlacementPreview(null);
+            setPanel(panel === "inventory" ? null : "inventory");
+          }}
         >
           <span className="tool-icon tool-icon--bag" aria-hidden="true" />
           <span>バッグ</span>
@@ -420,7 +610,11 @@ export function LumiIslandApp() {
         </button>
         <button
           className={panel === "craft" ? "is-active" : ""}
-          onClick={() => setPanel(panel === "craft" ? null : "craft")}
+          onClick={() => {
+            setPlacementMode(null);
+            setPlacementPreview(null);
+            setPanel(panel === "craft" ? null : "craft");
+          }}
         >
           <span className="tool-icon tool-icon--hammer" aria-hidden="true" />
           <span>つくる</span>
@@ -428,7 +622,11 @@ export function LumiIslandApp() {
         </button>
         <button
           className={panel === "quests" ? "is-active" : ""}
-          onClick={() => setPanel(panel === "quests" ? null : "quests")}
+          onClick={() => {
+            setPlacementMode(null);
+            setPlacementPreview(null);
+            setPanel(panel === "quests" ? null : "quests");
+          }}
         >
           <span className="tool-icon tool-icon--note" aria-hidden="true" />
           <span>おねがい</span>
@@ -461,9 +659,7 @@ export function LumiIslandApp() {
             {panel === "inventory" && (
               <InventoryPanel
                 state={state}
-                rotation={rotation}
-                setRotation={setRotation}
-                onPlace={place}
+                onPlace={beginPlacement}
               />
             )}
             {panel === "craft" && (
@@ -556,13 +752,9 @@ export function LumiIslandApp() {
 
 function InventoryPanel({
   state,
-  rotation,
-  setRotation,
   onPlace,
 }: {
   state: GameState;
-  rotation: number;
-  setRotation: (value: number) => void;
   onPlace: (item: FurnitureId) => void;
 }) {
   const furniture = Object.entries(state.inventory).filter(
@@ -606,19 +798,13 @@ function InventoryPanel({
                 <strong>{ITEMS[item].name}</strong>
                 <small>もっている数 {amount}</small>
               </div>
-              <button onClick={() => onPlace(item)}>足元に置く</button>
+              <button onClick={() => onPlace(item)}>場所をえらぶ</button>
             </article>
           ))}
         </div>
       ) : (
         <p className="empty-copy">Cキーの「つくる」で家具を作ってみよう。</p>
       )}
-      <div className="placement-rotation">
-        <span>置く向き</span>
-        <button onClick={() => setRotation(rotation - Math.PI / 4)}>↶</button>
-        <b>{Math.round((rotation * 180) / Math.PI)}°</b>
-        <button onClick={() => setRotation(rotation + Math.PI / 4)}>↷</button>
-      </div>
     </>
   );
 }
