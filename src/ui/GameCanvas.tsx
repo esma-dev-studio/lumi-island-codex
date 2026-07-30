@@ -11,15 +11,18 @@ import type {
   PlacementMode,
   PlacementPreview,
 } from "@/src/placement/PlacementController";
-import type { ActivityRequest } from "@/src/ui/minigames/ActivityOverlay";
+import type { ActivityRequest } from "@/src/ui/minigames/ActivityOverlayPhase21";
+import type { ActivityResult } from "@/src/activities/ActivityResult";
 
 interface GameCanvasProps {
   state: GameState;
   paused: boolean;
   placementMode: PlacementMode | null;
+  pendingActivityResult: ActivityResult | null;
   cameraResetToken: number;
   onHint: (hint: InteractionHint | null) => void;
   onActivity: (activity: ActivityRequest) => void;
+  onActivitySettled: (result: ActivityResult) => void;
   onTalk: (resident: "ノラ" | "カイ" | "セラ") => void;
   onEditFurniture: (id: string) => void;
   onPlacementPreview: (preview: PlacementPreview | null) => void;
@@ -34,9 +37,11 @@ export function GameCanvas({
   state,
   paused,
   placementMode,
+  pendingActivityResult,
   cameraResetToken,
   onHint,
   onActivity,
+  onActivitySettled,
   onTalk,
   onEditFurniture,
   onPlacementPreview,
@@ -51,6 +56,7 @@ export function GameCanvas({
   const callbackRef = useRef({
     onHint,
     onActivity,
+    onActivitySettled,
     onTalk,
     onEditFurniture,
     onPlacementPreview,
@@ -65,6 +71,7 @@ export function GameCanvas({
     callbackRef.current = {
       onHint,
       onActivity,
+      onActivitySettled,
       onTalk,
       onEditFurniture,
       onPlacementPreview,
@@ -78,6 +85,7 @@ export function GameCanvas({
     onEditFurniture,
     onFps,
     onActivity,
+    onActivitySettled,
     onHint,
     onPlacementConfirm,
     onPlacementPreview,
@@ -98,6 +106,8 @@ export function GameCanvas({
         onHint: (hint) => callbackRef.current.onHint(hint),
         onActivity: (activity) =>
           callbackRef.current.onActivity(activity),
+        onActivitySettled: (result) =>
+          callbackRef.current.onActivitySettled(result),
         onTalk: (resident) => callbackRef.current.onTalk(resident),
         onEditFurniture: (id) =>
           callbackRef.current.onEditFurniture(id),
@@ -134,6 +144,14 @@ export function GameCanvas({
   useEffect(() => {
     controllerRef.current?.syncFurniture(state.placedFurniture);
   }, [state.placedFurniture]);
+
+  useEffect(() => {
+    controllerRef.current?.syncResourceStates(state.resourceStates);
+  }, [state.resourceStates]);
+
+  useEffect(() => {
+    if (pendingActivityResult) controllerRef.current?.resolveActivity(pendingActivityResult);
+  }, [pendingActivityResult]);
 
   useEffect(() => {
     controllerRef.current?.setPlacementMode(placementMode);

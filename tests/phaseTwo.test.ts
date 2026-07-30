@@ -18,7 +18,7 @@ import {
   tryCatchFish,
 } from "@/src/fishing/FishingMiniGame";
 import { resolveFishing } from "@/src/fishing/FishingSystem";
-import { easyModeSettings } from "@/src/ui/accessibility/EasyMode";
+import { easyModeSettings } from "@/src/accessibility/EasyModeSettings";
 import {
   createInitialState,
   sanitizeState,
@@ -159,7 +159,7 @@ describe("world source, NPC collision, pause, and save migration", () => {
       inventory: { wood: 9 },
     };
     const migrated = sanitizeState(old);
-    expect(migrated.version).toBe(2);
+    expect(migrated.version).toBe(3);
     expect(migrated.lumen).toBe(777);
     expect(migrated.inventory.wood).toBe(9);
     expect(migrated.easyMode).toBe(false);
@@ -168,7 +168,7 @@ describe("world source, NPC collision, pause, and save migration", () => {
 
   it("recovers from a future or corrupt save", () => {
     expect(sanitizeState({ version: 99, lumen: 999 }).lumen).toBe(120);
-    expect(sanitizeState(null).version).toBe(2);
+    expect(sanitizeState(null).version).toBe(3);
   });
 });
 

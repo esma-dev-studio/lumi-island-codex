@@ -34,6 +34,10 @@ const animations: Record<AnimationName, string> = {
   happy: "happy",
   surprised: "surprised",
   blink: "blink",
+  chop: "interact",
+  mine: "interact",
+  fish: "pickup",
+  wave: "happy",
 };
 
 export const CHARACTER_CONFIGS: Record<CharacterId, CharacterConfig> = {

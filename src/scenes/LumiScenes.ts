@@ -39,7 +39,7 @@ import {
   ROCK_LAYOUT,
   TREE_LAYOUT,
 } from "@/src/world/IslandLayout";
-import type { ActivityRequest } from "@/src/ui/minigames/ActivityOverlay";
+import type { ActivityRequest } from "@/src/ui/minigames/ActivityOverlayPhase21";
 import {
   rotatedFootprint,
   validateFurniturePlacement,
@@ -52,7 +52,15 @@ import type {
   AnimationName,
   PlacedFurniture,
   ResourceId,
+  ResourceState,
 } from "@/src/game/types";
+import type { ActivityResult } from "@/src/activities/ActivityResult";
+import {
+  activityDuration,
+  animationForActivity,
+} from "@/src/activities/ActivityCoordinator";
+import { isResourceAvailable } from "@/src/resources/ResourceStateSystem";
+import { ResourceVisualController } from "@/src/resources/ResourceVisualController";
 
 export interface InteractionHint {
   label: string;
@@ -62,6 +70,7 @@ export interface InteractionHint {
 export interface IslandSceneCallbacks {
   onHint: (hint: InteractionHint | null) => void;
   onActivity: (activity: ActivityRequest) => void;
+  onActivitySettled: (result: ActivityResult) => void;
   onTalk: (resident: "ノラ" | "カイ" | "セラ") => void;
   onEditFurniture: (id: string) => void;
   onPlacementPreview: (preview: PlacementPreview | null) => void;
@@ -78,6 +87,8 @@ export interface IslandController {
   setDayMinute: (minute: number) => void;
   syncFurniture: (placed: PlacedFurniture[]) => void;
   setPlacementMode: (mode: PlacementMode | null) => void;
+  syncResourceStates: (states: Record<string, ResourceState>) => void;
+  resolveActivity: (result: ActivityResult) => void;
   resetCamera: () => void;
   dispose: () => void;
 }
@@ -854,6 +865,30 @@ export function createIslandScene(
     available: true,
     respawnAt: 0,
   });
+  const resourceTargets = new Map<string, Interactable>();
+  const resourceVisuals = new Map<string, ResourceVisualController>();
+  interactables
+    .filter(
+      (target): target is Interactable & { item: ResourceId } =>
+        target.kind === "resource" && Boolean(target.item),
+    )
+    .forEach((target) => {
+      resourceTargets.set(target.node.name, target);
+      resourceVisuals.set(
+        target.node.name,
+        new ResourceVisualController(target.node, target.item),
+      );
+    });
+  const syncResourceStates = (states: Record<string, ResourceState>) => {
+    resourceTargets.forEach((target, sourceId) => {
+      target.available = isResourceAvailable(states, sourceId);
+      resourceVisuals.get(sourceId)?.apply(states[sourceId]);
+    });
+    if (closest && !closest.available) {
+      closest = null;
+      callbacks.onHint(null);
+    }
+  };
 
   const player = createCharacterView(
     scene,
@@ -910,6 +945,10 @@ export function createIslandScene(
   let animationElapsedTime = 0;
   let playerAction: AnimationName | null = null;
   let playerActionUntil = 0;
+  let pendingActivity: {
+    result: ActivityResult;
+    settleAt: number;
+  } | null = null;
   let lastFpsUpdate = 0;
   let lastPositionUpdate = 0;
   let currentDayMinute = 8 * 60;
@@ -1062,11 +1101,15 @@ export function createIslandScene(
       return;
     }
     if (!closest.item) return;
-    playerAction = "pickup";
-    playerActionUntil = gameElapsedTime + 1.05;
-    playerMotion.setInteraction("pickup");
-    player.setAnimation("pickup", 1, true);
-    reactToGatherTarget(closest);
+    const targetDirection = closest.node.getAbsolutePosition().subtract(player.root.position);
+    targetDirection.y = 0;
+    if (targetDirection.lengthSquared() > 0.001) {
+      const facing = Math.atan2(targetDirection.x, targetDirection.z);
+      playerMotion.setFacing(facing);
+      player.root.rotation.y = facing;
+    }
+    playerMotion.setInteraction("interact");
+    player.setAnimation("interact", 1, true);
     burst(closest.node.position.add(new Vector3(0, 0.8, 0)), ITEMS[closest.item].color);
     callbacks.onActivity({
       kind:
@@ -1084,6 +1127,34 @@ export function createIslandScene(
     callbacks.onHint(null);
   };
 
+  const resolveActivity = (result: ActivityResult) => {
+    const target = resourceTargets.get(result.sourceId);
+    const animation = animationForActivity(result.activityType);
+    const duration = activityDuration(result);
+    if (target) {
+      const targetDirection = target.node
+        .getAbsolutePosition()
+        .subtract(player.root.position);
+      targetDirection.y = 0;
+      if (targetDirection.lengthSquared() > 0.001) {
+        const facing = Math.atan2(targetDirection.x, targetDirection.z);
+        playerMotion.setFacing(facing);
+        player.root.rotation.y = facing;
+      }
+      target.available = false;
+      reactToGatherTarget(target);
+      const color = ITEMS[target.item ?? result.rewardItems[0]?.itemId ?? "wood"].color;
+      burst(target.node.getAbsolutePosition().add(new Vector3(0, 0.8, 0)), color);
+    }
+    playerAction = animation;
+    playerActionUntil = gameElapsedTime + duration;
+    playerMotion.setInteraction(animation);
+    player.setAnimation(animation, 1, true);
+    pendingActivity = {
+      result,
+      settleAt: gameElapsedTime + duration,
+    };
+  };
   const syncFurniture = (placed: PlacedFurniture[]) => {
     currentFurniture = [...placed];
     const desired = new Set(placed.map((item) => item.id));
@@ -1127,6 +1198,12 @@ export function createIslandScene(
       ...(scene.metadata ?? {}),
       phase2Timing: { realElapsedTime, gameElapsedTime, animationElapsedTime },
     };
+    if (process.env.NODE_ENV !== "production") {
+      canvas.dataset.debugAvailableResources = [...resourceTargets.entries()]
+        .filter(([, target]) => target.available)
+        .map(([sourceId]) => sourceId)
+        .join(",");
+    }
     if (paused) {
       playerMotion.stop();
       return;
@@ -1137,6 +1214,12 @@ export function createIslandScene(
       playerAction = null;
       playerMotion.setInteraction(null);
     }
+    if (pendingActivity && gameElapsedTime >= pendingActivity.settleAt) {
+      const settled = pendingActivity.result;
+      pendingActivity = null;
+      callbacks.onActivitySettled(settled);
+    }
+
 
     const horizontal =
       (keys.has("KeyD") || keys.has("ArrowRight") ? 1 : 0) -
@@ -1325,11 +1408,6 @@ export function createIslandScene(
       ? []
       : [...interactables, ...furnitureTargets.values()];
     for (const target of nearbyTargets) {
-      if (!target.available && target.respawnAt && gameElapsedTime >= target.respawnAt) {
-        target.available = true;
-        target.respawnAt = 0;
-        target.node.setEnabled(true);
-      }
       if (!target.available) continue;
       const distance = Vector3.Distance(
         player.root.position,
@@ -1478,6 +1556,8 @@ export function createIslandScene(
     setDayMinute,
     syncFurniture,
     setPlacementMode,
+    syncResourceStates,
+    resolveActivity,
     resetCamera,
     dispose: () => {
       placementGhost?.dispose(false, true);
@@ -1486,6 +1566,7 @@ export function createIslandScene(
       window.removeEventListener("blur", onBlur);
       window.removeEventListener("resize", resize);
       scene.dispose();
+      resourceVisuals.forEach((controller) => controller.dispose());
       engine.dispose();
     },
   };

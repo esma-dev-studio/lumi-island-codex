@@ -6,7 +6,7 @@ import "./showcase-phase2.css";
 
 const title = "Lumi Island";
 const description =
-  "光る小さな島で、探索、採取、クラフト、家具づくりを楽しむオリジナル3Dスローライフゲーム。";
+  "光る小さな島で、集めて、作って、住民のおねがいをかなえる子ども向け3Dスローライフゲーム。";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -37,8 +37,8 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [
         {
           url: `${origin}/og.png`,
-          width: 1731,
-          height: 909,
+          width: 1200,
+          height: 630,
           alt: "Lumi Island — 光る小さな島の3Dスローライフゲーム",
         },
       ],

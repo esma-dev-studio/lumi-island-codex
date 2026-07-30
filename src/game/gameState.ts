@@ -9,6 +9,9 @@ import type {
   QuestProgress,
   ResourceId,
 } from "@/src/game/types";
+import { sanitizeResourceStates } from "@/src/resources/ResourceStateSystem";
+import { migrateCollectionCounts } from "@/src/collection/CollectionSystem";
+import { createTutorialProgress } from "@/src/tutorial/TutorialSystem";
 
 export const SAVE_KEY = "lumi-island-save-v1";
 
@@ -21,13 +24,16 @@ const questProgress = (): Record<QuestId, QuestProgress> => ({
 });
 
 export const createInitialState = (): GameState => ({
-  version: 2,
+  version: 3,
   playerPosition: { x: 0, z: 6 },
   easyMode: false,
   tutorialStep: 0,
+  tutorialProgress: createTutorialProgress(),
   discoveredItems: [],
   caughtFish: [],
+  collectionCounts: {},
   resourceStates: {},
+  audioSettings: { muted: false, effectsVolume: 0.72 },
   characterModelId: "mira",
   playSeconds: 0,
   inventory: { "twig-stool": 1 },
@@ -235,34 +241,70 @@ export function sanitizeState(value: unknown): GameState {
   const initial = createInitialState();
   if (!value || typeof value !== "object") return initial;
   const candidate = value as Partial<Omit<GameState, "version">> & { version?: number };
-  if (candidate.version !== 1 && candidate.version !== 2) return initial;
+  if (
+    candidate.version !== 1 &&
+    candidate.version !== 2 &&
+    candidate.version !== 3
+  ) {
+    return initial;
+  }
   const migrated =
     candidate.version === 1
       ? {
           ...candidate,
-          version: 2 as const,
+          version: 3 as const,
           easyMode: false,
           tutorialStep: 7,
+          tutorialProgress: createTutorialProgress(7),
           discoveredItems: [],
           caughtFish: [],
+          collectionCounts: {},
           resourceStates: {},
+          audioSettings: initial.audioSettings,
           characterModelId: "mira" as const,
           playSeconds: 0,
         }
-      : candidate;
+      : {
+          ...candidate,
+          version: 3 as const,
+          tutorialProgress:
+            candidate.tutorialProgress ??
+            createTutorialProgress(candidate.tutorialStep ?? 7),
+          audioSettings: candidate.audioSettings ?? initial.audioSettings,
+        };
   return {
     ...initial,
     ...migrated,
-    version: 2,
+    version: 3,
     playerPosition: {
       ...initial.playerPosition,
       ...(migrated.playerPosition ?? {}),
     },
     inventory: { ...initial.inventory, ...(migrated.inventory ?? {}) },
     quests: { ...initial.quests, ...(migrated.quests ?? {}) },
+    tutorialStep: migrated.tutorialProgress?.step ?? migrated.tutorialStep ?? 7,
+    tutorialProgress:
+      migrated.tutorialProgress ??
+      createTutorialProgress(migrated.tutorialStep ?? 7),
     discoveredItems: Array.isArray(migrated.discoveredItems) ? migrated.discoveredItems : [],
     caughtFish: Array.isArray(migrated.caughtFish) ? migrated.caughtFish : [],
-    resourceStates: migrated.resourceStates ?? {},
+    collectionCounts: migrateCollectionCounts(
+      migrated.collectionCounts,
+      Array.isArray(migrated.discoveredItems)
+        ? migrated.discoveredItems
+        : [],
+      Array.isArray(migrated.caughtFish)
+        ? migrated.caughtFish
+        : [],
+    ),
+    resourceStates: sanitizeResourceStates(migrated.resourceStates),
+    audioSettings: {
+      muted: Boolean(migrated.audioSettings?.muted),
+      effectsVolume:
+        typeof migrated.audioSettings?.effectsVolume === "number"
+          ? Math.max(0, Math.min(1, migrated.audioSettings.effectsVolume))
+          : initial.audioSettings.effectsVolume,
+    },
     placedFurniture: Array.isArray(migrated.placedFurniture)
       ? migrated.placedFurniture
       : [],

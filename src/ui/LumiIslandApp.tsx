@@ -21,7 +21,7 @@ import type {
   ItemId,
   ResourceId,
 } from "@/src/game/types";
-import { playSound } from "@/src/audio/AudioSystem";
+import { configureAudio, playSound, preloadAudio } from "@/src/audio/FileAudioSystem";
 import {
   clearSave,
   hasSave,
@@ -36,10 +36,19 @@ import {
   type PlacementPreview,
 } from "@/src/placement/PlacementController";
 import {
-  ActivityOverlay,
-  type ActivityCompletion,
+  ActivityOverlayPhase21,
   type ActivityRequest,
-} from "@/src/ui/minigames/ActivityOverlay";
+} from "@/src/ui/minigames/ActivityOverlayPhase21";
+import type { ActivityResult } from "@/src/activities/ActivityResult";
+import { depleteResource, tickResourceStates } from "@/src/resources/ResourceStateSystem";
+import { registerActivityDiscovery } from "@/src/collection/CollectionSystem";
+import { CollectionPanel } from "@/src/collection/CollectionPanel";
+import {
+  applyTutorialEventToState,
+  resetTutorial,
+} from "@/src/tutorial/TutorialSystem";
+import { TutorialOverlay } from "@/src/tutorial/TutorialOverlay";
+import { TUTORIAL_STEPS } from "@/src/tutorial/TutorialSteps";
 
 const CharacterShowcase = dynamic(
   () =>
@@ -54,7 +63,7 @@ const GameCanvas = dynamic(
 );
 
 type Screen = "title" | "showcase" | "game";
-type Panel = "inventory" | "craft" | "quests" | "menu" | null;
+type Panel = "inventory" | "craft" | "quests" | "collection" | "menu" | null;
 
 interface Toast {
   id: number;
@@ -72,16 +81,6 @@ const RESOURCES: ResourceId[] = [
   "reed",
   "fish",
 ];
-
-const TUTORIAL_STEPS = [
-  { title: "矢印で 3歩あるこう", copy: "画面の矢印か、キーボードの矢印を おしてみよう。", action: "歩いてみる" },
-  { title: "光るものへ ちかづこう", copy: "木や石、草花の そばまで歩くと、大きなボタンが出るよ。", action: "わかった" },
-  { title: "見つけたものを ひろおう", copy: "EかSpace、または画面の大きなボタンを おそう。", action: "やってみる" },
-  { title: "バッグを ひらこう", copy: "集めたものは、右下の「バッグ」で見られるよ。", action: "つぎへ" },
-  { title: "家具を つくろう", copy: "「つくる」で材料を家具にかえられるよ。", action: "つぎへ" },
-  { title: "好きな場所に おこう", copy: "家具をえらび、みどりに光る場所で決めよう。", action: "つぎへ" },
-  { title: "島のみんなと はなそう", copy: "ノラたちの近くで「はなす」を おしてみよう。", action: "島へ出発！" },
-] as const;
 
 function sendGameKey(code: string, pressed: boolean) {
   window.dispatchEvent(
@@ -116,8 +115,8 @@ export function LumiIslandApp() {
   const [screen, setScreen] = useState<Screen>("title");
   const [state, setState] = useState<GameState>(() => createInitialState());
   const [canContinue, setCanContinue] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
-  const [tutorialOpen, setTutorialOpen] = useState(false);
   const [dialogResident, setDialogResident] = useState<
     "ノラ" | "カイ" | "セラ" | null
   >(null);
@@ -125,6 +124,8 @@ export function LumiIslandApp() {
   const [, setFps] = useState(0);
   const [toast, setToast] = useState<Toast | null>(null);
   const [activity, setActivity] = useState<ActivityRequest | null>(null);
+  const [pendingActivityResult, setPendingActivityResult] =
+    useState<ActivityResult | null>(null);
   const [placementMode, setPlacementMode] =
     useState<PlacementMode | null>(null);
   const [placementPreview, setPlacementPreview] =
@@ -133,9 +134,16 @@ export function LumiIslandApp() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setCanContinue(hasSave()), 0);
+    const timer = window.setTimeout(() => {
+      setShowDebug(new URLSearchParams(window.location.search).has("debug"));
+      setCanContinue(hasSave());
+    }, 0);
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    configureAudio(state.audioSettings);
+  }, [state.audioSettings]);
 
   const notify = useCallback(
     (message: string, tone: Toast["tone"] = "normal") => {
@@ -159,16 +167,19 @@ export function LumiIslandApp() {
   );
   const activeQuest = activeQuestId ? QUESTS[activeQuestId] : null;
 
-  const isPaused =
-    panel !== null || tutorialOpen || dialogResident !== null ||
-    activity !== null;
+  const isPaused = panel !== null || dialogResident !== null || activity !== null;
 
   useEffect(() => {
     if (screen !== "game" || isPaused) return;
     const timer = window.setInterval(() => {
       setState((current) => {
         const advanced = advanceTimeWhileRunning(current, 3, false);
-        return { ...advanced, playSeconds: advanced.playSeconds + 1 };
+        const playSeconds = advanced.playSeconds + 1;
+        return {
+          ...advanced,
+          playSeconds,
+          resourceStates: tickResourceStates(advanced.resourceStates, playSeconds),
+        };
       });
     }, 1000);
     return () => window.clearInterval(timer);
@@ -193,6 +204,9 @@ export function LumiIslandApp() {
         event.preventDefault();
         setPlacementMode(null);
         setPlacementPreview(null);
+        setState((current) =>
+          applyTutorialEventToState(current, { type: "inventory" }),
+        );
         setPanel((current) => (current === "inventory" ? null : "inventory"));
         playSound("ui");
       } else if (event.code === "KeyC") {
@@ -215,7 +229,6 @@ export function LumiIslandApp() {
           return;
         }
         setDialogResident(null);
-        setTutorialOpen(false);
         setPanel((current) => (current === null ? "menu" : null));
         playSound("ui");
       }
@@ -232,7 +245,7 @@ export function LumiIslandApp() {
     setActivity(null);
     setPlacementMode(null);
     setPlacementPreview(null);
-    setTutorialOpen(true);
+    preloadAudio();
     setScreen("game");
     playSound("ui");
   };
@@ -241,7 +254,6 @@ export function LumiIslandApp() {
     const loaded = loadGame();
     setState(loaded ?? createInitialState());
     setPanel(null);
-    setTutorialOpen((loaded?.tutorialStep ?? 7) < TUTORIAL_STEPS.length);
     setActivity(null);
     setDialogResident(null);
     setPlacementMode(null);
@@ -250,52 +262,64 @@ export function LumiIslandApp() {
     playSound("ui");
   };
 
-  const completeActivity = useCallback(
-    (completion: ActivityCompletion) => {
+  const queueActivityResult = useCallback((result: ActivityResult) => {
+    setActivity(null);
+    setHint(null);
+    setPendingActivityResult(result);
+  }, []);
+
+  const beginActivity = useCallback((nextActivity: ActivityRequest) => {
+    setHint(null);
+    setActivity(nextActivity);
+  }, []);
+
+  const settleActivity = useCallback(
+    (result: ActivityResult) => {
       setState((current) => {
         const beforeQuest = QUEST_ORDER.find(
           (id) => current.quests[id].status === "active",
         );
-        let next = gatherItem(current, completion.item, completion.amount);
-        if (completion.bonusItem) {
-          next = gatherItem(next, completion.bonusItem, 1);
-        }
+        let next = current;
+        result.rewardItems.forEach((reward) => {
+          next = gatherItem(next, reward.itemId, reward.quantity);
+        });
         next = {
           ...next,
           discoveredItems:
-            completion.discoveryId &&
-            !next.discoveredItems.includes(completion.discoveryId)
-              ? [...next.discoveredItems, completion.discoveryId]
+            result.discoveryId && !next.discoveredItems.includes(result.discoveryId)
+              ? [...next.discoveredItems, result.discoveryId]
               : next.discoveredItems,
           caughtFish:
-            completion.fishId && !next.caughtFish.includes(completion.fishId)
-              ? [...next.caughtFish, completion.fishId]
+            result.fishId && !next.caughtFish.includes(result.fishId)
+              ? [...next.caughtFish, result.fishId]
               : next.caughtFish,
-          resourceStates: activity
-            ? {
-                ...next.resourceStates,
-                [activity.sourceId]: {
-                  availableAt: next.playSeconds,
-                  visualVariant:
-                    ((next.resourceStates[activity.sourceId]?.visualVariant ?? 0) + 1) % 3,
-                },
-              }
-            : next.resourceStates,
+          collectionCounts: registerActivityDiscovery(
+            next.collectionCounts,
+            result,
+          ),
+          resourceStates: depleteResource(
+            next.resourceStates,
+            result.sourceId,
+            result.rewardItems[0]?.itemId ?? "wood",
+            next.playSeconds,
+          ),
         };
+        next = applyTutorialEventToState(next, { type: "gather" });
         const completed =
           beforeQuest && next.quests[beforeQuest].status === "complete";
         if (completed) {
           notify(`依頼「${QUESTS[beforeQuest].title}」を達成！`, "success");
           playSound("quest");
         } else {
-          notify(completion.message, "success");
+          notify(result.message, "success");
           playSound("pickup");
         }
         return next;
       });
-      setActivity(null);
+      setHint(null);
+      setPendingActivityResult(null);
     },
-    [activity, notify],
+    [notify],
   );
 
   const craft = (item: FurnitureId) => {
@@ -318,7 +342,7 @@ export function LumiIslandApp() {
         completed ? "success" : "normal",
       );
       playSound(completed ? "quest" : "craft");
-      return result.state;
+      return applyTutorialEventToState(result.state, { type: "craft" });
     });
   };
 
@@ -402,7 +426,7 @@ export function LumiIslandApp() {
           completed ? "success" : "normal",
         );
         playSound(completed ? "quest" : "place");
-        return result.state;
+        return applyTutorialEventToState(result.state, { type: "place" });
       });
       setPlacementMode(null);
       setPlacementPreview(null);
@@ -436,15 +460,36 @@ export function LumiIslandApp() {
 
   const talk = useCallback((resident: "ノラ" | "カイ" | "セラ") => {
     setDialogResident(resident);
+    setState((current) =>
+      applyTutorialEventToState(current, { type: "talk" }),
+    );
     playSound("ui");
   }, []);
 
   const updatePlayerPosition = useCallback(
     (position: { x: number; z: number }) => {
-      setState((current) => ({ ...current, playerPosition: position }));
+      setState((current) => {
+        const distance = Math.hypot(
+          position.x - current.playerPosition.x,
+          position.z - current.playerPosition.z,
+        );
+        return applyTutorialEventToState(
+          { ...current, playerPosition: position },
+          { type: "move", distance },
+        );
+      });
     },
     [],
   );
+
+  const updateHint = useCallback((nextHint: InteractionHint | null) => {
+    setHint(nextHint);
+    if (nextHint) {
+      setState((current) =>
+        applyTutorialEventToState(current, { type: "hint" }),
+      );
+    }
+  }, []);
 
   const manualSave = () => {
     saveGame(state);
@@ -474,6 +519,7 @@ export function LumiIslandApp() {
         onNewGame={startNewGame}
         onContinue={continueGame}
         onShowcase={() => setScreen("showcase")}
+        showShowcase={showDebug && process.env.NODE_ENV !== "production"}
       />
     );
   }
@@ -488,14 +534,16 @@ export function LumiIslandApp() {
           : 4;
 
   return (
-    <main className="game-screen">
+    <main className={`game-screen ${state.easyMode ? "is-easy" : ""}`}>
       <GameCanvas
         state={state}
         paused={isPaused}
         placementMode={placementMode}
+        pendingActivityResult={pendingActivityResult}
         cameraResetToken={cameraResetToken}
-        onHint={setHint}
-        onActivity={setActivity}
+        onHint={updateHint}
+        onActivity={beginActivity}
+        onActivitySettled={settleActivity}
         onTalk={talk}
         onEditFurniture={editFurniture}
         onPlacementPreview={setPlacementPreview}
@@ -602,9 +650,9 @@ export function LumiIslandApp() {
         </ol>
       </aside>
 
-      {hint && !isPaused && (
+      {hint && !isPaused && pendingActivityResult === null && (
         <div className="interaction-hint">
-          <kbd>E</kbd>
+          {!state.easyMode && <kbd>E</kbd>}
           <div>
             <strong>{hint.action}</strong>
             <span>{hint.label}</span>
@@ -647,7 +695,7 @@ export function LumiIslandApp() {
           </div>
           {hint && (
             <button className="touch-action" onClick={() => sendGameKey("KeyE", true)}>
-              <b>E</b>
+              {!state.easyMode && <b>E</b>}
               <span>{hint.action}</span>
             </button>
           )}
@@ -706,11 +754,14 @@ export function LumiIslandApp() {
             setPlacementMode(null);
             setPlacementPreview(null);
             setPanel(panel === "inventory" ? null : "inventory");
+            setState((current) =>
+              applyTutorialEventToState(current, { type: "inventory" }),
+            );
           }}
         >
           <span className="tool-icon tool-icon--bag" aria-hidden="true" />
           <span>バッグ</span>
-          <kbd>I</kbd>
+          {!state.easyMode && <kbd>I</kbd>}
         </button>
         <button
           className={panel === "craft" ? "is-active" : ""}
@@ -722,7 +773,7 @@ export function LumiIslandApp() {
         >
           <span className="tool-icon tool-icon--hammer" aria-hidden="true" />
           <span>つくる</span>
-          <kbd>C</kbd>
+          {!state.easyMode && <kbd>C</kbd>}
         </button>
         <button
           className={panel === "quests" ? "is-active" : ""}
@@ -734,7 +785,18 @@ export function LumiIslandApp() {
         >
           <span className="tool-icon tool-icon--note" aria-hidden="true" />
           <span>おねがい</span>
-          <kbd>Q</kbd>
+          {!state.easyMode && <kbd>Q</kbd>}
+        </button>
+        <button
+          className={panel === "collection" ? "is-active" : ""}
+          onClick={() => {
+            setPlacementMode(null);
+            setPlacementPreview(null);
+            setPanel(panel === "collection" ? null : "collection");
+          }}
+        >
+          <span className="tool-icon tool-icon--book" aria-hidden="true" />
+          <span>ずかん</span>
         </button>
       </nav>
 
@@ -750,6 +812,8 @@ export function LumiIslandApp() {
                   ? "クラフト"
                   : panel === "quests"
                     ? "お願い"
+                    : panel === "collection"
+                      ? "島の図かん"
                     : "メニュー"
             }
           >
@@ -765,18 +829,27 @@ export function LumiIslandApp() {
             {panel === "craft" && (
               <CraftPanel state={state} onCraft={craft} />
             )}
+            {panel === "collection" && <CollectionPanel counts={state.collectionCounts} easyMode={state.easyMode} />}
             {panel === "quests" && <QuestPanel state={state} />}
             {panel === "menu" && (
               <MenuPanel
                 onSave={manualSave}
                 onHelp={() => {
-                  setState((current) => ({ ...current, tutorialStep: 0 }));
-                  setTutorialOpen(true);
+                  setState((current) => ({
+                    ...current,
+                    tutorialStep: 0,
+                    tutorialProgress: resetTutorial(),
+                  }));
+                  setPanel(null);
                 }}
                 onTitle={returnToTitle}
                 easyMode={state.easyMode}
                 onEasyMode={(easyMode) =>
                   setState((current) => ({ ...current, easyMode }))
+                }
+                audioSettings={state.audioSettings}
+                onAudioSettings={(audioSettings) =>
+                  setState((current) => ({ ...current, audioSettings }))
                 }
               />
             )}
@@ -784,46 +857,32 @@ export function LumiIslandApp() {
         </div>
       )}
 
-      {tutorialOpen && (
-        <div className="modal-scrim">
-          <section className="tutorial-modal">
-            <p className="eyebrow">はじめてガイド {Math.min(state.tutorialStep + 1, TUTORIAL_STEPS.length)} / {TUTORIAL_STEPS.length}</p>
-            <div className="tutorial-one-step" aria-live="polite">
-              <b>{Math.min(state.tutorialStep + 1, TUTORIAL_STEPS.length)}</b>
-              <h2>{TUTORIAL_STEPS[Math.min(state.tutorialStep, TUTORIAL_STEPS.length - 1)].title}</h2>
-              <p>{TUTORIAL_STEPS[Math.min(state.tutorialStep, TUTORIAL_STEPS.length - 1)].copy}</p>
-            </div>
-            <button
-              className="primary-button tutorial-start"
-              onClick={() => {
-                const nextStep = state.tutorialStep + 1;
-                setState((current) => ({ ...current, tutorialStep: nextStep }));
-                if (nextStep >= TUTORIAL_STEPS.length) {
-                  setTutorialOpen(false);
-                  setPanel(null);
-                }
-                playSound("ui");
-              }}
-            >
-              {TUTORIAL_STEPS[Math.min(state.tutorialStep, TUTORIAL_STEPS.length - 1)].action}
-            </button>
-            <button className="tutorial-skip" onClick={() => {
-              setState((current) => ({ ...current, tutorialStep: TUTORIAL_STEPS.length }));
-              setTutorialOpen(false);
-            }}>あとで見る</button>
-          </section>
-        </div>
+      {state.tutorialProgress.step < TUTORIAL_STEPS.length && (
+        <TutorialOverlay
+          progress={state.tutorialProgress}
+          easyMode={state.easyMode}
+          onDismiss={() =>
+            setState((current) => ({
+              ...current,
+              tutorialStep: TUTORIAL_STEPS.length,
+              tutorialProgress: {
+                ...current.tutorialProgress,
+                step: TUTORIAL_STEPS.length,
+              },
+            }))
+          }
+        />
       )}
 
       {activity && (
-        <ActivityOverlay
+        <ActivityOverlayPhase21
           request={activity}
           easyMode={state.easyMode}
           day={state.day}
           alreadyDiscovered={state.discoveredItems.some((id) =>
             id.startsWith(`${activity.item}-`),
           )}
-          onComplete={completeActivity}
+          onResolve={queueActivityResult}
           onCancel={() => setActivity(null)}
         />
       )}
@@ -1025,12 +1084,16 @@ function MenuPanel({
   onTitle,
   easyMode,
   onEasyMode,
+  audioSettings,
+  onAudioSettings,
 }: {
   onSave: () => void;
   onHelp: () => void;
   onTitle: () => void;
   easyMode: boolean;
   onEasyMode: (enabled: boolean) => void;
+  audioSettings: GameState["audioSettings"];
+  onAudioSettings: (settings: GameState["audioSettings"]) => void;
 }) {
   return (
     <>
@@ -1055,6 +1118,31 @@ function MenuPanel({
           <strong>やさしい表示 {easyMode ? "ON" : "OFF"}</strong>
           <span>判定を広くして、読みがなと大きな案内を使います</span>
         </button>
+        <div className="audio-settings-card">
+          <div>
+            <strong>こうか音</strong>
+            <span>{audioSettings.muted ? "音をけしています" : `音量 ${Math.round(audioSettings.effectsVolume * 100)}%`}</span>
+          </div>
+          <button
+            className={audioSettings.muted ? "is-selected" : ""}
+            onClick={() =>
+              onAudioSettings({ ...audioSettings, muted: !audioSettings.muted })
+            }
+          >
+            {audioSettings.muted ? "音を出す" : "音をけす"}
+          </button>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.1"
+            value={audioSettings.effectsVolume}
+            aria-label="こうか音の音量"
+            onChange={(event) =>
+              onAudioSettings({ ...audioSettings, effectsVolume: Number(event.target.value), muted: false })
+            }
+          />
+        </div>
         <button onClick={onTitle}>
           <strong>タイトルにもどる</strong>
           <span>もどる前に自動でセーブします</span>

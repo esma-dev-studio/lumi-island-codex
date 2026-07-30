@@ -38,7 +38,29 @@ export type AnimationName =
   | "pickup"
   | "happy"
   | "surprised"
-  | "blink";
+  | "blink"
+  | "chop"
+  | "mine"
+  | "fish"
+  | "wave";
+
+export interface ResourceState {
+  resourceId: string;
+  state: "available" | "depleted" | "recovering";
+  depletedAt?: number;
+  recoverAt?: number;
+  visualStage: number;
+}
+
+export interface TutorialProgressState {
+  step: number;
+  walkedDistance: number;
+}
+
+export interface AudioSettings {
+  muted: boolean;
+  effectsVolume: number;
+}
 
 export interface Position2D {
   x: number;
@@ -58,13 +80,16 @@ export interface QuestProgress {
 }
 
 export interface GameState {
-  version: 2;
+  version: 3;
   playerPosition: Position2D;
   easyMode: boolean;
   tutorialStep: number;
+  tutorialProgress: TutorialProgressState;
   discoveredItems: string[];
   caughtFish: string[];
-  resourceStates: Record<string, { availableAt: number; visualVariant?: number }>;
+  collectionCounts: Record<string, number>;
+  resourceStates: Record<string, ResourceState>;
+  audioSettings: AudioSettings;
   characterModelId: "mira";
   playSeconds: number;
   inventory: Partial<Record<ItemId, number>>;

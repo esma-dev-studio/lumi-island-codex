@@ -1,0 +1,261 @@
+.collection-panel {
+  padding-top: 0.25rem;
+}
+
+.collection-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.collection-ring {
+  display: grid;
+  place-items: center;
+  width: 5.2rem;
+  height: 5.2rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.collection-ring::before {
+  position: absolute;
+  width: 3.7rem;
+  height: 3.7rem;
+  background: #fffaf0;
+  border-radius: 50%;
+  content: "";
+}
+
+.collection-ring {
+  position: relative;
+}
+
+.collection-ring b {
+  position: relative;
+  z-index: 1;
+  color: #315e57;
+}
+
+.collection-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1.1rem 0;
+  overflow-x: auto;
+}
+
+.collection-tabs button {
+  padding: 0.6rem 0.9rem;
+  color: #5e6e67;
+  background: #eef1e8;
+  border: 1px solid transparent;
+  border-radius: 99px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.collection-tabs button.is-active {
+  color: #fff;
+  background: #397f6e;
+  border-color: #2e6a5d;
+}
+
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+}
+
+.collection-grid article {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 6.2rem;
+  padding: 0.8rem;
+  background: #f3efe4;
+  border: 1px solid #ded5c4;
+  border-radius: 1rem;
+}
+
+.collection-grid article.is-found {
+  background: linear-gradient(145deg, #f9f7ec, #e7f1e5);
+  border-color: #c4d9c5;
+}
+
+.collection-symbol {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  color: #fff6d6;
+  background: linear-gradient(145deg, #6ba697, #2f7169);
+  border-radius: 1rem;
+  font-size: 1.35rem;
+}
+
+.is-missing .collection-symbol {
+  color: #9ba39b;
+  background: #d9ded6;
+  filter: grayscale(1);
+}
+
+.collection-grid h3,
+.collection-grid p {
+  margin: 0;
+}
+
+.collection-grid h3 {
+  color: #244d47;
+  font-size: 0.93rem;
+}
+
+.collection-grid p,
+.collection-grid small {
+  display: block;
+  margin-top: 0.25rem;
+  color: #6a776f;
+  font-size: 0.72rem;
+}
+
+.collection-grid article > b {
+  align-self: start;
+  color: #b07d34;
+  font-size: 0.72rem;
+}
+
+.audio-settings-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem 0.8rem;
+  padding: 0.95rem 1rem;
+  background: #f0f2e9;
+  border: 1px solid #d8ddcd;
+  border-radius: 0.9rem;
+}
+
+.audio-settings-card > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.audio-settings-card strong {
+  color: var(--ink);
+}
+
+.audio-settings-card span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.audio-settings-card button {
+  padding: 0.55rem 0.7rem;
+  color: #315f56;
+  background: #fff;
+  border: 1px solid #cbd8d0;
+  border-radius: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.audio-settings-card input {
+  width: 100%;
+  grid-column: 1 / -1;
+  accent-color: #377e6c;
+}
+
+.game-screen.is-easy .game-tools {
+  transform: translateX(-50%) scale(1.08);
+  transform-origin: bottom center;
+}
+
+.game-screen.is-easy .interaction-hint,
+.game-screen.is-easy .touch-action {
+  font-size: 1.08rem;
+  outline: 4px solid rgba(255, 225, 121, 0.5);
+}
+
+.game-screen.is-easy .interaction-hint {
+  min-width: 13rem;
+  justify-content: center;
+}
+
+.tutorial-coach--easy {
+  border: 3px solid rgba(241, 190, 81, 0.8);
+}
+
+@keyframes phase21-pop {
+  from { opacity: 0; transform: scale(0.55) rotate(-8deg); }
+  to { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@keyframes phase21-float {
+  50% { transform: translateY(-7px) rotate(2deg); }
+}
+
+@keyframes phase21-swim {
+  to { transform: translateX(18px); }
+}
+
+@keyframes phase21-nibble {
+  to { transform: translateY(5px) rotate(6deg); }
+}
+
+@keyframes phase21-bite {
+  to { transform: translateY(8px) scale(0.9); }
+}
+
+@media (max-width: 720px) {
+  .tutorial-coach {
+    top: 5.2rem;
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .tutorial-coach kbd {
+    display: none;
+  }
+
+  .tutorial-coach > button {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .collection-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-card {
+    min-height: 370px;
+    padding-top: 2.6rem;
+  }
+
+  .rock-cracks button,
+  .fish-shadows button {
+    height: 7rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .tutorial-coach {
+    left: 0.65rem;
+    right: 0.65rem;
+    width: auto;
+    transform: none;
+  }
+
+  .tutorial-coach__step {
+    width: 2.8rem;
+    height: 2.8rem;
+  }
+
+  .activity-card {
+    border-radius: 1.45rem;
+  }
+
+  .game-screen.is-easy .game-tools {
+    transform: translateX(-50%) scale(1);
+  }
+}

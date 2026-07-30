@@ -1,0 +1,495 @@
+.tutorial-coach {
+  position: fixed;
+  z-index: 34;
+  left: 50%;
+  top: 6rem;
+  display: grid;
+  grid-template-columns: auto minmax(12rem, 1fr) auto auto;
+  align-items: center;
+  gap: 0.85rem;
+  width: min(720px, calc(100vw - 2rem));
+  padding: 0.8rem 0.9rem;
+  color: #173b39;
+  background: rgba(255, 253, 244, 0.94);
+  border: 1px solid rgba(33, 81, 73, 0.18);
+  border-radius: 1.2rem;
+  box-shadow: 0 18px 55px rgba(13, 48, 48, 0.2);
+  backdrop-filter: blur(18px);
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.tutorial-coach__step {
+  display: grid;
+  place-items: center;
+  width: 3.35rem;
+  height: 3.35rem;
+  color: #fff;
+  background: linear-gradient(145deg, #2e8e7a, #1e645b);
+  border-radius: 1rem;
+  font: 800 1.25rem/1 var(--font-display);
+}
+
+.tutorial-coach__step small {
+  font-size: 0.58rem;
+  opacity: 0.72;
+}
+
+.tutorial-coach > div:nth-child(2) > span {
+  color: #8a6a3a;
+  font-size: 0.69rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.tutorial-coach h2 {
+  margin: 0.15rem 0 0;
+  font-size: clamp(0.95rem, 2.2vw, 1.25rem);
+}
+
+.tutorial-coach kbd {
+  min-width: 5.5rem;
+  padding: 0.6rem 0.75rem;
+  color: #1f4d47;
+  background: #e3f3ea;
+  border: 1px solid #acd1bd;
+  border-radius: 0.75rem;
+  box-shadow: inset 0 -2px 0 #8ebda7;
+  font: 800 0.8rem/1 var(--font-body);
+  text-align: center;
+}
+
+.tutorial-coach > button {
+  padding: 0.55rem 0.7rem;
+  color: #766b58;
+  background: transparent;
+  border: 0;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tutorial-distance {
+  width: min(14rem, 48vw);
+  height: 0.35rem;
+  margin-top: 0.45rem;
+  overflow: hidden;
+  background: #dce7dc;
+  border-radius: 99px;
+}
+
+.tutorial-distance i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #5eb692, #efb85d);
+  transition: width 180ms ease;
+}
+
+.activity-scrim {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(226, 244, 218, 0.24), transparent 35%),
+    rgba(8, 32, 35, 0.66);
+  backdrop-filter: blur(10px);
+}
+
+.activity-card {
+  position: relative;
+  width: min(540px, 94vw);
+  min-height: 400px;
+  padding: 2.2rem clamp(1.25rem, 4vw, 2.5rem);
+  overflow: hidden;
+  color: #173a38;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.85), transparent 42%),
+    #fffaf0;
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  border-radius: 2rem;
+  box-shadow: 0 34px 100px rgba(4, 31, 32, 0.38);
+  text-align: center;
+}
+
+.activity-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 0.48rem;
+  background: linear-gradient(90deg, #5aa58b, #efb85d);
+  content: "";
+}
+
+.activity-card--stone::before {
+  background: linear-gradient(90deg, #6b7e87, #b8a17c);
+}
+
+.activity-card--fishing::before {
+  background: linear-gradient(90deg, #277b94, #66c5c1);
+}
+
+.activity-close {
+  position: absolute;
+  z-index: 2;
+  top: 1rem;
+  right: 1rem;
+  display: grid;
+  place-items: center;
+  width: 2.55rem;
+  height: 2.55rem;
+  color: #47605b;
+  background: rgba(226, 237, 228, 0.9);
+  border: 0;
+  border-radius: 50%;
+  font-size: 1.35rem;
+  cursor: pointer;
+}
+
+.activity-card h2 {
+  margin: 0.25rem 0 0.7rem;
+  font: 800 clamp(1.55rem, 5vw, 2.2rem)/1.25 var(--font-display);
+}
+
+.activity-instruction {
+  margin: 0 auto 1.25rem;
+  color: #5a6c64;
+  font-weight: 700;
+}
+
+.easy-badge {
+  position: absolute;
+  top: 1.1rem;
+  left: 1.2rem;
+  padding: 0.42rem 0.7rem;
+  color: #276758;
+  background: #dff4e7;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.activity-action {
+  min-width: min(18rem, 100%);
+  min-height: 3.8rem;
+  margin-top: 1rem;
+  padding: 0.85rem 1.3rem;
+  color: #fffdf5;
+  background: linear-gradient(145deg, #2d8d77, #21695f);
+  border: 0;
+  border-radius: 1.15rem;
+  box-shadow: 0 7px 0 #174f49, 0 14px 28px rgba(30, 96, 86, 0.22);
+  font: 800 1.08rem/1 var(--font-body);
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.activity-action:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 9px 0 #174f49, 0 16px 30px rgba(30, 96, 86, 0.26);
+}
+
+.activity-action:active:not(:disabled) {
+  transform: translateY(5px);
+  box-shadow: 0 2px 0 #174f49;
+}
+
+.activity-action:disabled {
+  color: #778782;
+  background: #d9dfd9;
+  box-shadow: 0 5px 0 #b4bfba;
+  cursor: not-allowed;
+}
+
+.activity-action kbd {
+  margin-right: 0.55rem;
+  padding: 0.25rem 0.42rem;
+  color: #214e47;
+  background: #fff;
+  border-radius: 0.35rem;
+}
+
+.wood-hit-count {
+  display: flex;
+  justify-content: center;
+  gap: 0.7rem;
+  margin: 1.4rem 0;
+}
+
+.wood-hit-count span {
+  display: grid;
+  place-items: center;
+  width: 3.2rem;
+  height: 3.2rem;
+  color: #876946;
+  background: #efe5cf;
+  border: 2px solid #d2bb91;
+  border-radius: 50%;
+  font-weight: 900;
+}
+
+.wood-hit-count span[class^="is-"] {
+  color: #fff;
+  background: #64a982;
+  border-color: #3c8063;
+  animation: phase21-pop 240ms ease-out;
+}
+
+.wood-hit-count .is-great {
+  background: #e4a742;
+  border-color: #b77b21;
+}
+
+.timing-track {
+  position: relative;
+  height: 2rem;
+  margin: 1.8rem auto 0.7rem;
+  overflow: hidden;
+  background: #e5e1d5;
+  border: 1px solid #cfc6b2;
+  border-radius: 99px;
+  box-shadow: inset 0 2px 5px rgba(43, 57, 49, 0.12);
+}
+
+.timing-track > span,
+.timing-track > b {
+  position: absolute;
+  top: 0;
+  height: 100%;
+}
+
+.timing-good {
+  background: #90caa9;
+}
+
+.timing-great {
+  background: #f5c867;
+}
+
+.timing-track > b {
+  z-index: 2;
+  width: 0.35rem;
+  background: #fff;
+  box-shadow: 0 0 0 2px #174f49, 0 0 12px #fff;
+  transform: translateX(-50%);
+}
+
+.rock-cracks {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.8rem;
+  margin: 1.7rem 0;
+}
+
+.rock-cracks button {
+  position: relative;
+  height: 9rem;
+  overflow: hidden;
+  color: #405057;
+  background: linear-gradient(145deg, #c8d0cd, #7f9292);
+  border: 3px solid rgba(255, 255, 255, 0.55);
+  border-radius: 46% 52% 44% 56%;
+  box-shadow: 0 8px 0 #526768;
+  cursor: pointer;
+}
+
+.rock-cracks button:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+
+.rock-cracks i,
+.rock-cracks i::before,
+.rock-cracks i::after {
+  position: absolute;
+  display: block;
+  width: 0.22rem;
+  background: rgba(255, 239, 174, calc(0.3 + var(--crack-strength)));
+  border-radius: 99px;
+  box-shadow: 0 0 14px #ffe6a0;
+  content: "";
+}
+
+.rock-cracks i {
+  top: 1.4rem;
+  left: 50%;
+  height: calc(3.4rem + 2rem * var(--crack-strength));
+  transform: rotate(-7deg);
+}
+
+.rock-cracks i::before {
+  top: 1.7rem;
+  height: 2.5rem;
+  transform: rotate(55deg);
+  transform-origin: top;
+}
+
+.rock-cracks i::after {
+  top: 2.5rem;
+  height: 1.9rem;
+  transform: rotate(-50deg);
+  transform-origin: top;
+}
+
+.rock-cracks span {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.5rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 900;
+}
+
+.discovery-orb,
+.fish-silhouette {
+  display: grid;
+  place-items: center;
+  width: 7.2rem;
+  height: 7.2rem;
+  margin: 1.1rem auto;
+  color: #fff4cf;
+  background:
+    radial-gradient(circle at 35% 32%, #fff, transparent 9%),
+    linear-gradient(145deg, #efb85d, #70aa7f);
+  border: 4px solid rgba(255, 255, 255, 0.72);
+  border-radius: 50%;
+  box-shadow: 0 12px 35px rgba(93, 127, 80, 0.28);
+  font-size: 3.2rem;
+  animation: phase21-float 2.4s ease-in-out infinite;
+}
+
+.discovery-copy {
+  padding: 0.9rem 1rem;
+  background: rgba(227, 238, 221, 0.56);
+  border-radius: 1rem;
+}
+
+.discovery-copy h3 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.discovery-copy p {
+  margin: 0.5rem 0 0;
+  color: #5c6f66;
+}
+
+ruby rt {
+  color: #79684c;
+  font-size: 0.56em;
+  font-weight: 700;
+}
+
+.fish-shadows {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.7rem;
+  padding: 1.1rem;
+  background: linear-gradient(#7cc6c2, #4d9ca8);
+  border-radius: 1.4rem;
+  box-shadow: inset 0 5px 15px rgba(16, 79, 88, 0.2);
+}
+
+.fish-shadows button {
+  height: 9rem;
+  color: rgba(20, 73, 77, 0.42);
+  background: rgba(222, 248, 236, 0.22);
+  border: 2px solid rgba(255, 255, 255, 0.32);
+  border-radius: 1rem;
+  cursor: pointer;
+}
+
+.fish-shadows button:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.fish-shadows .has-shadow i {
+  display: inline-block;
+  color: #1f5d62;
+  font-size: 2.1rem;
+  animation: phase21-swim 1.8s ease-in-out infinite alternate;
+}
+
+.fishing-water {
+  position: relative;
+  height: 9.5rem;
+  margin: 1.2rem 0;
+  overflow: hidden;
+  background:
+    repeating-radial-gradient(ellipse at 50% 70%, transparent 0 18px, rgba(220, 255, 248, 0.2) 20px 22px),
+    linear-gradient(#74c2c3, #37869a);
+  border-radius: 1.3rem;
+}
+
+.fishing-line {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 54%;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.fishing-bobber {
+  position: absolute;
+  top: 48%;
+  left: calc(50% - 0.55rem);
+  width: 1.1rem;
+  height: 1.45rem;
+  background: linear-gradient(#ec7265 50%, #fff 50%);
+  border-radius: 55% 55% 45% 45%;
+  box-shadow: 0 3px 8px rgba(10, 63, 70, 0.35);
+}
+
+.fishing-water.is-nibble .fishing-bobber {
+  animation: phase21-nibble 210ms ease-in-out infinite alternate;
+}
+
+.fishing-water.is-bite {
+  outline: 5px solid rgba(255, 219, 105, 0.72);
+}
+
+.fishing-water.is-bite .fishing-bobber {
+  top: 66%;
+  animation: phase21-bite 400ms ease-in-out infinite alternate;
+}
+
+.fishing-water.is-reeling .fishing-bobber {
+  top: 28%;
+}
+
+.activity-result {
+  display: grid;
+  place-items: center;
+  min-height: 15rem;
+  padding-top: 1rem;
+}
+
+.activity-result > span {
+  color: #e4aa46;
+  font-size: 3.8rem;
+  filter: drop-shadow(0 5px 10px rgba(208, 150, 45, 0.25));
+  animation: phase21-pop 430ms ease-out;
+}
+
+.activity-result h3 {
+  margin: 0.3rem 0;
+  font-size: 1.55rem;
+}
+
+.tool-icon--book {
+  position: relative;
+  width: 1.45rem;
+  height: 1.25rem;
+  border: 2px solid currentColor;
+  border-radius: 0.25rem 0.42rem 0.42rem 0.25rem;
+}
+
+.tool-icon--book::before {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: 46%;
+  width: 2px;
+  background: currentColor;
+  content: "";
+}

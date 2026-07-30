@@ -26,9 +26,22 @@ sound-effect assets.
 
 ## Sound effects
 
-- Assets: short interaction, gathering, and fishing tones
-- Author: original Web Audio synthesis defined in `src/audio/AudioManifest.ts`
-- Source URL: not applicable
-- License: original project code
-- Production use: yes
+- Pack: `100 CC0 SFX #2`
+- Author: rubberduck
+- Source: https://opengameart.org/content/100-cc0-sfx-2
+- License: CC0 1.0
+- Modifications: selected sounds were renamed by action and copied as OGG
+  files under `public/assets/audio/cc0-sfx-100-v2/`; playback gain is adjusted
+  by `src/audio/FileAudioManifest.ts`
+- Production use: yes, for UI, pickup, crafting, placement, requests,
+  footsteps, wood, stone, foraging, water, fish bite, and catch actions
 
+The earlier oscillator-based sound implementation was removed in Phase 2.1.
+
+## Social sharing image
+
+- Asset: `public/og.png`
+- Author: OpenAI ImageGen, directed and selected for this project
+- Source URL: not applicable; generated specifically for Lumi Island
+- Modifications: center-cropped and resized to 1200 x 630 pixels
+- Production use: social preview metadata only

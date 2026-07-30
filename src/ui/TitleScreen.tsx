@@ -5,11 +5,13 @@ export function TitleScreen({
   onNewGame,
   onContinue,
   onShowcase,
+  showShowcase = false,
 }: {
   canContinue: boolean;
   onNewGame: () => void;
   onContinue: () => void;
   onShowcase: () => void;
+  showShowcase?: boolean;
 }) {
   return (
     <main className="title-screen">
@@ -50,9 +52,11 @@ export function TitleScreen({
             </button>
           )}
         </div>
-        <button className="text-button" onClick={onShowcase}>
-          キャラクターをくわしく見る →
-        </button>
+        {showShowcase && (
+          <button className="text-button" onClick={onShowcase}>
+            キャラクター確認（開発用） →
+          </button>
+        )}
       </section>
 
       <footer className="title-footer">
