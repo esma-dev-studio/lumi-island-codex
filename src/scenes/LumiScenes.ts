@@ -14,14 +14,32 @@ import {
   TransformNode,
   Vector3,
 } from "@babylonjs/core";
-import { createCharacter } from "@/src/characters/CharacterFactory";
-import { CHARACTERS, ITEMS } from "@/src/data/gameData";
+import {
+  CHARACTER_ORDER,
+  getCharacterConfig,
+  type CharacterId,
+} from "@/src/characters/CharacterConfig";
+import { CharacterController } from "@/src/characters/CharacterController";
+import { createCharacterView } from "@/src/characters/CharacterView";
+import type {
+  CharacterLoadStatus,
+  CharacterMetrics,
+} from "@/src/characters/CharacterView";
+import { ITEMS } from "@/src/data/gameData";
 import { cameraRelativeMovement } from "@/src/world/CameraRelativeMovement";
 import {
   resolveWorldMovement,
+  resolveNpcMovement,
   STATIC_WORLD_COLLIDERS,
   type WorldCollider,
 } from "@/src/world/CollisionWorld";
+import {
+  HOUSE_LAYOUT,
+  POND_LAYOUT,
+  ROCK_LAYOUT,
+  TREE_LAYOUT,
+} from "@/src/world/IslandLayout";
+import type { ActivityRequest } from "@/src/ui/minigames/ActivityOverlay";
 import {
   rotatedFootprint,
   validateFurniturePlacement,
@@ -43,7 +61,7 @@ export interface InteractionHint {
 
 export interface IslandSceneCallbacks {
   onHint: (hint: InteractionHint | null) => void;
-  onGather: (item: ResourceId) => void;
+  onActivity: (activity: ActivityRequest) => void;
   onTalk: (resident: "ノラ" | "カイ" | "セラ") => void;
   onEditFurniture: (id: string) => void;
   onPlacementPreview: (preview: PlacementPreview | null) => void;
@@ -192,7 +210,7 @@ function createIslandBase(scene: Scene): void {
     ),
     pondMat,
   );
-  pond.position.set(-8, 0.43, -2);
+  pond.position.set(POND_LAYOUT.position.x, 0.43, POND_LAYOUT.position.z);
   pond.scaling.z = 0.7;
 
   const rockMat = makeMaterial(scene, "pond-stone", palette.stone);
@@ -207,9 +225,9 @@ function createIslandBase(scene: Scene): void {
       rockMat,
     );
     stone.position.set(
-      -8 + Math.cos(angle) * 3.32,
+      POND_LAYOUT.position.x + Math.cos(angle) * 3.32,
       0.46,
-      -2 + Math.sin(angle) * 2.34,
+      POND_LAYOUT.position.z + Math.sin(angle) * 2.34,
     );
     stone.scaling.set(1 + (index % 3) * 0.16, 0.6, 0.85);
     stone.rotation.y = angle;
@@ -680,34 +698,28 @@ export function createIslandScene(
   };
 
   createIslandBase(scene);
-  const occluderNodes: TransformNode[] = [
-    createHouse(scene, new Vector3(0, 0.42, 8.7), 0, mats.cream, mats.wood, mats.roof, "mira"),
-    createHouse(scene, new Vector3(-10.5, 0.42, 5.4), 0.55, mats.cream, mats.wood, mats.roof, "nolla"),
-    createHouse(scene, new Vector3(10.5, 0.42, 3.9), -0.55, mats.cream, mats.wood, mats.roof, "kai"),
-    createHouse(scene, new Vector3(5.8, 0.42, -7.8), 2.55, mats.cream, mats.wood, mats.roof, "sera"),
-  ];
+  const occluderNodes: TransformNode[] = HOUSE_LAYOUT.map((house) =>
+    createHouse(
+      scene,
+      new Vector3(house.position.x, house.position.y, house.position.z),
+      house.rotation,
+      mats.cream,
+      mats.wood,
+      mats.roof,
+      house.id.replace("house-", ""),
+    ),
+  );
   const ghostValid = makeMaterial(scene, "placement-valid", "#65b875", "#173c25");
   const ghostInvalid = makeMaterial(scene, "placement-invalid", "#d65d51", "#501511");
   ghostValid.alpha = 0.58;
   ghostInvalid.alpha = 0.62;
 
-  const treePositions = [
-    [-13, -4],
-    [-11, -7],
-    [-7, -8.8],
-    [-4, -9.4],
-    [10.8, -5.8],
-    [13.2, -2.5],
-    [-14, 1],
-    [14.5, 2],
-    [-7.7, 7.6],
-  ];
-  const rockPositions = [
-    [-5.3, 4.5],
-    [8, 7],
-    [11.4, -0.8],
-    [-3, -7.2],
-  ];
+  const treePositions = TREE_LAYOUT.map(
+    (tree) => [tree.position.x, tree.position.z] as const,
+  );
+  const rockPositions = ROCK_LAYOUT.map(
+    (rock) => [rock.position.x, rock.position.z] as const,
+  );
   const berryPositions = [
     [-7.5, 1.6],
     [5, 4.9],
@@ -843,24 +855,31 @@ export function createIslandScene(
     respawnAt: 0,
   });
 
-  const player = createCharacter(
+  const player = createCharacterView(
     scene,
-    CHARACTERS[0],
+    getCharacterConfig("mira"),
     new Vector3(startPosition.x, 0.44, startPosition.z),
     0.78,
+    shadows,
   );
   player.root.rotation.y = Math.PI;
-  player.root.getChildMeshes().forEach((mesh) => shadows.addShadowCaster(mesh));
+  const playerMotion = new CharacterController();
+  playerMotion.setFacing(Math.PI);
 
   const npcData = [
-    { palette: CHARACTERS[1], position: new Vector3(-8.7, 0.44, 4.4), resident: "ノラ" as const },
-    { palette: CHARACTERS[2], position: new Vector3(8.8, 0.44, 3.2), resident: "カイ" as const },
-    { palette: CHARACTERS[3], position: new Vector3(4.8, 0.44, -5.6), resident: "セラ" as const },
+    { id: "nolla" as const, position: new Vector3(-8.7, 0.44, 4.4), resident: "ノラ" as const },
+    { id: "kai" as const, position: new Vector3(8.8, 0.44, 3.2), resident: "カイ" as const },
+    { id: "sera" as const, position: new Vector3(4.8, 0.44, -5.6), resident: "セラ" as const },
   ];
   const npcs = npcData.map((npc, index) => {
-    const rig = createCharacter(scene, npc.palette, npc.position, 0.76);
+    const rig = createCharacterView(
+      scene,
+      getCharacterConfig(npc.id),
+      npc.position,
+      0.76,
+      shadows,
+    );
     rig.root.rotation.y = (index - 1) * 0.7;
-    rig.root.getChildMeshes().forEach((mesh) => shadows.addShadowCaster(mesh));
     interactables.push({
       node: rig.root,
       kind: "resident",
@@ -875,6 +894,7 @@ export function createIslandScene(
       home: npc.position.clone(),
       phase: index * 2.1,
       resident: npc.resident,
+      actionUntil: 0,
     };
   });
 
@@ -885,12 +905,15 @@ export function createIslandScene(
   const keys = new Set<string>();
   let paused = false;
   let closest: Interactable | null = null;
-  let elapsed = 0;
+  let realElapsedTime = 0;
+  let gameElapsedTime = 0;
+  let animationElapsedTime = 0;
+  let playerAction: AnimationName | null = null;
+  let playerActionUntil = 0;
   let lastFpsUpdate = 0;
   let lastPositionUpdate = 0;
   let currentDayMinute = 8 * 60;
   let footstepTimer = 0;
-  const velocity = new Vector3();
   const furnitureMeshes = new Map<string, TransformNode>();
   const furnitureTargets = new Map<string, Interactable>();
   let currentFurniture = [...initialFurniture];
@@ -961,8 +984,13 @@ export function createIslandScene(
   window.addEventListener("keyup", onKeyUp);
   window.addEventListener("blur", onBlur);
 
+  const burstMaterialCache = new Map<string, StandardMaterial>();
   const burst = (position: Vector3, color: string) => {
-    const mat = makeMaterial(scene, `burst-${performance.now()}`, color, color);
+    let mat = burstMaterialCache.get(color);
+    if (!mat) {
+      mat = makeMaterial(scene, `burst-${burstMaterialCache.size}`, color, color);
+      burstMaterialCache.set(color, mat);
+    }
     const particles: Mesh[] = [];
     for (let index = 0; index < 7; index += 1) {
       const particle = setMaterial(
@@ -1000,6 +1028,24 @@ export function createIslandScene(
     });
   };
 
+  const reactToGatherTarget = (target: Interactable) => {
+    const original = target.node.scaling.clone();
+    const isSolid = target.item === "wood" || target.item === "stone";
+    target.node.scaling.y = original.y * (isSolid ? 0.9 : 1.12);
+    target.node.rotation.z += target.item === "stone" ? 0.025 : -0.045;
+    let elapsed = 0;
+    const observer = scene.onBeforeRenderObservable.add(() => {
+      elapsed += Math.min(0.05, engine.getDeltaTime() / 1000);
+      const amount = Math.min(1, elapsed / 0.72);
+      target.node.scaling = Vector3.Lerp(target.node.scaling, original, amount);
+      if (amount >= 1) {
+        target.node.scaling.copyFrom(original);
+        target.node.rotation.z = 0;
+        scene.onBeforeRenderObservable.remove(observer);
+      }
+    });
+  };
+
   const interact = () => {
     if (!closest || !closest.available) return;
     if (closest.kind === "furniture" && closest.furnitureId) {
@@ -1009,16 +1055,31 @@ export function createIslandScene(
     if (closest.kind === "resident" && closest.resident) {
       callbacks.onTalk(closest.resident);
       const npc = npcs.find((entry) => entry.resident === closest?.resident);
-      npc?.rig.setAnimation("talk", elapsed);
+      if (npc) {
+        npc.actionUntil = gameElapsedTime + 2.2;
+        npc.rig.setAnimation("talk", 1, true);
+      }
       return;
     }
     if (!closest.item) return;
-    closest.available = false;
-    closest.respawnAt = performance.now() + 26000;
-    closest.node.setEnabled(false);
-    player.setAnimation("pickup", elapsed);
+    playerAction = "pickup";
+    playerActionUntil = gameElapsedTime + 1.05;
+    playerMotion.setInteraction("pickup");
+    player.setAnimation("pickup", 1, true);
+    reactToGatherTarget(closest);
     burst(closest.node.position.add(new Vector3(0, 0.8, 0)), ITEMS[closest.item].color);
-    callbacks.onGather(closest.item);
+    callbacks.onActivity({
+      kind:
+        closest.item === "wood"
+          ? "wood"
+          : closest.item === "stone"
+            ? "stone"
+            : closest.item === "fish"
+              ? "fishing"
+              : "forage",
+      item: closest.item,
+      sourceId: closest.node.name,
+    });
     closest = null;
     callbacks.onHint(null);
   };
@@ -1061,10 +1122,20 @@ export function createIslandScene(
 
   scene.onBeforeRenderObservable.add(() => {
     const delta = Math.min(0.05, engine.getDeltaTime() / 1000);
-    elapsed += delta;
+    realElapsedTime += delta;
+    scene.metadata = {
+      ...(scene.metadata ?? {}),
+      phase2Timing: { realElapsedTime, gameElapsedTime, animationElapsedTime },
+    };
     if (paused) {
-      player.setAnimation("idle", elapsed);
+      playerMotion.stop();
       return;
+    }
+    gameElapsedTime += delta;
+    animationElapsedTime += delta;
+    if (playerAction && gameElapsedTime >= playerActionUntil) {
+      playerAction = null;
+      playerMotion.setInteraction(null);
     }
 
     const horizontal =
@@ -1081,24 +1152,19 @@ export function createIslandScene(
     });
     const input = new Vector3(movement.x, 0, movement.z);
     const running = keys.has("ShiftLeft") || keys.has("ShiftRight");
-    const targetSpeed = running ? 6.2 : 3.8;
+    const motion = playerMotion.update(
+      { x: input.x, z: input.z },
+      running,
+      delta,
+    );
+    player.root.rotation.y = motion.facing;
+    player.setAnimation(motion.animation, running ? 1.08 : 1);
+    player.update(delta);
     if (input.lengthSquared() > 0) {
-      input.normalize();
-      const targetVelocity = input.scale(targetSpeed);
-      velocity.x += (targetVelocity.x - velocity.x) * Math.min(1, delta * 8);
-      velocity.z += (targetVelocity.z - velocity.z) * Math.min(1, delta * 8);
-      const targetRotation = Math.atan2(input.x, input.z);
-      let rotationDelta = targetRotation - player.root.rotation.y;
-      rotationDelta = Math.atan2(Math.sin(rotationDelta), Math.cos(rotationDelta));
-      player.root.rotation.y += rotationDelta * Math.min(1, delta * 10);
-      player.setAnimation(running ? "run" : "walk", elapsed);
       footstepTimer -= delta;
       if (footstepTimer <= 0) {
         footstepTimer = running ? 0.24 : 0.36;
       }
-    } else {
-      velocity.scaleInPlace(Math.max(0, 1 - delta * 8));
-      player.setAnimation("idle", elapsed);
     }
 
     const currentPosition = {
@@ -1106,8 +1172,8 @@ export function createIslandScene(
       z: player.root.position.z,
     };
     const desiredPosition = {
-      x: currentPosition.x + velocity.x * delta,
-      z: currentPosition.z + velocity.z * delta,
+      x: currentPosition.x + motion.velocity.x * delta,
+      z: currentPosition.z + motion.velocity.z * delta,
     };
     const dynamicColliders: WorldCollider[] = [
       ...STATIC_WORLD_COLLIDERS,
@@ -1147,7 +1213,7 @@ export function createIslandScene(
         resolvedPosition.z - desiredPosition.z,
       ) > 0.04
     ) {
-      velocity.scaleInPlace(0.35);
+      playerMotion.stop();
     }
     player.root.position.y = 0.44;
 
@@ -1255,12 +1321,11 @@ export function createIslandScene(
 
     let nextClosest: Interactable | null = null;
     let closestDistance = Number.POSITIVE_INFINITY;
-    const now = performance.now();
     const nearbyTargets = placementMode
       ? []
       : [...interactables, ...furnitureTargets.values()];
     for (const target of nearbyTargets) {
-      if (!target.available && target.respawnAt && now >= target.respawnAt) {
+      if (!target.available && target.respawnAt && gameElapsedTime >= target.respawnAt) {
         target.available = true;
         target.respawnAt = 0;
         target.node.setEnabled(true);
@@ -1286,7 +1351,13 @@ export function createIslandScene(
                   ? "はなす"
                   : closest.kind === "furniture"
                     ? "ならべかえる"
-                    : "あつめる",
+                    : closest.item === "fish"
+                      ? "つりをする"
+                      : closest.item === "wood"
+                        ? "えだを集める"
+                        : closest.item === "stone"
+                          ? "石をさがす"
+                          : "そっとひろう",
             }
           : null,
       );
@@ -1296,21 +1367,67 @@ export function createIslandScene(
       const radius = 0.75 + index * 0.15;
       const target = npc.home.add(
         new Vector3(
-          Math.sin(elapsed * 0.18 + npc.phase) * radius,
+          Math.sin(gameElapsedTime * 0.18 + npc.phase) * radius,
           0,
-          Math.cos(elapsed * 0.16 + npc.phase) * radius,
+          Math.cos(gameElapsedTime * 0.16 + npc.phase) * radius,
         ),
       );
       const direction = target.subtract(npc.rig.root.position);
       direction.y = 0;
       if (direction.lengthSquared() > 0.05) {
         direction.normalize();
-        npc.rig.root.position.addInPlace(direction.scale(delta * 0.35));
+        const currentNpcPosition = { x: npc.rig.root.position.x, z: npc.rig.root.position.z };
+        const desiredNpcPosition = {
+          x: currentNpcPosition.x + direction.x * delta * 0.35,
+          z: currentNpcPosition.z + direction.z * delta * 0.35,
+        };
+        const furnitureColliders: WorldCollider[] = currentFurniture.map((item) => {
+          const footprint = rotatedFootprint(item.type, item.rotation);
+          return {
+            kind: "box",
+            id: `npc-furniture-${item.id}`,
+            x: item.position.x,
+            z: item.position.z,
+            halfWidth: footprint.halfWidth,
+            halfDepth: footprint.halfDepth,
+            rotation: item.rotation,
+          };
+        });
+        const resolvedNpcPosition = resolveNpcMovement(
+          currentNpcPosition,
+          desiredNpcPosition,
+          0.48,
+          [...STATIC_WORLD_COLLIDERS, ...furnitureColliders],
+          [
+            {
+              id: "player",
+              x: player.root.position.x,
+              z: player.root.position.z,
+              radius: 0.48,
+            },
+            ...npcs
+              .filter((other) => other !== npc)
+              .map((other, otherIndex) => ({
+                id: `other-npc-${otherIndex}`,
+                x: other.rig.root.position.x,
+                z: other.rig.root.position.z,
+                radius: 0.48,
+              })),
+          ],
+        );
+        npc.rig.root.position.x = resolvedNpcPosition.x;
+        npc.rig.root.position.z = resolvedNpcPosition.z;
         npc.rig.root.rotation.y = Math.atan2(direction.x, direction.z);
-        npc.rig.setAnimation("walk", elapsed, 0.38);
+        npc.rig.setAnimation(
+          gameElapsedTime < npc.actionUntil ? "talk" : "walk",
+          gameElapsedTime < npc.actionUntil ? 1 : 0.82,
+        );
       } else {
-        npc.rig.setAnimation("idle", elapsed);
+        npc.rig.setAnimation(
+          gameElapsedTime < npc.actionUntil ? "talk" : "idle",
+        );
       }
+      npc.rig.update(delta);
       npc.rig.root.position.y = 0.44;
     });
 
@@ -1343,7 +1460,7 @@ export function createIslandScene(
       callbacks.onFps(Math.round(engine.getFps()));
     }
     ripple.rotation.y += delta * 0.3;
-    const pulse = 1 + Math.sin(elapsed * 2) * 0.07;
+    const pulse = 1 + Math.sin(animationElapsedTime * 2) * 0.07;
     ripple.scaling.x = pulse;
     ripple.scaling.z = 0.65 * pulse;
   });
@@ -1378,13 +1495,20 @@ export interface ShowcaseController {
   scene: Scene;
   selectCharacter: (index: number) => void;
   setAnimation: (animation: AnimationName) => void;
-  setTime: (time: "day" | "night") => void;
+  setTime: (time: ShowcaseTime) => void;
+  setView: (view: ShowcaseView) => void;
+  setCompare: (enabled: boolean) => void;
   dispose: () => void;
 }
+
+export type ShowcaseTime = "day" | "evening" | "night";
+export type ShowcaseView = "front" | "angle" | "side" | "back";
 
 export function createShowcaseScene(
   canvas: HTMLCanvasElement,
   onFps: (fps: number) => void,
+  onMetrics?: (metrics: CharacterMetrics) => void,
+  onStatus?: (status: CharacterLoadStatus) => void,
 ): ShowcaseController {
   const engine = new Engine(canvas, true, { antialias: true });
   engine.setHardwareScalingLevel(Math.min(1.3, 1 / window.devicePixelRatio));
@@ -1394,11 +1518,11 @@ export function createShowcaseScene(
     "showcase-camera",
     -Math.PI / 2,
     1.38,
-    7.7,
+    6.35,
     new Vector3(0, 1.8, 0),
     scene,
   );
-  camera.lowerRadiusLimit = 5.5;
+  camera.lowerRadiusLimit = 4.9;
   camera.upperRadiusLimit = 10;
   camera.attachControl(canvas, true);
   const hemi = new HemisphericLight("showcase-fill", new Vector3(0, 1, 0), scene);
@@ -1425,21 +1549,42 @@ export function createShowcaseScene(
   floor.position.y = -0.12;
   floor.receiveShadows = true;
 
-  const rigs = CHARACTERS.map((character, index) => {
-    const rig = createCharacter(scene, character, new Vector3(0, 0, 0), 0.93);
+  const loadStatus = new Map<CharacterId, CharacterLoadStatus>();
+  const rigs = CHARACTER_ORDER.map((characterId, index) => {
+    const rig = createCharacterView(
+      scene,
+      getCharacterConfig(characterId),
+      new Vector3(0, 0, 0),
+      0.93,
+      shadow,
+      (status) => {
+        loadStatus.set(characterId, status);
+        if (index === 0) onStatus?.(status);
+      },
+    );
     rig.root.rotation.y = Math.PI;
-    rig.root.setEnabled(index === 0);
+    rig.setEnabled(index === 0);
     return rig;
   });
   let selected = 0;
   let animation: AnimationName = "idle";
-  let elapsed = 0;
+  let compare = false;
   let lastFps = 0;
+
+  const reportSelected = () => {
+    onStatus?.(rigs[selected].getStatus());
+    onMetrics?.(rigs[selected].getMetrics());
+  };
+  void rigs[0].ready.then(reportSelected);
 
   engine.runRenderLoop(() => {
     const delta = Math.min(0.05, engine.getDeltaTime() / 1000);
-    elapsed += delta;
-    rigs[selected].setAnimation(animation, elapsed);
+    rigs[selected].setAnimation(animation);
+    rigs[selected].update(delta);
+    if (compare && selected !== 1) {
+      rigs[1].setAnimation("idle");
+      rigs[1].update(delta);
+    }
     lastFps += delta;
     if (lastFps >= 1) {
       lastFps = 0;
@@ -1453,9 +1598,10 @@ export function createShowcaseScene(
   return {
     scene,
     selectCharacter: (index) => {
-      rigs[selected].root.setEnabled(false);
+      rigs[selected].setEnabled(false);
       selected = index;
-      rigs[selected].root.setEnabled(true);
+      rigs[selected].setEnabled(true);
+      void rigs[selected].ready.then(reportSelected);
     },
     setAnimation: (next) => {
       animation = next;
@@ -1464,13 +1610,48 @@ export function createShowcaseScene(
       if (time === "day") {
         hemi.intensity = 0.92;
         key.intensity = 1.4;
+        key.diffuse = Color3.FromHexString("#fff4d8");
         scene.clearColor = Color4.FromHexString("#dfd5bd00");
+      } else if (time === "evening") {
+        hemi.intensity = 0.58;
+        key.intensity = 0.95;
+        key.diffuse = Color3.FromHexString("#eab17d");
+        scene.clearColor = Color4.FromHexString("#806c5b00");
       } else {
         hemi.intensity = 0.35;
         key.intensity = 0.6;
         key.diffuse = Color3.FromHexString("#8fb0bd");
         scene.clearColor = Color4.FromHexString("#203a4200");
       }
+    },
+    setView: (view) => {
+      camera.alpha =
+        view === "front"
+          ? -Math.PI / 2
+          : view === "angle"
+            ? -Math.PI / 4
+            : view === "side"
+              ? 0
+              : Math.PI / 2;
+    },
+    setCompare: (enabled) => {
+      compare = enabled;
+      rigs.forEach((rig) => rig.setEnabled(false));
+      rigs.forEach((rig) => {
+        rig.root.position.x = 0;
+      });
+      if (enabled) {
+        selected = 0;
+        rigs[0].root.position.x = -1.15;
+        rigs[1].root.position.x = 1.15;
+        rigs[0].setEnabled(true);
+        rigs[1].setEnabled(true);
+        camera.radius = 7.4;
+      } else {
+        rigs[selected].setEnabled(true);
+        camera.radius = 6.35;
+      }
+      reportSelected();
     },
     dispose: () => {
       window.removeEventListener("resize", resize);

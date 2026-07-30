@@ -56,8 +56,8 @@ export function TitleScreen({
       </section>
 
       <footer className="title-footer">
-        <span>WASDで歩く</span>
-        <span>Eで調べる</span>
+        <span>矢印で歩く</span>
+        <span>大きなボタンで調べる</span>
         <span>オートセーブ</span>
       </footer>
     </main>

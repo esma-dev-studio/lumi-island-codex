@@ -1,0 +1,86 @@
+.showcase-screen--night .showcase-header,
+.showcase-screen--night .showcase-controls,
+.showcase-screen--night .showcase-character-copy,
+.showcase-screen--night .quiet-button,
+.showcase-screen--night .control-label {
+  color: #fff5db;
+}
+
+.showcase-screen--night .showcase-header {
+  border-color: rgba(255, 245, 219, 0.25);
+  background: rgba(15, 42, 47, 0.9);
+}
+
+.showcase-screen--night .showcase-controls {
+  border-color: rgba(255, 245, 219, 0.25);
+  background: rgba(15, 42, 47, 0.92);
+}
+
+.showcase-screen--night .segmented-row button {
+  border-color: rgba(255, 245, 219, 0.22);
+  color: #fff5db;
+}
+
+.showcase-screen--night .segmented-row button.is-active {
+  color: #fff;
+  background: #4f7b59;
+}
+
+.showcase-screen--night .showcase-character-copy small,
+.showcase-screen--night .showcase-character-copy > span,
+.showcase-screen--night .showcase-metrics {
+  color: #f0dfba;
+}
+
+.showcase-screen--evening {
+  background: linear-gradient(135deg, #ceb78e, #8a7964);
+}
+
+.showcase-metrics {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 430px;
+}
+
+.showcase-metrics span {
+  font-size: 12px;
+}
+
+.showcase-controls {
+  overflow-y: auto;
+}
+
+.showcase-control-group + .showcase-control-group {
+  margin-top: 18px;
+  padding-top: 18px;
+}
+
+.showcase-controls button {
+  min-height: 42px;
+  font-size: 14px;
+}
+
+.model-status {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  z-index: 3;
+  padding: 16px 20px;
+  border-radius: 16px;
+  color: #213e3b;
+  background: rgba(255, 249, 230, 0.92);
+  box-shadow: 0 12px 32px rgba(20, 40, 38, 0.22);
+  font-size: 16px;
+  transform: translate(-50%, -50%);
+}
+
+.model-status--error {
+  color: #fff;
+  background: #8c463f;
+}
+
+@media (max-width: 900px) {
+  .showcase-metrics span:nth-child(n + 4) {
+    display: none;
+  }
+}
+

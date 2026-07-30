@@ -37,7 +37,8 @@ export type AnimationName =
   | "interact"
   | "pickup"
   | "happy"
-  | "surprised";
+  | "surprised"
+  | "blink";
 
 export interface Position2D {
   x: number;
@@ -57,8 +58,15 @@ export interface QuestProgress {
 }
 
 export interface GameState {
-  version: 1;
+  version: 2;
   playerPosition: Position2D;
+  easyMode: boolean;
+  tutorialStep: number;
+  discoveredItems: string[];
+  caughtFish: string[];
+  resourceStates: Record<string, { availableAt: number; visualVariant?: number }>;
+  characterModelId: "mira";
+  playSeconds: number;
   inventory: Partial<Record<ItemId, number>>;
   lumen: number;
   dayMinute: number;

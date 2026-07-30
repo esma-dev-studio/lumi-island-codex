@@ -1,4 +1,8 @@
 import type { Position2D } from "@/src/game/types";
+import {
+  ISLAND_LAYOUT,
+  colliderFromIslandObject,
+} from "@/src/world/IslandLayout";
 
 export interface CircleCollider {
   kind: "circle";
@@ -45,30 +49,8 @@ export const ISLAND_WALK_BOUNDS: IslandBounds = {
   radiusZ: 12.55,
 };
 
-export const STATIC_WORLD_COLLIDERS: WorldCollider[] = [
-  box("house-mira", 0, 8.7, 2.45, 2.05, 0),
-  box("house-nolla", -10.5, 5.4, 2.45, 2.05, 0.55),
-  box("house-kai", 10.5, 3.9, 2.45, 2.05, -0.55),
-  box("house-sera", 5.8, -7.8, 2.45, 2.05, 2.55),
-  ellipse("moon-pond", -8, -2, 3.55, 2.55),
-  ...[
-    [-13, -4],
-    [-11, -7],
-    [-7, -8.8],
-    [-4, -9.4],
-    [10.8, -5.8],
-    [13.2, -2.5],
-    [-14, 1],
-    [14.5, 2],
-    [-7.7, 7.6],
-  ].map(([x, z], index) => circle(`tree-${index}`, x, z, 1.05)),
-  ...[
-    [-5.3, 4.5],
-    [8, 7],
-    [11.4, -0.8],
-    [-3, -7.2],
-  ].map(([x, z], index) => circle(`rock-${index}`, x, z, 0.95)),
-];
+export const STATIC_WORLD_COLLIDERS: WorldCollider[] =
+  ISLAND_LAYOUT.map(colliderFromIslandObject);
 
 export function resolveWorldMovement(
   current: Position2D,
@@ -90,6 +72,28 @@ export function resolveWorldMovement(
     resolved = clampInsideIsland(resolved, playerRadius, bounds);
   }
   return resolved;
+}
+
+export function resolveNpcMovement(
+  current: Position2D,
+  desired: Position2D,
+  npcRadius: number,
+  staticColliders: readonly WorldCollider[],
+  actors: readonly (Position2D & { id: string; radius: number })[],
+): Position2D {
+  const actorColliders: WorldCollider[] = actors.map((actor) => ({
+    kind: "circle",
+    id: actor.id,
+    x: actor.x,
+    z: actor.z,
+    radius: actor.radius,
+  }));
+  return resolveWorldMovement(
+    current,
+    desired,
+    npcRadius,
+    [...staticColliders, ...actorColliders],
+  );
 }
 
 export function pointOverlapsCollider(
@@ -224,34 +228,4 @@ function fromLocal(point: Position2D, collider: BoxCollider): Position2D {
       point.x * Math.sin(rotation) +
       point.z * Math.cos(rotation),
   };
-}
-
-function circle(
-  id: string,
-  x: number,
-  z: number,
-  radius: number,
-): CircleCollider {
-  return { kind: "circle", id, x, z, radius };
-}
-
-function box(
-  id: string,
-  x: number,
-  z: number,
-  halfWidth: number,
-  halfDepth: number,
-  rotation: number,
-): BoxCollider {
-  return { kind: "box", id, x, z, halfWidth, halfDepth, rotation };
-}
-
-function ellipse(
-  id: string,
-  x: number,
-  z: number,
-  radiusX: number,
-  radiusZ: number,
-): EllipseCollider {
-  return { kind: "ellipse", id, x, z, radiusX, radiusZ };
 }

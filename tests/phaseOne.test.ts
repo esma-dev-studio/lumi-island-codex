@@ -32,7 +32,7 @@ describe("camera-relative movement", () => {
   it("keeps screen-right intuitive after the camera rotates", () => {
     const movement = cameraRelativeMovement(1, 0, { x: 1, z: 0 });
     expect(movement.x).toBeCloseTo(0);
-    expect(movement.z).toBeCloseTo(1);
+    expect(movement.z).toBeCloseTo(-1);
   });
 
   it("normalizes diagonal input", () => {

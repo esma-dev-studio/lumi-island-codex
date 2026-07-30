@@ -25,7 +25,7 @@ export function cameraRelativeMovement(
           z: cameraForward.z / forwardLength,
         }
       : { x: 0, z: -1 };
-  const right = { x: -forward.z, z: forward.x };
+  const right = { x: forward.z, z: -forward.x };
   const movement = {
     x: right.x * horizontal + forward.x * forwardAmount,
     z: right.z * horizontal + forward.z * forwardAmount,

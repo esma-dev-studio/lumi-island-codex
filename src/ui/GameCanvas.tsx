@@ -6,11 +6,12 @@ import {
   type InteractionHint,
   type IslandController,
 } from "@/src/scenes/LumiScenes";
-import type { GameState, ResourceId } from "@/src/game/types";
+import type { GameState } from "@/src/game/types";
 import type {
   PlacementMode,
   PlacementPreview,
 } from "@/src/placement/PlacementController";
+import type { ActivityRequest } from "@/src/ui/minigames/ActivityOverlay";
 
 interface GameCanvasProps {
   state: GameState;
@@ -18,7 +19,7 @@ interface GameCanvasProps {
   placementMode: PlacementMode | null;
   cameraResetToken: number;
   onHint: (hint: InteractionHint | null) => void;
-  onGather: (item: ResourceId) => void;
+  onActivity: (activity: ActivityRequest) => void;
   onTalk: (resident: "ノラ" | "カイ" | "セラ") => void;
   onEditFurniture: (id: string) => void;
   onPlacementPreview: (preview: PlacementPreview | null) => void;
@@ -35,7 +36,7 @@ export function GameCanvas({
   placementMode,
   cameraResetToken,
   onHint,
-  onGather,
+  onActivity,
   onTalk,
   onEditFurniture,
   onPlacementPreview,
@@ -49,7 +50,7 @@ export function GameCanvas({
   const controllerRef = useRef<IslandController | null>(null);
   const callbackRef = useRef({
     onHint,
-    onGather,
+    onActivity,
     onTalk,
     onEditFurniture,
     onPlacementPreview,
@@ -63,7 +64,7 @@ export function GameCanvas({
   useEffect(() => {
     callbackRef.current = {
       onHint,
-      onGather,
+      onActivity,
       onTalk,
       onEditFurniture,
       onPlacementPreview,
@@ -76,7 +77,7 @@ export function GameCanvas({
   }, [
     onEditFurniture,
     onFps,
-    onGather,
+    onActivity,
     onHint,
     onPlacementConfirm,
     onPlacementPreview,
@@ -95,7 +96,8 @@ export function GameCanvas({
       state.placedFurniture,
       {
         onHint: (hint) => callbackRef.current.onHint(hint),
-        onGather: (item) => callbackRef.current.onGather(item),
+        onActivity: (activity) =>
+          callbackRef.current.onActivity(activity),
         onTalk: (resident) => callbackRef.current.onTalk(resident),
         onEditFurniture: (id) =>
           callbackRef.current.onEditFurniture(id),

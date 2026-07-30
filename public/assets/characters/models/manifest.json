@@ -1,0 +1,41 @@
+{
+  "generator": "scripts/generate_character_glbs.py",
+  "characters": [
+    {
+      "id": "mira",
+      "path": "public/assets/characters/models/mira.glb",
+      "bytes": 310480,
+      "triangles": 7763,
+      "materials": 6,
+      "meshes": 4,
+      "animations": 9
+    },
+    {
+      "id": "nolla",
+      "path": "public/assets/characters/models/nolla.glb",
+      "bytes": 311164,
+      "triangles": 7779,
+      "materials": 6,
+      "meshes": 4,
+      "animations": 9
+    },
+    {
+      "id": "kai",
+      "path": "public/assets/characters/models/kai.glb",
+      "bytes": 270856,
+      "triangles": 6703,
+      "materials": 6,
+      "meshes": 4,
+      "animations": 9
+    },
+    {
+      "id": "sera",
+      "path": "public/assets/characters/models/sera.glb",
+      "bytes": 207668,
+      "triangles": 5043,
+      "materials": 6,
+      "meshes": 4,
+      "animations": 9
+    }
+  ]
+}

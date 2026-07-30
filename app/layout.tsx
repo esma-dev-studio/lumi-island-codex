@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
+import "./phase2.css";
+import "./showcase-phase2.css";
 
 const title = "Lumi Island";
 const description =

@@ -1,0 +1,458 @@
+/* Phase 2: child-readable controls and short activity presentation. */
+.game-screen {
+  font-size: 16px;
+}
+
+.game-screen button,
+.game-screen input,
+.game-screen p,
+.game-screen span,
+.game-screen small {
+  font-size: max(14px, 0.875rem);
+}
+
+.game-screen p,
+.game-screen button {
+  font-size: max(16px, 1rem);
+}
+
+.game-topbar {
+  min-height: 76px;
+  padding: 12px 18px;
+}
+
+.game-brand small,
+.day-clock small,
+.lumen-counter small {
+  font-size: 14px;
+}
+
+.quest-ribbon {
+  max-width: 320px;
+  padding: 18px 20px;
+}
+
+.quest-ribbon h2 {
+  font-size: 24px;
+}
+
+.guide-rail,
+.fps-indicator {
+  display: none;
+}
+
+.interaction-hint {
+  bottom: 118px;
+  padding: 14px 18px;
+}
+
+.interaction-hint strong {
+  font-size: 18px;
+}
+
+.interaction-hint span {
+  font-size: 15px;
+}
+
+.touch-controls {
+  position: fixed;
+  inset: auto 24px 24px;
+  z-index: 22;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.move-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 54px);
+  grid-template-rows: repeat(2, 54px);
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 22px;
+  background: rgba(24, 48, 51, 0.72);
+  box-shadow: 0 14px 35px rgba(10, 26, 29, 0.28);
+  backdrop-filter: blur(12px);
+  pointer-events: auto;
+}
+
+.move-pad button {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 15px;
+  color: #fff9e9;
+  background: rgba(255, 255, 255, 0.14);
+  font: 700 24px/1 system-ui, sans-serif;
+  touch-action: none;
+  user-select: none;
+}
+
+.move-pad button:active {
+  transform: translateY(2px);
+  background: rgba(240, 181, 87, 0.75);
+}
+
+.move-pad .move-up {
+  grid-column: 2;
+}
+
+.move-pad button:nth-child(2) {
+  grid-column: 1;
+}
+
+.move-pad button:nth-child(3) {
+  grid-column: 2;
+}
+
+.move-pad button:nth-child(4) {
+  grid-column: 3;
+}
+
+.touch-action {
+  display: flex;
+  min-width: 154px;
+  min-height: 72px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0 0 84px auto;
+  padding: 12px 22px;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  border-radius: 24px;
+  color: #193b39;
+  background: linear-gradient(145deg, #ffe0a0, #f0b557);
+  box-shadow: 0 12px 34px rgba(25, 45, 42, 0.3);
+  font-weight: 800;
+  pointer-events: auto;
+}
+
+.touch-action b {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 13px;
+  color: #fff;
+  background: #315d4b;
+  font-size: 20px;
+}
+
+.touch-action span {
+  font-size: 18px;
+}
+
+.activity-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255, 224, 160, 0.18), transparent 35%),
+    rgba(13, 36, 39, 0.74);
+  backdrop-filter: blur(10px);
+}
+
+.activity-card {
+  position: relative;
+  width: min(640px, 96vw);
+  min-height: 460px;
+  overflow: hidden;
+  padding: 42px clamp(24px, 6vw, 58px);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 34px;
+  color: #183b3b;
+  background:
+    linear-gradient(145deg, rgba(255, 253, 240, 0.98), rgba(234, 220, 192, 0.98));
+  box-shadow: 0 38px 90px rgba(8, 26, 28, 0.4);
+  text-align: center;
+}
+
+.activity-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 10px;
+  background: linear-gradient(90deg, #e6a84e, #789257, #2a7878);
+  content: "";
+}
+
+.activity-card h2 {
+  margin: 12px 0;
+  font-size: clamp(30px, 5vw, 48px);
+  line-height: 1.25;
+}
+
+.activity-card h3 {
+  font-size: 28px;
+}
+
+.activity-close {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(24, 59, 59, 0.2);
+  border-radius: 50%;
+  color: #183b3b;
+  background: rgba(255, 255, 255, 0.52);
+  font-size: 26px !important;
+}
+
+.easy-badge {
+  position: absolute;
+  top: 25px;
+  left: 24px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  color: #fff;
+  background: #4d7657;
+  font-weight: 800;
+}
+
+.activity-instruction {
+  max-width: 470px;
+  margin: 16px auto 24px;
+  font-size: 18px !important;
+  line-height: 1.8;
+}
+
+.timing-track {
+  position: relative;
+  height: 66px;
+  margin: 36px 0;
+  overflow: hidden;
+  border: 5px solid #fff7df;
+  border-radius: 24px;
+  background: #ba7160;
+  box-shadow: inset 0 4px 14px rgba(35, 49, 45, 0.22);
+}
+
+.timing-track .timing-good,
+.timing-track .timing-great {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.timing-good {
+  background: #7fac72;
+}
+
+.timing-great {
+  z-index: 1;
+  background: #f2c75d;
+}
+
+.timing-track b {
+  position: absolute;
+  z-index: 2;
+  top: 6px;
+  bottom: 6px;
+  width: 8px;
+  border-radius: 99px;
+  background: #fff;
+  box-shadow: 0 0 0 3px #203f43, 0 0 16px #fff;
+  transform: translateX(-50%);
+}
+
+.activity-action {
+  min-width: min(360px, 90%);
+  min-height: 68px;
+  padding: 14px 26px;
+  border: 0;
+  border-radius: 22px;
+  color: #fffdf1;
+  background: linear-gradient(145deg, #315e4c, #1f4543);
+  box-shadow: 0 10px 24px rgba(22, 58, 52, 0.25);
+  font-size: 20px !important;
+  font-weight: 850;
+}
+
+.activity-action:disabled {
+  opacity: 0.45;
+}
+
+.activity-action kbd {
+  margin-right: 9px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  color: #183b3b;
+  background: #ffe4a5;
+}
+
+.activity-result > span {
+  display: block;
+  color: #e6a84e;
+  font-size: 70px !important;
+}
+
+.activity-result p {
+  margin-bottom: 28px;
+  font-size: 19px !important;
+}
+
+.discovery-orb,
+.fish-silhouette {
+  display: grid;
+  width: 126px;
+  height: 126px;
+  place-items: center;
+  margin: 22px auto;
+  border-radius: 50%;
+  color: #fff7d6;
+  background: radial-gradient(circle at 35% 30%, #9cb77c, #315e4c);
+  box-shadow: 0 12px 34px rgba(36, 77, 61, 0.3);
+  font-size: 56px !important;
+}
+
+.fish-silhouette {
+  background: radial-gradient(circle at 35% 30%, #6bb1ac, #285d66);
+}
+
+.discovery-copy ruby {
+  font-size: 20px;
+  font-weight: 750;
+}
+
+.discovery-copy rt {
+  font-size: 12px;
+}
+
+.discovery-copy p {
+  margin: 18px 0 26px;
+  font-size: 17px !important;
+}
+
+.fishing-water {
+  position: relative;
+  height: 170px;
+  margin: 24px -20px;
+  overflow: hidden;
+  border-radius: 28px;
+  background:
+    repeating-radial-gradient(ellipse at 50% 75%, transparent 0 18px, rgba(255,255,255,.2) 20px 22px),
+    linear-gradient(#6eaaa4, #296f76);
+}
+
+.fishing-line {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 94px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.fishing-bobber {
+  position: absolute;
+  top: 82px;
+  left: calc(50% - 13px);
+  width: 26px;
+  height: 34px;
+  border-radius: 50% 50% 45% 45%;
+  background: linear-gradient(#e9bb55 50%, #f5eee0 50%);
+  transition: transform 120ms ease;
+}
+
+.fishing-water.is-biting {
+  animation: bite-flash 0.35s infinite alternate;
+}
+
+.fishing-water.is-biting .fishing-bobber {
+  transform: translateY(28px) scale(0.8);
+}
+
+@keyframes bite-flash {
+  to { box-shadow: inset 0 0 0 8px rgba(255, 225, 120, 0.7); }
+}
+
+.tutorial-modal {
+  max-width: 620px;
+  padding: 42px;
+}
+
+.tutorial-one-step {
+  margin: 24px 0;
+  padding: 28px;
+  border: 1px solid rgba(39, 74, 61, 0.18);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.36);
+  text-align: center;
+}
+
+.tutorial-one-step > b {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  color: #fff;
+  background: #315e4c;
+  font-size: 22px;
+}
+
+.tutorial-one-step h2 {
+  font-size: 30px;
+}
+
+.tutorial-one-step p {
+  font-size: 17px !important;
+  line-height: 1.8;
+}
+
+.tutorial-skip {
+  display: block;
+  margin: 18px auto 0;
+  border: 0;
+  color: #365a50;
+  background: transparent;
+  text-decoration: underline;
+}
+
+.menu-list button.is-selected {
+  outline: 3px solid #7fac72;
+  background: rgba(127, 172, 114, 0.16);
+}
+
+@media (max-width: 780px) {
+  .game-topbar {
+    transform: scale(0.9);
+    transform-origin: top left;
+    width: 111%;
+  }
+
+  .quest-ribbon {
+    top: 84px;
+    max-width: min(280px, 72vw);
+  }
+
+  .move-pad {
+    grid-template-columns: repeat(3, 48px);
+    grid-template-rows: repeat(2, 48px);
+  }
+
+  .touch-action {
+    min-width: 132px;
+    margin-bottom: 78px;
+    padding: 10px 14px;
+  }
+
+  .game-tools {
+    right: 12px;
+    bottom: 10px;
+    transform: scale(0.88);
+    transform-origin: bottom right;
+  }
+
+  .activity-card {
+    min-height: 0;
+    max-height: 92vh;
+    overflow-y: auto;
+    padding: 52px 22px 28px;
+  }
+}
+

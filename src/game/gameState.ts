@@ -21,8 +21,15 @@ const questProgress = (): Record<QuestId, QuestProgress> => ({
 });
 
 export const createInitialState = (): GameState => ({
-  version: 1,
+  version: 2,
   playerPosition: { x: 0, z: 6 },
+  easyMode: false,
+  tutorialStep: 0,
+  discoveredItems: [],
+  caughtFish: [],
+  resourceStates: {},
+  characterModelId: "mira",
+  playSeconds: 0,
   inventory: { "twig-stool": 1 },
   lumen: 120,
   dayMinute: 8 * 60,
@@ -227,19 +234,37 @@ export function formatGameTime(dayMinute: number): string {
 export function sanitizeState(value: unknown): GameState {
   const initial = createInitialState();
   if (!value || typeof value !== "object") return initial;
-  const candidate = value as Partial<GameState>;
-  if (candidate.version !== 1) return initial;
+  const candidate = value as Partial<Omit<GameState, "version">> & { version?: number };
+  if (candidate.version !== 1 && candidate.version !== 2) return initial;
+  const migrated =
+    candidate.version === 1
+      ? {
+          ...candidate,
+          version: 2 as const,
+          easyMode: false,
+          tutorialStep: 7,
+          discoveredItems: [],
+          caughtFish: [],
+          resourceStates: {},
+          characterModelId: "mira" as const,
+          playSeconds: 0,
+        }
+      : candidate;
   return {
     ...initial,
-    ...candidate,
+    ...migrated,
+    version: 2,
     playerPosition: {
       ...initial.playerPosition,
-      ...(candidate.playerPosition ?? {}),
+      ...(migrated.playerPosition ?? {}),
     },
-    inventory: { ...initial.inventory, ...(candidate.inventory ?? {}) },
-    quests: { ...initial.quests, ...(candidate.quests ?? {}) },
-    placedFurniture: Array.isArray(candidate.placedFurniture)
-      ? candidate.placedFurniture
+    inventory: { ...initial.inventory, ...(migrated.inventory ?? {}) },
+    quests: { ...initial.quests, ...(migrated.quests ?? {}) },
+    discoveredItems: Array.isArray(migrated.discoveredItems) ? migrated.discoveredItems : [],
+    caughtFish: Array.isArray(migrated.caughtFish) ? migrated.caughtFish : [],
+    resourceStates: migrated.resourceStates ?? {},
+    placedFurniture: Array.isArray(migrated.placedFurniture)
+      ? migrated.placedFurniture
       : [],
   };
 }

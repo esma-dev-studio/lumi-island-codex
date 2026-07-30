@@ -35,11 +35,16 @@ import {
   type PlacementMode,
   type PlacementPreview,
 } from "@/src/placement/PlacementController";
+import {
+  ActivityOverlay,
+  type ActivityCompletion,
+  type ActivityRequest,
+} from "@/src/ui/minigames/ActivityOverlay";
 
 const CharacterShowcase = dynamic(
   () =>
-    import("@/src/ui/CharacterShowcase").then(
-      (module) => module.CharacterShowcase,
+    import("@/src/ui/CharacterShowcasePhase2").then(
+      (module) => module.CharacterShowcasePhase2,
     ),
   { ssr: false },
 );
@@ -68,6 +73,30 @@ const RESOURCES: ResourceId[] = [
   "fish",
 ];
 
+const TUTORIAL_STEPS = [
+  { title: "矢印で 3歩あるこう", copy: "画面の矢印か、キーボードの矢印を おしてみよう。", action: "歩いてみる" },
+  { title: "光るものへ ちかづこう", copy: "木や石、草花の そばまで歩くと、大きなボタンが出るよ。", action: "わかった" },
+  { title: "見つけたものを ひろおう", copy: "EかSpace、または画面の大きなボタンを おそう。", action: "やってみる" },
+  { title: "バッグを ひらこう", copy: "集めたものは、右下の「バッグ」で見られるよ。", action: "つぎへ" },
+  { title: "家具を つくろう", copy: "「つくる」で材料を家具にかえられるよ。", action: "つぎへ" },
+  { title: "好きな場所に おこう", copy: "家具をえらび、みどりに光る場所で決めよう。", action: "つぎへ" },
+  { title: "島のみんなと はなそう", copy: "ノラたちの近くで「はなす」を おしてみよう。", action: "島へ出発！" },
+] as const;
+
+function sendGameKey(code: string, pressed: boolean) {
+  window.dispatchEvent(
+    new KeyboardEvent(pressed ? "keydown" : "keyup", {
+      code,
+      bubbles: true,
+    }),
+  );
+}
+
+function tapGameKey(code: string) {
+  sendGameKey(code, true);
+  window.setTimeout(() => sendGameKey(code, false), 170);
+}
+
 const RESIDENT_COPY = {
   ノラ: {
     greeting: "広場の木が、朝の雨で少しゆるんだみたい。",
@@ -93,8 +122,9 @@ export function LumiIslandApp() {
     "ノラ" | "カイ" | "セラ" | null
   >(null);
   const [hint, setHint] = useState<InteractionHint | null>(null);
-  const [fps, setFps] = useState(0);
+  const [, setFps] = useState(0);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [activity, setActivity] = useState<ActivityRequest | null>(null);
   const [placementMode, setPlacementMode] =
     useState<PlacementMode | null>(null);
   const [placementPreview, setPlacementPreview] =
@@ -130,12 +160,16 @@ export function LumiIslandApp() {
   const activeQuest = activeQuestId ? QUESTS[activeQuestId] : null;
 
   const isPaused =
-    panel !== null || tutorialOpen || dialogResident !== null;
+    panel !== null || tutorialOpen || dialogResident !== null ||
+    activity !== null;
 
   useEffect(() => {
     if (screen !== "game" || isPaused) return;
     const timer = window.setInterval(() => {
-      setState((current) => advanceTimeWhileRunning(current, 3, false));
+      setState((current) => {
+        const advanced = advanceTimeWhileRunning(current, 3, false);
+        return { ...advanced, playSeconds: advanced.playSeconds + 1 };
+      });
     }, 1000);
     return () => window.clearInterval(timer);
   }, [isPaused, screen]);
@@ -195,6 +229,7 @@ export function LumiIslandApp() {
     setState(createInitialState());
     setPanel(null);
     setDialogResident(null);
+    setActivity(null);
     setPlacementMode(null);
     setPlacementPreview(null);
     setTutorialOpen(true);
@@ -206,7 +241,8 @@ export function LumiIslandApp() {
     const loaded = loadGame();
     setState(loaded ?? createInitialState());
     setPanel(null);
-    setTutorialOpen(false);
+    setTutorialOpen((loaded?.tutorialStep ?? 7) < TUTORIAL_STEPS.length);
+    setActivity(null);
     setDialogResident(null);
     setPlacementMode(null);
     setPlacementPreview(null);
@@ -214,26 +250,52 @@ export function LumiIslandApp() {
     playSound("ui");
   };
 
-  const gather = useCallback(
-    (item: ResourceId) => {
+  const completeActivity = useCallback(
+    (completion: ActivityCompletion) => {
       setState((current) => {
         const beforeQuest = QUEST_ORDER.find(
           (id) => current.quests[id].status === "active",
         );
-        const next = gatherItem(current, item);
+        let next = gatherItem(current, completion.item, completion.amount);
+        if (completion.bonusItem) {
+          next = gatherItem(next, completion.bonusItem, 1);
+        }
+        next = {
+          ...next,
+          discoveredItems:
+            completion.discoveryId &&
+            !next.discoveredItems.includes(completion.discoveryId)
+              ? [...next.discoveredItems, completion.discoveryId]
+              : next.discoveredItems,
+          caughtFish:
+            completion.fishId && !next.caughtFish.includes(completion.fishId)
+              ? [...next.caughtFish, completion.fishId]
+              : next.caughtFish,
+          resourceStates: activity
+            ? {
+                ...next.resourceStates,
+                [activity.sourceId]: {
+                  availableAt: next.playSeconds,
+                  visualVariant:
+                    ((next.resourceStates[activity.sourceId]?.visualVariant ?? 0) + 1) % 3,
+                },
+              }
+            : next.resourceStates,
+        };
         const completed =
           beforeQuest && next.quests[beforeQuest].status === "complete";
         if (completed) {
           notify(`依頼「${QUESTS[beforeQuest].title}」を達成！`, "success");
           playSound("quest");
         } else {
-          notify(`${ITEMS[item].name}を 1こ ひろった`);
+          notify(completion.message, "success");
           playSound("pickup");
         }
         return next;
       });
+      setActivity(null);
     },
-    [notify],
+    [activity, notify],
   );
 
   const craft = (item: FurnitureId) => {
@@ -433,7 +495,7 @@ export function LumiIslandApp() {
         placementMode={placementMode}
         cameraResetToken={cameraResetToken}
         onHint={setHint}
-        onGather={gather}
+        onActivity={setActivity}
         onTalk={talk}
         onEditFurniture={editFurniture}
         onPlacementPreview={setPlacementPreview}
@@ -550,6 +612,48 @@ export function LumiIslandApp() {
         </div>
       )}
 
+      {!isPaused && (
+        <div className="touch-controls" aria-label="画面の操作ボタン">
+          <div className="move-pad" aria-label="矢印で歩く">
+            <button
+              className="move-up"
+              aria-label="上へ歩く"
+              onPointerDown={() => sendGameKey("ArrowUp", true)}
+              onPointerUp={() => sendGameKey("ArrowUp", false)}
+              onPointerLeave={() => sendGameKey("ArrowUp", false)}
+              onClick={() => tapGameKey("ArrowUp")}
+            >↑</button>
+            <button
+              aria-label="左へ歩く"
+              onPointerDown={() => sendGameKey("ArrowLeft", true)}
+              onPointerUp={() => sendGameKey("ArrowLeft", false)}
+              onPointerLeave={() => sendGameKey("ArrowLeft", false)}
+              onClick={() => tapGameKey("ArrowLeft")}
+            >←</button>
+            <button
+              aria-label="下へ歩く"
+              onPointerDown={() => sendGameKey("ArrowDown", true)}
+              onPointerUp={() => sendGameKey("ArrowDown", false)}
+              onPointerLeave={() => sendGameKey("ArrowDown", false)}
+              onClick={() => tapGameKey("ArrowDown")}
+            >↓</button>
+            <button
+              aria-label="右へ歩く"
+              onPointerDown={() => sendGameKey("ArrowRight", true)}
+              onPointerUp={() => sendGameKey("ArrowRight", false)}
+              onPointerLeave={() => sendGameKey("ArrowRight", false)}
+              onClick={() => tapGameKey("ArrowRight")}
+            >→</button>
+          </div>
+          {hint && (
+            <button className="touch-action" onClick={() => sendGameKey("KeyE", true)}>
+              <b>E</b>
+              <span>{hint.action}</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {placementMode && (
         <section
           className={`placement-hud ${
@@ -634,10 +738,6 @@ export function LumiIslandApp() {
         </button>
       </nav>
 
-      <div className="fps-indicator" aria-label={`${fps} FPS`}>
-        {fps || "—"} FPS
-      </div>
-
       {panel && (
         <div className="panel-scrim" onMouseDown={() => setPanel(null)}>
           <section
@@ -669,8 +769,15 @@ export function LumiIslandApp() {
             {panel === "menu" && (
               <MenuPanel
                 onSave={manualSave}
-                onHelp={() => setTutorialOpen(true)}
+                onHelp={() => {
+                  setState((current) => ({ ...current, tutorialStep: 0 }));
+                  setTutorialOpen(true);
+                }}
                 onTitle={returnToTitle}
+                easyMode={state.easyMode}
+                onEasyMode={(easyMode) =>
+                  setState((current) => ({ ...current, easyMode }))
+                }
               />
             )}
           </section>
@@ -680,37 +787,45 @@ export function LumiIslandApp() {
       {tutorialOpen && (
         <div className="modal-scrim">
           <section className="tutorial-modal">
-            <p className="eyebrow">WELCOME TO LUMI ISLAND</p>
-            <h2>島の暮らしは、3つだけ。</h2>
-            <div className="tutorial-steps">
-              <article>
-                <b>01</b>
-                <h3>歩いて、見つける</h3>
-                <p>WASDか矢印で歩こう。光るものの近くでE。</p>
-              </article>
-              <article>
-                <b>02</b>
-                <h3>集めて、つくる</h3>
-                <p>木や石を集めたら、Cで家具をつくれる。</p>
-              </article>
-              <article>
-                <b>03</b>
-                <h3>置いて、つながる</h3>
-                <p>家具を置いて、島のみんなのお願いをかなえよう。</p>
-              </article>
+            <p className="eyebrow">はじめてガイド {Math.min(state.tutorialStep + 1, TUTORIAL_STEPS.length)} / {TUTORIAL_STEPS.length}</p>
+            <div className="tutorial-one-step" aria-live="polite">
+              <b>{Math.min(state.tutorialStep + 1, TUTORIAL_STEPS.length)}</b>
+              <h2>{TUTORIAL_STEPS[Math.min(state.tutorialStep, TUTORIAL_STEPS.length - 1)].title}</h2>
+              <p>{TUTORIAL_STEPS[Math.min(state.tutorialStep, TUTORIAL_STEPS.length - 1)].copy}</p>
             </div>
             <button
               className="primary-button tutorial-start"
               onClick={() => {
-                setTutorialOpen(false);
-                setPanel(null);
+                const nextStep = state.tutorialStep + 1;
+                setState((current) => ({ ...current, tutorialStep: nextStep }));
+                if (nextStep >= TUTORIAL_STEPS.length) {
+                  setTutorialOpen(false);
+                  setPanel(null);
+                }
                 playSound("ui");
               }}
             >
-              島を歩いてみる
+              {TUTORIAL_STEPS[Math.min(state.tutorialStep, TUTORIAL_STEPS.length - 1)].action}
             </button>
+            <button className="tutorial-skip" onClick={() => {
+              setState((current) => ({ ...current, tutorialStep: TUTORIAL_STEPS.length }));
+              setTutorialOpen(false);
+            }}>あとで見る</button>
           </section>
         </div>
+      )}
+
+      {activity && (
+        <ActivityOverlay
+          request={activity}
+          easyMode={state.easyMode}
+          day={state.day}
+          alreadyDiscovered={state.discoveredItems.some((id) =>
+            id.startsWith(`${activity.item}-`),
+          )}
+          onComplete={completeActivity}
+          onCancel={() => setActivity(null)}
+        />
       )}
 
       {dialogResident && (
@@ -908,10 +1023,14 @@ function MenuPanel({
   onSave,
   onHelp,
   onTitle,
+  easyMode,
+  onEasyMode,
 }: {
   onSave: () => void;
   onHelp: () => void;
   onTitle: () => void;
+  easyMode: boolean;
+  onEasyMode: (enabled: boolean) => void;
 }) {
   return (
     <>
@@ -928,6 +1047,13 @@ function MenuPanel({
         <button onClick={onHelp}>
           <strong>遊びかた</strong>
           <span>歩く・集める・作るをもう一度見る</span>
+        </button>
+        <button
+          className={easyMode ? "is-selected" : ""}
+          onClick={() => onEasyMode(!easyMode)}
+        >
+          <strong>やさしい表示 {easyMode ? "ON" : "OFF"}</strong>
+          <span>判定を広くして、読みがなと大きな案内を使います</span>
         </button>
         <button onClick={onTitle}>
           <strong>タイトルにもどる</strong>
