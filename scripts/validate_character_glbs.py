@@ -202,26 +202,56 @@ def inspect_model(path: Path, manifest_entry: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def run_khronos(paths: list[Path]) -> dict[str, dict[str, Any]]:
+def run_khronos(paths: list[Path]) -> tuple[str, dict[str, dict[str, Any]]]:
+    """Run Khronos validation without turning a missing executable into a model failure."""
     command = ["node", str(ROOT / "scripts" / "khronos_validate.mjs"), *map(str, paths)]
-    completed = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, check=False)
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError as error:
+        unavailable = {
+            path.name: {"status": "unavailable", "runtimeError": str(error)}
+            for path in paths
+        }
+        return "unavailable", unavailable
+
     if not completed.stdout:
-        return {
+        unavailable = {
             path.name: {
-                "errors": 1,
+                "status": "unavailable",
                 "runtimeError": completed.stderr.strip() or "Khronos validator produced no output",
             }
             for path in paths
         }
+        return "unavailable", unavailable
     try:
         values = json.loads(completed.stdout)
     except json.JSONDecodeError as error:
-        return {
-            path.name: {"errors": 1, "runtimeError": f"invalid Khronos output: {error}"}
+        unavailable = {
+            path.name: {
+                "status": "unavailable",
+                "runtimeError": f"invalid Khronos output: {error}",
+            }
             for path in paths
         }
-    return {Path(value["file"]).name: value for value in values}
+        return "unavailable", unavailable
 
+    by_name: dict[str, dict[str, Any]] = {}
+    for value in values:
+        errors = int(value.get("errors", 0))
+        by_name[Path(value["file"]).name] = {
+            **value,
+            "status": "passed" if errors == 0 else "failed",
+        }
+    validator_status = "failed" if any(
+        result.get("status") == "failed" for result in by_name.values()
+    ) else "passed"
+    return validator_status, by_name
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -231,29 +261,35 @@ def main() -> None:
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     entries = {entry["id"]: entry for entry in manifest.get("characters", [])}
     paths = [MODEL_DIR / f"{character}.glb" for character in REQUIRED_CHARACTERS]
-    khronos = run_khronos(paths)
+    validator_status, khronos = run_khronos(paths)
     results = []
     for character, path in zip(REQUIRED_CHARACTERS, paths, strict=True):
         result = inspect_model(path, entries.get(character, {}))
-        khronos_result = khronos.get(path.name, {"errors": 1, "runtimeError": "missing result"})
+        khronos_result = khronos.get(
+            path.name,
+            {"status": "unavailable", "runtimeError": "missing result"},
+        )
         result["khronos"] = khronos_result
-        if khronos_result.get("errors", 1) != 0:
+        if khronos_result.get("status") == "failed":
             result["errors"].append(
                 f"Khronos glTF Validator errors: {khronos_result.get('errors', 1)}"
             )
         result["passed"] = not result["errors"]
         results.append(result)
 
+    production_passed = all(result["passed"] for result in results)
     report = {
         "gate": "production-character-glb",
-        "passed": all(result["passed"] for result in results),
+        "passed": production_passed,
+        "validatorStatus": validator_status,
+        "productionGateStatus": "passed" if production_passed else "failed",
         "visualReviewRequired": True,
         "models": results,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2))
-    raise SystemExit(0 if report["passed"] else 1)
+    raise SystemExit(0 if production_passed else 1)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,6 @@
-import { AbstractMesh, TransformNode, Vector3 } from "@babylonjs/core";
+import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { ResourceId, ResourceState } from "@/src/game/types";
 
 interface MeshBaseline {

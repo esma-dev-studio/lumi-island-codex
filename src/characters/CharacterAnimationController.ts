@@ -1,8 +1,6 @@
-import {
-  AnimationGroup,
-  Observer,
-  Scene,
-} from "@babylonjs/core";
+import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+import type { Observer } from "@babylonjs/core/Misc/observable";
+import type { Scene } from "@babylonjs/core/scene";
 import type { AnimationName } from "@/src/game/types";
 import type { CharacterConfig } from "@/src/characters/CharacterConfig";
 import { resolveAnimationName } from "@/src/characters/CharacterConfig";

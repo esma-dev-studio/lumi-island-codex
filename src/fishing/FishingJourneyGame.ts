@@ -20,6 +20,7 @@ export interface FishingJourneyState {
 export function createFishingJourney(
   easyMode: boolean,
   randomValue = Math.random(),
+  habitat: "pond" | "harbor" = "pond",
 ): FishingJourneyState {
   const normalized = Math.max(0, Math.min(0.999, randomValue));
   return {
@@ -27,9 +28,15 @@ export function createFishingJourney(
     elapsed: 0,
     shadow: Math.floor(normalized * 3),
     biteAt: 2.2 + normalized * 1.4,
-    biteWindow: easyMode ? 2.1 : 1.25,
+    biteWindow: easyMode
+      ? habitat === "harbor"
+        ? 1.8
+        : 2.1
+      : habitat === "harbor"
+        ? 1
+        : 1.25,
     reelProgress: 0,
-    reelTarget: easyMode ? 1 : 2,
+    reelTarget: (easyMode ? 1 : 2) + (habitat === "harbor" ? 1 : 0),
   };
 }
 

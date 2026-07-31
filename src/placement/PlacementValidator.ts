@@ -44,6 +44,7 @@ const FOOTPRINTS: Record<
   "tea-basket": { halfWidth: 0.7, halfDepth: 0.55 },
   "cedar-bench": { halfWidth: 1.3, halfDepth: 0.65 },
   "harbor-sign": { halfWidth: 0.85, halfDepth: 0.55 },
+  "nolla-workbench": { halfWidth: 1.35, halfDepth: 0.75 },
 };
 
 export function validateFurniturePlacement(

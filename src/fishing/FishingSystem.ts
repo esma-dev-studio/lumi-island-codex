@@ -1,4 +1,5 @@
 import { chooseFish, type FishDefinition } from "@/src/fishing/FishData";
+import type { FishHabitat } from "@/src/world/FishingSpotController";
 
 export interface FishingResolutionState {
   phase: string;
@@ -14,6 +15,7 @@ export interface FishingResult {
 export function resolveFishing(
   state: FishingResolutionState,
   fishRoll = Math.random(),
+  habitat: FishHabitat = "pond",
 ): FishingResult {
   if (state.phase !== "caught") {
     return {
@@ -21,7 +23,7 @@ export function resolveFishing(
       message: "おしい！ 魚はまたすぐに来るよ。",
     };
   }
-  const fish = chooseFish(fishRoll);
+  const fish = chooseFish(fishRoll, habitat);
   return {
     caught: true,
     fish,

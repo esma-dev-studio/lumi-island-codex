@@ -4,6 +4,7 @@ import "./globals.css";
 import "./phase2.css";
 import "./showcase-phase2.css";
 import "./phase22-hud.css";
+import "./phase23.css";
 
 const title = "Lumi Island";
 const description =

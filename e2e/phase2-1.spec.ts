@@ -29,10 +29,29 @@ async function seedSave(page: Page, overrides: SaveSeed) {
     { key: SAVE_KEY, value: overrides },
   );
   await page.reload();
-  await page.getByRole("button", { name: /つづきから/ }).click();
+  await page.getByRole("button", { name: /つづきから/ }).evaluate((button) => {
+    window.setTimeout(() => (button as HTMLButtonElement).click(), 0);
+  });
   await expect(page.locator("canvas.game-canvas")).toBeVisible();
 }
 
+async function startNewGame(page: Page) {
+  const canvas = page.locator("canvas.game-canvas");
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const start = page.getByRole("button", { name: /あたらしく始める/ });
+    await expect(start).toBeVisible();
+    await start.evaluate((button) => {
+      window.setTimeout(() => (button as HTMLButtonElement).click(), 0);
+    });
+    try {
+      await canvas.waitFor({ state: "visible", timeout: 30_000 });
+      return;
+    } catch {
+      if (attempt === 1) throw new Error("game canvas did not load after Vite warm-up retry");
+      await expect(start).toBeVisible({ timeout: 15_000 });
+    }
+  }
+}
 function monitorErrors(page: Page) {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -44,9 +63,14 @@ function monitorErrors(page: Page) {
 
 async function openMenu(page: Page) {
   await page.getByRole("button", { name: "メニュー" }).click();
-  await expect(page.getByRole("heading", { name: "メニュー" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "なにを する？" })).toBeVisible();
 }
 
+async function openSettings(page: Page) {
+  await openMenu(page);
+  await page.getByRole("button", { name: /せってい/ }).click();
+  await expect(page.getByRole("heading", { name: "せってい" })).toBeVisible();
+}
 async function interactWithNearbyTarget(page: Page) {
   const canvas = page.locator("canvas.game-canvas");
   await canvas.click();
@@ -69,7 +93,7 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
       fullPage: true,
     });
 
-    await page.getByRole("button", { name: /あたらしく始める/ }).click();
+    await startNewGame(page);
     await expect(page.locator("canvas.game-canvas")).toBeVisible();
     const tutorial = page.getByTestId("tutorial-coach");
     await expect(tutorial).toContainText("矢印で すこし歩こう");
@@ -95,7 +119,7 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
       path: "screenshots/phase2-1-normal-mode.png",
       fullPage: true,
     });
-    await openMenu(page);
+    await openSettings(page);
     const canvasClock = page.locator("canvas.game-canvas");
     await expect(canvasClock).toHaveAttribute("data-debug-paused", "true");
     const pausedTime = await canvasClock.getAttribute("data-debug-game-elapsed-time");
@@ -119,8 +143,8 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
       fullPage: true,
     });
 
-    await openMenu(page);
-    await page.getByRole("button", { name: /セーブする/ }).click();
+    await openSettings(page);
+    await page.getByRole("button", { name: /いま セーブする/ }).click();
     await expect(page.getByRole("status")).toContainText("セーブ");
     await page.reload();
     await expect(
@@ -168,8 +192,8 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
       fullPage: true,
     });
 
-    await openMenu(page);
-    await page.getByRole("button", { name: /セーブする/ }).click();
+    await openSettings(page);
+    await page.getByRole("button", { name: /いま セーブする/ }).click();
     const saved = await page.evaluate((key) => {
       const raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : null;
@@ -181,7 +205,9 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
     expect(saved.inventory.wood).toBeGreaterThanOrEqual(1);
 
     await page.reload();
-    await page.getByRole("button", { name: /つづきから/ }).click();
+    await page.getByRole("button", { name: /つづきから/ }).evaluate((button) => {
+    window.setTimeout(() => (button as HTMLButtonElement).click(), 0);
+  });
     await expect(page.locator("canvas.game-canvas")).toBeVisible();
     await page.waitForTimeout(650);
     await expect(page.locator("canvas.game-canvas")).not.toHaveAttribute(
@@ -213,7 +239,8 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
     await expect(page.getByRole("status")).toContainText("石");
 
     await page.getByRole("button", { name: "メニュー" }).click();
-    await page.getByRole("button", { name: /タイトルにもどる/ }).click();
+    await page.getByRole("button", { name: /せってい/ }).click();
+    await page.getByRole("button", { name: /タイトルへ もどる/ }).click();
     await seedSave(page, {
       easyMode: true,
       playerPosition: { x: -6.2, z: 1.6 },

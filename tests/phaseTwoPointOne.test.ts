@@ -129,11 +129,11 @@ describe("collection, animation ordering, and save migration", () => {
       },
     );
     expect(counts["lumi-minnow"]).toBe(1);
-    expect(collectionCompletion(counts)).toMatchObject({ found: 1, total: 13 });
+    expect(collectionCompletion(counts)).toMatchObject({ found: 1, total: 18 });
     expect(collectionCategoryCompletion(counts, "fish")).toEqual({
       found: 1,
-      total: 3,
-      percent: 33,
+      total: 5,
+      percent: 20,
     });
   });
 
@@ -175,7 +175,7 @@ describe("collection, animation ordering, and save migration", () => {
         },
       },
     });
-    expect(migrated.version).toBe(3);
+    expect(migrated.version).toBe(4);
     expect(migrated.lumen).toBe(432);
     expect(migrated.tutorialProgress.step).toBe(5);
     expect(migrated.collectionCounts["lumi-minnow"]).toBe(1);

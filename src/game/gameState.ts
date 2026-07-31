@@ -17,10 +17,12 @@ import {
 import { createTutorialProgress } from "@/src/tutorial/TutorialSystem";
 import {
   applyJourneyEvent,
-  BASE_RECIPES,
   createJourneyGoal,
-  withCalculatedRank,
-} from "@/src/progression/ProgressionSystem";
+  dailyGoalIsActive,
+} from "@/src/progression/DailyGoalSystem";
+import { BASE_RECIPES } from "@/src/progression/UnlockCatalog";
+import { withCalculatedRank } from "@/src/progression/IslandRankSystem";
+import { INITIAL_LUMEN } from "@/src/economy/EconomyConfig";
 
 export const SAVE_KEY = "lumi-island-save-v1";
 
@@ -33,7 +35,7 @@ const questProgress = (): Record<QuestId, QuestProgress> => ({
 });
 
 export const createInitialState = (): GameState => ({
-  version: 3,
+  version: 4,
   playerPosition: { x: 0, z: 6 },
   easyMode: false,
   tutorialStep: 0,
@@ -45,8 +47,8 @@ export const createInitialState = (): GameState => ({
   audioSettings: { muted: false, effectsVolume: 0.72 },
   characterModelId: "mira",
   playSeconds: 0,
-  inventory: { "twig-stool": 1 },
-  lumen: 120,
+  inventory: {},
+  lumen: INITIAL_LUMEN,
   dayMinute: 8 * 60,
   day: 1,
   quests: questProgress(),
@@ -55,9 +57,12 @@ export const createInitialState = (): GameState => ({
   unlockedRecipes: [...BASE_RECIPES],
   collectionMilestones: [],
   groveRepairs: 0,
+  bridgeRepaired: false,
   collectionHintsBought: 0,
   residentFriendship: { ノラ: 0, カイ: 0, セラ: 0 },
   residentLastTalkDay: {},
+  nollaMemorySeen: false,
+  dailyGoalsStartDay: null,
   journeyGoal: createJourneyGoal(1),
   totalGathered: 0,
   totalCrafted: 0,
@@ -188,7 +193,10 @@ export function advanceTimeWhileRunning(
 }
 
 export function applyEvent(state: GameState, event: GameEvent): GameState {
-  const journey = applyJourneyEvent(state.journeyGoal, event);
+  const dailyActive = dailyGoalIsActive(state.dailyGoalsStartDay, state.day);
+  const journey = dailyActive
+    ? applyJourneyEvent(state.journeyGoal, event)
+    : { goal: state.journeyGoal, reward: 0 };
   let next: GameState = {
     ...state,
     journeyGoal: journey.goal,
@@ -214,24 +222,22 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       amount,
     },
   };
+  let dailyGoalsStartDay = state.dailyGoalsStartDay;
 
   if (complete) {
     const currentIndex = QUEST_ORDER.indexOf(activeId);
     const nextQuest = QUEST_ORDER[currentIndex + 1];
-    if (nextQuest) quests[nextQuest] = { status: "active", amount: 0 };
+    if (nextQuest) {
+      quests[nextQuest] = { status: "active", amount: 0 };
+    } else if (dailyGoalsStartDay === null) {
+      dailyGoalsStartDay = state.day + 1;
+    }
   }
 
-  const resident = definition.resident;
-  const residentFriendship = complete
-    ? {
-        ...state.residentFriendship,
-        [resident]: Math.min(3, (state.residentFriendship[resident] ?? 0) + 1),
-      }
-    : state.residentFriendship;
   next = {
     ...next,
     quests,
-    residentFriendship,
+    dailyGoalsStartDay,
     lumen: complete ? next.lumen + definition.reward : next.lumen,
   };
   return withCalculatedRank(next);
@@ -277,7 +283,8 @@ export function sanitizeState(value: unknown): GameState {
   if (
     candidate.version !== 1 &&
     candidate.version !== 2 &&
-    candidate.version !== 3
+    candidate.version !== 3 &&
+    candidate.version !== 4
   ) {
     return initial;
   }
@@ -285,7 +292,7 @@ export function sanitizeState(value: unknown): GameState {
     candidate.version === 1
       ? {
           ...candidate,
-          version: 3 as const,
+          version: 4 as const,
           easyMode: false,
           tutorialStep: 7,
           tutorialProgress: createTutorialProgress(7),
@@ -299,7 +306,7 @@ export function sanitizeState(value: unknown): GameState {
         }
       : {
           ...candidate,
-          version: 3 as const,
+          version: 4 as const,
           tutorialProgress:
             candidate.tutorialProgress ??
             createTutorialProgress(candidate.tutorialStep ?? 7),
@@ -308,7 +315,7 @@ export function sanitizeState(value: unknown): GameState {
   return withCalculatedRank({
     ...initial,
     ...migrated,
-    version: 3,
+    version: 4,
     playerPosition: {
       ...initial.playerPosition,
       ...(migrated.playerPosition ?? {}),
@@ -353,6 +360,7 @@ export function sanitizeState(value: unknown): GameState {
       typeof migrated.groveRepairs === "number"
         ? Math.max(0, Math.min(3, Math.floor(migrated.groveRepairs)))
         : 0,
+    bridgeRepaired: Boolean(migrated.bridgeRepaired),
     collectionHintsBought:
       typeof migrated.collectionHintsBought === "number"
         ? Math.max(0, Math.floor(migrated.collectionHintsBought))
@@ -362,9 +370,22 @@ export function sanitizeState(value: unknown): GameState {
       ...(migrated.residentFriendship ?? {}),
     },
     residentLastTalkDay: migrated.residentLastTalkDay ?? {},
-    journeyGoal:
-      migrated.journeyGoal && migrated.journeyGoal.day === (migrated.day ?? initial.day)
-        ? migrated.journeyGoal
-        : createJourneyGoal(migrated.day ?? initial.day),
+    nollaMemorySeen: Boolean(migrated.nollaMemorySeen),
+    dailyGoalsStartDay:
+      typeof migrated.dailyGoalsStartDay === "number"
+        ? Math.max(1, Math.floor(migrated.dailyGoalsStartDay))
+        : QUEST_ORDER.every((id) => migrated.quests?.[id]?.status === "complete")
+          ? (migrated.day ?? initial.day) + 1
+          : null,
+    journeyGoal: (() => {
+      const day = migrated.day ?? initial.day;
+      const fresh = createJourneyGoal(day);
+      if (!migrated.journeyGoal || migrated.journeyGoal.day !== day) return fresh;
+      const amount = Math.max(
+        0,
+        Math.min(fresh.target, Number(migrated.journeyGoal.amount) || 0),
+      );
+      return { ...fresh, amount, complete: amount >= fresh.target };
+    })(),
   });
 }

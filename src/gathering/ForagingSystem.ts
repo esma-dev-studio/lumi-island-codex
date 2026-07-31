@@ -2,7 +2,7 @@ import type { ResourceId } from "@/src/game/types";
 
 export type ForageResource = Extract<
   ResourceId,
-  "berry" | "herb" | "shell" | "glowcap" | "reed"
+  "berry" | "herb" | "shell" | "glowcap" | "reed" | "starleaf" | "moonpetal" | "stardew"
 >;
 
 export interface ForageDiscovery {
@@ -34,6 +34,15 @@ const DISCOVERIES: Record<ForageResource, Omit<ForageDiscovery, "item">[]> = {
   reed: [
     { discoveryId: "reed-water", title: "みずべ草", reading: "みずべ ぐさ", note: "しなやかで、ござ作りにぴったり。", amount: 1 },
     { discoveryId: "reed-silver", title: "銀のあし", reading: "ぎんの あし", note: "風がふくと銀色にゆれる。", amount: 2 },
+  ],
+  starleaf: [
+    { discoveryId: "starleaf-islet", title: "星しずく草", reading: "ほししずく そう", note: "橋の先の風で、葉がきらめいた！", amount: 1 },
+  ],
+  moonpetal: [
+    { discoveryId: "moonpetal-night", title: "月あかり花", reading: "つきあかり ばな", note: "夜だけ、月みたいに花がひらく。", amount: 1 },
+  ],
+  stardew: [
+    { discoveryId: "stardew-night", title: "星つゆ草", reading: "ほしつゆ そう", note: "夜つゆが小さな星になった！", amount: 1 },
   ],
 };
 

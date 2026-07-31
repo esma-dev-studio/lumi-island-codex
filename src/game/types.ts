@@ -6,6 +6,9 @@ export type ResourceId =
   | "shell"
   | "glowcap"
   | "reed"
+  | "starleaf"
+  | "moonpetal"
+  | "stardew"
   | "fish";
 
 export type FurnitureId =
@@ -18,7 +21,8 @@ export type FurnitureId =
   | "reed-mat"
   | "tea-basket"
   | "cedar-bench"
-  | "harbor-sign";
+  | "harbor-sign"
+  | "nolla-workbench";
 
 export type ItemId = ResourceId | FurnitureId;
 export type ResidentId = "ノラ" | "カイ" | "セラ";
@@ -81,11 +85,14 @@ export interface QuestProgress {
 }
 
 export type IslandRank = 1 | 2 | 3;
-export type JourneyGoalKind = "gather" | "craft" | "place";
+export type JourneyGoalKind = "gather" | "craft" | "place" | "talk";
 
 export interface JourneyGoalState {
   day: number;
   kind: JourneyGoalKind;
+  item?: ResourceId;
+  resident?: ResidentId;
+  label: string;
   amount: number;
   target: number;
   reward: number;
@@ -93,7 +100,7 @@ export interface JourneyGoalState {
 }
 
 export interface GameState {
-  version: 3;
+  version: 4;
   playerPosition: Position2D;
   easyMode: boolean;
   tutorialStep: number;
@@ -115,9 +122,12 @@ export interface GameState {
   unlockedRecipes: FurnitureId[];
   collectionMilestones: number[];
   groveRepairs: number;
+  bridgeRepaired: boolean;
   collectionHintsBought: number;
   residentFriendship: Record<ResidentId, number>;
   residentLastTalkDay: Partial<Record<ResidentId, number>>;
+  nollaMemorySeen: boolean;
+  dailyGoalsStartDay: number | null;
   journeyGoal: JourneyGoalState;
   totalGathered: number;
   totalCrafted: number;

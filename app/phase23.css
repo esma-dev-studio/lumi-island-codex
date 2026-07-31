@@ -1,0 +1,404 @@
+﻿/* Phase 2.3 — child-first navigation, meaningful unlocks, and story feedback */
+.game-panel--menu,
+.game-panel--building,
+.game-panel--settings {
+  width: min(720px, 58vw);
+}
+
+.main-menu-heading,
+.building-heading,
+.settings-heading {
+  border-bottom-color: rgba(49, 95, 86, 0.18);
+}
+
+.menu-status--compact {
+  margin-bottom: 1rem;
+}
+
+.child-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 1.1rem;
+}
+
+.child-menu-card {
+  position: relative;
+  display: grid;
+  min-height: 116px;
+  padding: 1rem;
+  overflow: hidden;
+  border: 1px solid rgba(49, 95, 86, 0.17);
+  border-radius: 20px;
+  grid-template-columns: 54px 1fr;
+  gap: 0.8rem;
+  align-items: center;
+  color: #244b46;
+  background: linear-gradient(145deg, #fffdf5, #e6efe3);
+  box-shadow: 0 10px 24px rgba(45, 74, 61, 0.08);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.child-menu-card:hover,
+.child-menu-card:focus-visible {
+  transform: translateY(-3px);
+  border-color: rgba(49, 95, 86, 0.42);
+  box-shadow: 0 16px 30px rgba(45, 74, 61, 0.15);
+}
+
+.child-menu-card--book { background: linear-gradient(145deg, #fffaf0, #eee3c8); }
+.child-menu-card--build { background: linear-gradient(145deg, #fdf5df, #e5d2a7); }
+.child-menu-card--settings { background: linear-gradient(145deg, #f4f3ee, #dce5df); }
+
+.child-menu-icon {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.54);
+  box-shadow: inset 0 -5px 12px rgba(54, 83, 70, 0.09);
+  font-size: 28px;
+}
+
+.child-menu-card strong,
+.child-menu-card small {
+  display: block;
+}
+
+.child-menu-card strong {
+  font-family: Georgia, "Yu Mincho", serif;
+  font-size: 1.15rem;
+}
+
+.child-menu-card small {
+  margin-top: 0.25rem;
+  color: #5b6d65;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.child-menu-card > b {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.65rem;
+  padding: 0.2rem 0.42rem;
+  border-radius: 999px;
+  color: #547167;
+  background: rgba(255, 255, 255, 0.58);
+  font-size: 0.62rem;
+}
+
+.main-menu-tip {
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem;
+  border-radius: 14px;
+  color: #53675a;
+  background: rgba(255, 255, 255, 0.48);
+  font-size: 0.75rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.next-fun-card,
+.friendship-story-card {
+  display: grid;
+  align-items: center;
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(49, 95, 86, 0.2);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255, 252, 239, 0.94), rgba(222, 235, 218, 0.9));
+  grid-template-columns: auto 1fr auto;
+  gap: 0.8rem;
+}
+
+.next-fun-orb {
+  width: 38px;
+  height: 38px;
+  border: 6px solid rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  background: #e9b95a;
+  box-shadow: 0 4px 14px rgba(189, 130, 45, 0.28);
+}
+
+.next-fun-card small,
+.next-fun-card strong,
+.next-fun-card span,
+.friendship-story-card small,
+.friendship-story-card strong,
+.friendship-story-card span {
+  display: block;
+}
+
+.next-fun-card small,
+.friendship-story-card small {
+  color: #8a6335;
+  font-size: 0.67rem;
+  font-weight: 900;
+}
+
+.next-fun-card strong,
+.friendship-story-card strong {
+  margin: 0.15rem 0;
+  font-size: 0.92rem;
+}
+
+.next-fun-card span,
+.friendship-story-card span {
+  color: #5b6d65;
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
+
+.next-fun-card button,
+.friendship-story-card button {
+  min-height: 42px;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  border-radius: 12px;
+  color: #fff8e7;
+  background: #315f56;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.unlock-shop-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.unlock-card {
+  display: grid;
+  min-height: 164px;
+  padding: 0.85rem;
+  border: 1px solid rgba(49, 95, 86, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 253, 245, 0.8);
+  box-shadow: 0 8px 20px rgba(45, 74, 61, 0.06);
+  grid-template-columns: 52px 1fr;
+  grid-template-rows: 1fr auto;
+  gap: 0.7rem;
+}
+
+.unlock-card.is-complete {
+  border-color: rgba(63, 127, 90, 0.4);
+  background: rgba(222, 239, 219, 0.75);
+}
+
+.unlock-card-art {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 16px;
+  background: linear-gradient(150deg, #f7d98c, #d7b667);
+  font-size: 26px;
+}
+
+.unlock-card--bridge .unlock-card-art { background: linear-gradient(150deg, #a9d4d0, #668f8c); }
+.unlock-card--grove .unlock-card-art { background: linear-gradient(150deg, #b7d29b, #6d955e); }
+.unlock-card--hint .unlock-card-art { background: linear-gradient(150deg, #d9caee, #9888b5); }
+
+.unlock-card-copy small {
+  color: #8b6740;
+  font-size: 0.62rem;
+  font-weight: 900;
+}
+
+.unlock-card-copy h3 {
+  margin: 0.18rem 0;
+  color: #284f49;
+  font-family: Georgia, "Yu Mincho", serif;
+  font-size: 1rem;
+}
+
+.unlock-card-copy p {
+  margin: 0;
+  color: #607068;
+  font-size: 0.65rem;
+  line-height: 1.45;
+}
+
+.unlock-card > button {
+  grid-column: 1 / -1;
+  min-height: 42px;
+  border: 1px solid rgba(49, 95, 86, 0.22);
+  border-radius: 12px;
+  color: #315f56;
+  background: #edf1e8;
+  font-size: 0.8rem;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.unlock-card > button.can-buy {
+  border-color: #315f56;
+  color: #fff9e8;
+  background: #315f56;
+  box-shadow: 0 6px 14px rgba(49, 95, 86, 0.2);
+}
+
+.unlock-card > button:disabled {
+  color: #53736b;
+  background: rgba(198, 223, 194, 0.7);
+  cursor: default;
+}
+
+.world-unlock-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.world-unlock-strip span {
+  padding: 0.55rem;
+  border-radius: 12px;
+  color: #77746b;
+  background: rgba(84, 85, 75, 0.08);
+  font-size: 0.62rem;
+  font-weight: 850;
+  text-align: center;
+}
+
+.world-unlock-strip span.is-open {
+  color: #2f6457;
+  background: rgba(109, 164, 115, 0.17);
+}
+
+.settings-list {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.settings-list > button,
+.settings-audio {
+  display: grid;
+  min-height: 70px;
+  padding: 0.8rem;
+  border: 1px solid rgba(49, 95, 86, 0.15);
+  border-radius: 16px;
+  grid-template-columns: 46px 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  color: #284f49;
+  background: rgba(255, 253, 245, 0.76);
+  cursor: pointer;
+  text-align: left;
+}
+
+.settings-list > button.is-selected {
+  border-color: #315f56;
+  background: rgba(214, 232, 212, 0.8);
+}
+
+.settings-symbol {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 13px;
+  background: rgba(49, 95, 86, 0.09);
+  font-size: 22px;
+}
+
+.settings-list strong,
+.settings-list small {
+  display: block;
+}
+
+.settings-list strong { font-size: 0.83rem; }
+.settings-list small { margin-top: 0.2rem; color: #68756f; font-size: 0.66rem; }
+.settings-audio { grid-template-columns: 46px 1fr auto; cursor: default; }
+.settings-audio > button { min-height: 38px; border: 0; border-radius: 10px; color: #fff9e8; background: #315f56; font-weight: 850; }
+.settings-audio input { grid-column: 2 / -1; width: 100%; accent-color: #315f56; }
+
+.resident-dialog--story {
+  grid-template-columns: 105px 1fr auto;
+}
+
+.dialog-name small {
+  margin-left: 0.5rem;
+  color: #d19536;
+  font-family: system-ui, sans-serif;
+  font-size: 0.72rem;
+}
+
+.resident-dialog .dialog-goal {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  color: #315f56;
+  background: rgba(49, 95, 86, 0.1);
+  font-size: 0.67rem;
+  font-weight: 900;
+}
+
+.dialog-actions {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.resident-dialog .dialog-gift {
+  color: #543a22;
+  background: #e6bd66;
+}
+
+@media (max-width: 820px) {
+  .game-panel--menu,
+  .game-panel--building,
+  .game-panel--settings {
+    width: min(620px, 88vw);
+  }
+}
+
+@media (max-width: 620px) {
+  .game-panel--menu,
+  .game-panel--building,
+  .game-panel--settings {
+    width: 100vw;
+  }
+
+  .child-menu-grid,
+  .unlock-shop-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .child-menu-card {
+    min-height: 90px;
+  }
+
+  .world-unlock-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .next-fun-card,
+  .friendship-story-card {
+    grid-template-columns: 1fr auto;
+  }
+
+  .next-fun-orb {
+    display: none;
+  }
+
+  .resident-dialog--story {
+    grid-template-columns: 74px 1fr;
+  }
+
+  .resident-dialog--story .resident-portrait {
+    width: 68px;
+    height: 78px;
+  }
+
+  .dialog-actions {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

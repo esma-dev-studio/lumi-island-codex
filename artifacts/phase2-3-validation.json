@@ -1,0 +1,42 @@
+{
+  "phase": "2.3",
+  "completedAt": "2026-07-31",
+  "checks": {
+    "typecheck": { "status": "passed", "command": "npm run typecheck" },
+    "lint": { "status": "passed", "command": "npm run lint" },
+    "vitest": { "status": "passed", "files": 6, "tests": 67, "failed": 0 },
+    "playwright": {
+      "status": "passed",
+      "tests": 16,
+      "failed": 0,
+      "execution": "split to stay inside the outer command time limit",
+      "groups": [
+        { "name": "Phase 2.1", "passed": 5, "failed": 0 },
+        { "name": "tutorial and child HUD", "passed": 4, "failed": 0 },
+        { "name": "input and progression", "passed": 6, "failed": 0 },
+        { "name": "Phase 2.3 no-seed journey", "passed": 1, "failed": 0, "durationSeconds": 248 }
+      ],
+      "monolithicAttempt": {
+        "status": "outer-timeout",
+        "outerTimeoutSeconds": 900,
+        "countedAsPass": false,
+        "impact": "Every detected test was subsequently run in split groups; all 16 passed."
+      }
+    },
+    "productionBuild": {
+      "status": "passed",
+      "command": "npm run build",
+      "warning": "At least one minified client chunk remains above 500 kB."
+    },
+    "browserVisualQa": {
+      "status": "passed",
+      "views": ["title", "initial HUD", "four-item menu", "island building", "settings"],
+      "fixFromQa": "Tutorial coach is hidden while main, building, collection, quest, or settings panels are open."
+    },
+    "characterProductionGate": {
+      "status": "failed",
+      "expectedForCurrentPlaceholderAssets": true,
+      "evidence": "artifacts/character-gate-phase2-3.json"
+    }
+  }
+}

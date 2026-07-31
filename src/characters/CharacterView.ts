@@ -1,10 +1,8 @@
-import {
-  AbstractMesh,
-  Scene,
-  ShadowGenerator,
-  TransformNode,
-  Vector3,
-} from "@babylonjs/core";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
+import type { Scene } from "@babylonjs/core/scene";
+import type { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
 import type { AnimationName } from "@/src/game/types";
 import type { CharacterConfig } from "@/src/characters/CharacterConfig";
 import {

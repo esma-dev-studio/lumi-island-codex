@@ -180,22 +180,22 @@ describe("Phase 2.2 audio and stable world data", () => {
   });
 });
 describe("Phase 2.2 continuation progression", () => {
-  it("turns ordinary island actions into a once-only daily reward", () => {
+  it("turns matching island actions into a once-only daily reward", () => {
     const initial = createInitialState();
-    const first = applyJourneyEvent(initial.journeyGoal, {
-      type: "gather",
-      item: "wood",
-      amount: 4,
-    });
-    expect(first.goal.amount).toBe(4);
-    expect(first.reward).toBe(0);
-    const complete = applyJourneyEvent(first.goal, {
+    const ignored = applyJourneyEvent(initial.journeyGoal, {
       type: "gather",
       item: "stone",
+      amount: 4,
+    });
+    expect(ignored.goal.amount).toBe(0);
+    expect(ignored.reward).toBe(0);
+    const complete = applyJourneyEvent(ignored.goal, {
+      type: "gather",
+      item: "wood",
       amount: 2,
     });
     expect(complete.goal.complete).toBe(true);
-    expect(complete.reward).toBe(45);
+    expect(complete.reward).toBe(10);
     expect(
       applyJourneyEvent(complete.goal, {
         type: "gather",
@@ -204,23 +204,24 @@ describe("Phase 2.2 continuation progression", () => {
       }).reward,
     ).toBe(0);
   });
+  it("requires earned lumen for useful, priced choices", () => {
+    const initial = createInitialState();
+    expect(spendLumen(initial, "recipe").ok).toBe(false);
 
-  it("gives lumen three useful, priced choices", () => {
-    let state = createInitialState();
+    let state = { ...initial, lumen: 60 };
     const recipe = spendLumen(state, "recipe");
     expect(recipe.ok).toBe(true);
-    expect(recipe.state.lumen).toBe(100);
+    expect(recipe.state.lumen).toBe(42);
     expect(recipe.state.unlockedRecipes).toContain("cedar-bench");
 
     state = spendLumen(recipe.state, "grove").state;
-    expect(state.lumen).toBe(85);
+    expect(state.lumen).toBe(30);
     expect(state.groveRepairs).toBe(1);
 
     state = spendLumen(state, "hint").state;
-    expect(state.lumen).toBe(75);
+    expect(state.lumen).toBe(24);
     expect(state.collectionHintsBought).toBe(1);
   });
-
   it("unlocks a visible collection reward at 25 percent", () => {
     const initial = createInitialState();
     const counts = Object.fromEntries(
@@ -234,10 +235,10 @@ describe("Phase 2.2 continuation progression", () => {
     expect(reward.milestone).toBe(25);
     expect(reward.state.collectionMilestones).toContain(25);
     expect(reward.state.unlockedRecipes).toContain("harbor-sign");
-    expect(reward.state.lumen).toBe(145);
+    expect(reward.state.lumen).toBe(16);
   });
 
-  it("raises friendship once per resident per island day", () => {
+  it("raises Nolla friendship through talk, gift, and building", () => {
     const initial = createInitialState();
     const first = befriendResident(initial, "ノラ");
     expect(first.level).toBe(1);
@@ -247,9 +248,8 @@ describe("Phase 2.2 continuation progression", () => {
       { ...first.state, day: first.state.day + 1 },
       "ノラ",
     );
-    expect(tomorrow.level).toBe(2);
+    expect(tomorrow.level).toBe(1);
   });
-
   it("uses requests, collection, furniture, and friendship for three ranks", () => {
     const initial = createInitialState();
     expect(calculateIslandRank(initial)).toBe(1);

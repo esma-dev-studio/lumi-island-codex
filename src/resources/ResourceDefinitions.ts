@@ -10,6 +10,14 @@ export type ResourceVisualType =
   | "reed-patch"
   | "fishing-spot";
 
+export type ResourceUnlockRequirement =
+  | "bridge"
+  | "collection-50"
+  | "collection-75"
+  | "grove-1"
+  | "grove-2"
+  | "grove-3";
+
 export type ResourceColliderDefinition = (
   | { kind: "circle"; radius: number }
   | { kind: "ellipse"; radiusX: number; radiusZ: number }
@@ -29,6 +37,9 @@ export interface ResourceDefinition {
   legacyIds: readonly string[];
   depletedLabel: string;
   recoveringLabel: string;
+  unlockRequirement?: ResourceUnlockRequirement;
+  timeWindow?: "night";
+  fishHabitat?: "pond" | "harbor";
 }
 
 const recovery: Record<ResourceId, number> = {
@@ -39,6 +50,9 @@ const recovery: Record<ResourceId, number> = {
   shell: 100,
   glowcap: 90,
   reed: 80,
+  starleaf: 90,
+  moonpetal: 120,
+  stardew: 120,
   fish: 75,
 };
 
@@ -50,8 +64,29 @@ const labels: Record<ResourceId, { depleted: string; recovering: string }> = {
   shell: { depleted: "貝をひろった浜", recovering: "波が貝を運んでいる浜" },
   glowcap: { depleted: "つんだあとのキノコ", recovering: "光が戻っているキノコ" },
   reed: { depleted: "刈ったあとの水べ草", recovering: "水べ草が育っている" },
+  starleaf: { depleted: "つんだあとの星しずく草", recovering: "星しずく草が育っている" },
+  moonpetal: { depleted: "花をつんだ月あかり花", recovering: "月あかり花が育っている" },
+  stardew: { depleted: "つんだあとの星つゆ草", recovering: "星つゆ草が育っている" },
   fish: { depleted: "魚がいない水面", recovering: "魚が戻ってきている水面" },
 };
+
+const prefix: Record<ResourceVisualType, string> = {
+  "cedar-tree": "wood-cedar",
+  "moon-rock": "stone-moon",
+  "berry-bush": "berry-grove",
+  "herb-patch": "herb-meadow",
+  "shell-patch": "shell-beach",
+  "glowcap-patch": "glowcap-forest",
+  "reed-patch": "reed-pond",
+  "fishing-spot": "fish-moon-pond",
+};
+
+interface DefinitionOptions {
+  id?: string;
+  unlockRequirement?: ResourceUnlockRequirement;
+  timeWindow?: "night";
+  fishHabitat?: "pond" | "harbor";
+}
 
 function definition(
   item: ResourceId,
@@ -62,19 +97,10 @@ function definition(
   placeHint: string,
   legacyId: string,
   collider?: ResourceColliderDefinition,
+  options: DefinitionOptions = {},
 ): ResourceDefinition {
-  const prefix: Record<ResourceVisualType, string> = {
-    "cedar-tree": "wood-cedar",
-    "moon-rock": "stone-moon",
-    "berry-bush": "berry-grove",
-    "herb-patch": "herb-meadow",
-    "shell-patch": "shell-beach",
-    "glowcap-patch": "glowcap-forest",
-    "reed-patch": "reed-pond",
-    "fishing-spot": "fish-moon-pond",
-  };
   return {
-    id: `${prefix[visualType]}-${String(visualIndex + 1).padStart(2, "0")}`,
+    id: options.id ?? `${prefix[visualType]}-${String(visualIndex + 1).padStart(2, "0")}`,
     item,
     position,
     visualType,
@@ -83,9 +109,12 @@ function definition(
     interactionRadius,
     recoverySeconds: recovery[item],
     placeHint,
-    legacyIds: [legacyId],
+    legacyIds: legacyId ? [legacyId] : [],
     depletedLabel: labels[item].depleted,
     recoveringLabel: labels[item].recovering,
+    unlockRequirement: options.unlockRequirement,
+    timeWindow: options.timeWindow,
+    fishHabitat: options.fishHabitat,
   };
 }
 
@@ -148,7 +177,39 @@ export const RESOURCE_WORLD_DEFINITIONS: readonly ResourceDefinition[] = [
       radiusZ: 2.55,
       offset: { x: 0, z: -3.2 },
     },
+    { fishHabitat: "pond" },
   ),
+  definition("berry", "berry-bush", 30, { x: -12.3, z: -5.6 }, 1.8, "元気になった森", "", undefined, {
+    id: "berry-restored-grove-01",
+    unlockRequirement: "grove-1",
+  }),
+  definition("herb", "herb-patch", 31, { x: -9.5, z: -7.1 }, 1.6, "元気になった森", "", undefined, {
+    id: "herb-restored-grove-01",
+    unlockRequirement: "grove-2",
+  }),
+  definition("glowcap", "glowcap-patch", 32, { x: -12.8, z: -7.3 }, 1.6, "元気になった森", "", undefined, {
+    id: "glowcap-restored-grove-01",
+    unlockRequirement: "grove-3",
+  }),
+  definition("starleaf", "herb-patch", 40, { x: 14.3, z: -4.3 }, 1.7, "橋の先の小島", "", undefined, {
+    id: "starleaf-bridge-islet-01",
+    unlockRequirement: "bridge",
+  }),
+  definition("fish", "fishing-spot", 1, { x: 9.5, z: -5.2 }, 2.2, "海辺の釣りデッキ", "", undefined, {
+    id: "fish-harbor-deck-01",
+    unlockRequirement: "collection-50",
+    fishHabitat: "harbor",
+  }),
+  definition("moonpetal", "glowcap-patch", 50, { x: -5.8, z: -8.3 }, 1.6, "夜にひらく花の庭", "", undefined, {
+    id: "moonpetal-night-garden-01",
+    unlockRequirement: "collection-75",
+    timeWindow: "night",
+  }),
+  definition("stardew", "herb-patch", 51, { x: -4.6, z: -8.9 }, 1.6, "夜にひらく花の庭", "", undefined, {
+    id: "stardew-night-garden-01",
+    unlockRequirement: "collection-75",
+    timeWindow: "night",
+  }),
 ];
 
 const byId = new Map(RESOURCE_WORLD_DEFINITIONS.map((entry) => [entry.id, entry]));

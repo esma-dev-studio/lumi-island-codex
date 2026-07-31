@@ -13,8 +13,8 @@ describe("Lumi Island game loop", () => {
     const state = createInitialState();
     expect(state.quests["first-kindling"].status).toBe("active");
     expect(state.quests["warm-light"].status).toBe("locked");
-    expect(state.lumen).toBe(120);
-    expect(inventoryCount(state, "twig-stool")).toBe(1);
+    expect(state.lumen).toBe(8);
+    expect(inventoryCount(state, "twig-stool")).toBe(0);
   });
 
   it("gathers resources and advances the first request", () => {
@@ -25,7 +25,7 @@ describe("Lumi Island game loop", () => {
     expect(inventoryCount(state, "wood")).toBe(3);
     expect(state.quests["first-kindling"].status).toBe("complete");
     expect(state.quests["warm-light"].status).toBe("active");
-    expect(state.lumen).toBe(200);
+    expect(state.lumen).toBe(20);
   });
 
   it("crafts only when every ingredient is available", () => {
@@ -64,8 +64,8 @@ describe("Lumi Island game loop", () => {
 
   it("recovers safely from invalid save data", () => {
     const recovered = sanitizeState({ version: 99, lumen: 99999 });
-    expect(recovered.version).toBe(3);
-    expect(recovered.lumen).toBe(120);
+    expect(recovered.version).toBe(4);
+    expect(recovered.lumen).toBe(8);
     expect(recovered.placedFurniture).toEqual([]);
   });
 });

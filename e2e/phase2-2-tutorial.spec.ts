@@ -23,7 +23,9 @@ async function seedTutorial(
     { key: SAVE_KEY, seed: values },
   );
   await page.reload();
-  await page.getByRole("button", { name: /つづきから/ }).click();
+  await page.getByRole("button", { name: /つづきから/ }).evaluate((button) => {
+    window.setTimeout(() => (button as HTMLButtonElement).click(), 0);
+  });
   await expect(page.locator("canvas.game-canvas")).toBeVisible();
 }
 
@@ -68,8 +70,9 @@ test.describe.serial("Lumi Island Phase 2.2 tutorial and child HUD", () => {
     await expect(coach).toHaveCount(0);
 
     await page.getByRole("button", { name: "メニュー", exact: true }).click();
+    await page.getByRole("button", { name: /せってい/ }).click();
     await page
-      .getByRole("button", { name: /チュートリアルを再開/ })
+      .getByRole("button", { name: /遊びかたを もう一度見る/ })
       .click();
     await expect(page.getByTestId("tutorial-coach")).toBeVisible();
 

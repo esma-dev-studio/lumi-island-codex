@@ -131,7 +131,7 @@ describe("world source, NPC collision, pause, and save migration", () => {
       inventory: { wood: 9 },
     };
     const migrated = sanitizeState(old);
-    expect(migrated.version).toBe(3);
+    expect(migrated.version).toBe(4);
     expect(migrated.lumen).toBe(777);
     expect(migrated.inventory.wood).toBe(9);
     expect(migrated.easyMode).toBe(false);
@@ -139,8 +139,8 @@ describe("world source, NPC collision, pause, and save migration", () => {
   });
 
   it("recovers from a future or corrupt save", () => {
-    expect(sanitizeState({ version: 99, lumen: 999 }).lumen).toBe(120);
-    expect(sanitizeState(null).version).toBe(3);
+    expect(sanitizeState({ version: 99, lumen: 999 }).lumen).toBe(8);
+    expect(sanitizeState(null).version).toBe(4);
   });
 });
 

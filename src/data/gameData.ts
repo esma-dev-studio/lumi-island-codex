@@ -6,6 +6,7 @@ import type {
   QuestId,
   RecipeDefinition,
 } from "@/src/game/types";
+import { QUEST_LUMEN_REWARDS } from "@/src/economy/EconomyConfig";
 
 export const ITEMS: Record<ItemId, ItemDefinition> = {
   wood: {
@@ -64,7 +65,30 @@ export const ITEMS: Record<ItemId, ItemDefinition> = {
     color: "#8b9855",
     category: "resource",
   },
-  fish: {
+  starleaf: {
+    id: "starleaf",
+    name: "星しずく草",
+    reading: "ほししずくそう",
+    description: "小島の風で きらめく葉。",
+    color: "#8cc7a8",
+    category: "resource",
+  },
+  moonpetal: {
+    id: "moonpetal",
+    name: "月あかり花",
+    reading: "つきあかりばな",
+    description: "夜だけ花びらをひらく。",
+    color: "#bca7ef",
+    category: "resource",
+  },
+  stardew: {
+    id: "stardew",
+    name: "星つゆ草",
+    reading: "ほしつゆそう",
+    description: "夜つゆを小さく光らせる。",
+    color: "#77cddd",
+    category: "resource",
+  },  fish: {
     id: "fish",
     name: "銀の小魚",
     reading: "ぎんのこざかな",
@@ -82,6 +106,7 @@ export const ITEMS: Record<ItemId, ItemDefinition> = {
   "tea-basket": furniture("tea-basket", "お茶のかご", "おちゃのかご", "#9b7650"),
   "cedar-bench": furniture("cedar-bench", "杉のベンチ", "すぎのべんち", "#8f5d3d"),
   "harbor-sign": furniture("harbor-sign", "港のしるべ", "みなとのしるべ", "#5e7d77"),
+  "nolla-workbench": furniture("nolla-workbench", "ノラの工具台", "のらのこうぐだい", "#7b563c"),
 };
 
 function furniture(
@@ -111,6 +136,7 @@ export const RECIPES: RecipeDefinition[] = [
   recipe("tea-basket", "お茶のかご", "香りのよいお茶の道具。", { berry: 2, herb: 2 }),
   recipe("cedar-bench", "杉のベンチ", "森をながめて休めるベンチ。", { wood: 5, stone: 1 }),
   recipe("harbor-sign", "港のしるべ", "海辺へつづく道の目じるし。", { wood: 4, shell: 2 }),
+  recipe("nolla-workbench", "ノラの工具台", "木しごとを いっしょに楽しめる台。", { wood: 4, stone: 1 }),
 ];
 
 function recipe(
@@ -131,7 +157,7 @@ export const QUESTS: Record<QuestId, QuestDefinition> = {
     description: "ノラが広場をなおす木をさがしています。",
     goalLabel: "木のえだを 3こ あつめる",
     target: 3,
-    reward: 80,
+    reward: QUEST_LUMEN_REWARDS["first-kindling"],
   },
   "warm-light": {
     id: "warm-light",
@@ -141,7 +167,7 @@ export const QUESTS: Record<QuestId, QuestDefinition> = {
     description: "石あかりをつくって、広場におこう。",
     goalLabel: "石あかりを 1こ つくる",
     target: 1,
-    reward: 120,
+    reward: QUEST_LUMEN_REWARDS["warm-light"],
   },
   "sea-letter": {
     id: "sea-letter",
@@ -151,7 +177,7 @@ export const QUESTS: Record<QuestId, QuestDefinition> = {
     description: "カイは音のちがう貝をさがしています。",
     goalLabel: "しま貝を 3こ あつめる",
     target: 3,
-    reward: 140,
+    reward: QUEST_LUMEN_REWARDS["sea-letter"],
   },
   "herbal-tea": {
     id: "herbal-tea",
@@ -161,7 +187,7 @@ export const QUESTS: Record<QuestId, QuestDefinition> = {
     description: "セラとお茶のかごをつくろう。",
     goalLabel: "お茶のかごを 1こ つくる",
     target: 1,
-    reward: 180,
+    reward: QUEST_LUMEN_REWARDS["herbal-tea"],
   },
   "lighthouse-picnic": {
     id: "lighthouse-picnic",
@@ -171,7 +197,7 @@ export const QUESTS: Record<QuestId, QuestDefinition> = {
     description: "みんなが集まれる台を灯台のそばにおこう。",
     goalLabel: "ピクニック台を 1こ おく",
     target: 1,
-    reward: 260,
+    reward: QUEST_LUMEN_REWARDS["lighthouse-picnic"],
   },
 };
 

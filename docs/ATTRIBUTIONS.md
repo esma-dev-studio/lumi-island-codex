@@ -19,7 +19,7 @@ Lumi Islandの世界観、名称、コード、キャラクターGLB仮素材、
 - Contents: オリジナルのプロシージャルメッシュ、6マテリアル、12ジョイント、9アニメーション
 - Asset status: `integration-placeholder`
 - Production use: **不可**。UV0、画像テクスチャ、複数関節ウェイト、本番レビューが未達です
-- Gate evidence: `artifacts/character-gate.json`
+- Gate evidence: `artifacts/character-gate-phase2-3.json` (`failed`; `unavailable`とは区別)
 
 ## 効果音
 

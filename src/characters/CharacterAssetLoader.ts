@@ -1,11 +1,9 @@
-import {
-  AbstractMesh,
-  AnimationGroup,
-  Scene,
-  SceneLoader,
-  Skeleton,
-  TransformNode,
-} from "@babylonjs/core";
+import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
+import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+import type { Scene } from "@babylonjs/core/scene";
+import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 // Register only the glTF 2.0 loader used by our original character assets.
 // Importing the package-wide barrel also bundles glTF 1.0 and every optional
 // extension into the server worker, which is unnecessary for these plain GLBs.

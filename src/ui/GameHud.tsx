@@ -1,13 +1,28 @@
+"use client";
+
+import { useEffect, useMemo } from "react";
 import { QUESTS } from "@/src/data/gameData";
 import type { GameState, QuestId } from "@/src/game/types";
 import type { InteractionHint } from "@/src/scenes/IslandScene";
-import { journeyGoalLabel } from "@/src/progression/ProgressionSystem";
 import {
-  sendGameKey,
-  tapGameKey,
-} from "@/src/player/PlayerInputController";
+  dailyGoalIsActive,
+  journeyGoalLabel,
+} from "@/src/progression/DailyGoalSystem";
+import { tapGameKey } from "@/src/player/PlayerInputController";
+import {
+  TouchMovementController,
+  type TouchDirectionKey,
+} from "@/src/input/TouchMovementController";
 
-export type HudPanel = "inventory" | "craft" | "quests" | "collection" | "menu" | null;
+export type HudPanel =
+  | "inventory"
+  | "craft"
+  | "quests"
+  | "collection"
+  | "building"
+  | "settings"
+  | "menu"
+  | null;
 
 export function GameHud({
   state,
@@ -36,6 +51,34 @@ export function GameHud({
 }) {
   const activeQuest = activeQuestId ? QUESTS[activeQuestId] : null;
   const questProgress = activeQuestId ? state.quests[activeQuestId] : null;
+  const dailyActive = dailyGoalIsActive(state.dailyGoalsStartDay, state.day);
+  const touchMovement = useMemo(() => new TouchMovementController(), []);
+
+  useEffect(() => {
+    const release = () => touchMovement.releaseAll();
+    window.addEventListener("blur", release);
+    return () => {
+      window.removeEventListener("blur", release);
+      release();
+    };
+  }, [touchMovement]);
+
+  useEffect(() => {
+    if (paused) touchMovement.releaseAll();
+  }, [paused, touchMovement]);
+
+  const touchHandlers = (key: TouchDirectionKey) => ({
+    onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+      touchMovement.press(key);
+    },
+    onPointerUp: () => touchMovement.release(key),
+    onPointerCancel: () => touchMovement.release(key),
+    onPointerLeave: () => touchMovement.release(key),
+    onLostPointerCapture: () => touchMovement.release(key),
+  });
+
   return (
     <>
       <header className="game-topbar">
@@ -55,12 +98,11 @@ export function GameHud({
 
       {!tutorialVisible && (
         <aside className="quest-ribbon">
-          <p className="eyebrow">いまの おねがい</p>
+          <p className="eyebrow">いま すること</p>
           {activeQuest && questProgress ? (
             <>
               <span className="quest-resident">{activeQuest.resident}より</span>
-              <h2>{activeQuest.title}</h2>
-              <p>{activeQuest.goalLabel}</p>
+              <h2>{activeQuest.goalLabel}</h2>
               <div className="quest-progress">
                 <span
                   style={{
@@ -71,15 +113,12 @@ export function GameHud({
                   }}
                 />
               </div>
-              <small>
-                {questProgress.amount} / {activeQuest.target}
-              </small>
+              <small>{questProgress.amount} / {activeQuest.target}</small>
             </>
-          ) : (
+          ) : dailyActive ? (
             <>
-              <span className="quest-resident">きょうの島しごと</span>
+              <span className="quest-resident">きょうの 島しごと</span>
               <h2>{journeyGoalLabel(state.journeyGoal)}</h2>
-              <p>できたら {state.journeyGoal.reward}ルーメン</p>
               <div className="quest-progress">
                 <span
                   style={{
@@ -92,9 +131,15 @@ export function GameHud({
               </div>
               <small>
                 {state.journeyGoal.complete
-                  ? "できた！ あしたも あそぼう"
+                  ? `できた！ ${state.journeyGoal.reward}ルーメン`
                   : `${state.journeyGoal.amount} / ${state.journeyGoal.target}`}
               </small>
+            </>
+          ) : (
+            <>
+              <span className="quest-resident">つぎの お楽しみ</span>
+              <h2>あしたから 島しごとが はじまるよ</h2>
+              <small>今日は 島を見てまわろう</small>
             </>
           )}
         </aside>
@@ -113,14 +158,7 @@ export function GameHud({
       {!paused && (
         <div className="touch-controls" aria-label="画面の操作ボタン">
           <div className="move-pad" aria-label="矢印で歩く">
-            <button
-              className="move-up"
-              aria-label="上へ歩く"
-              onPointerDown={() => sendGameKey("ArrowUp", true)}
-              onPointerUp={() => sendGameKey("ArrowUp", false)}
-              onPointerLeave={() => sendGameKey("ArrowUp", false)}
-              onClick={() => tapGameKey("ArrowUp")}
-            >
+            <button className="move-up" aria-label="上へ歩く" {...touchHandlers("ArrowUp")}>
               ↑
             </button>
             {(["ArrowLeft", "ArrowDown", "ArrowRight"] as const).map(
@@ -128,10 +166,7 @@ export function GameHud({
                 <button
                   key={key}
                   aria-label={`${["左", "下", "右"][index]}へ歩く`}
-                  onPointerDown={() => sendGameKey(key, true)}
-                  onPointerUp={() => sendGameKey(key, false)}
-                  onPointerLeave={() => sendGameKey(key, false)}
-                  onClick={() => tapGameKey(key)}
+                  {...touchHandlers(key)}
                 >
                   {["←", "↓", "→"][index]}
                 </button>

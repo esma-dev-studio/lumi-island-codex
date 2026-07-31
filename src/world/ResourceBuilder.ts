@@ -1,11 +1,9 @@
-import {
-  Mesh,
-  MeshBuilder,
-  type Scene,
-  type StandardMaterial,
-  TransformNode,
-  Vector3,
-} from "@babylonjs/core";
+import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Scene } from "@babylonjs/core/scene";
+import type { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import type { ResourceDefinition } from "@/src/resources/ResourceDefinitions";
 
 export interface ResourceMaterials {

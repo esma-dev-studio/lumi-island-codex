@@ -23,7 +23,9 @@ async function seedGame(
     { key: SAVE_KEY, values },
   );
   await page.reload();
-  await page.getByRole("button", { name: /つづきから/ }).click();
+  await page.getByRole("button", { name: /つづきから/ }).evaluate((button) => {
+    window.setTimeout(() => (button as HTMLButtonElement).click(), 0);
+  });
   await expect(page.locator("canvas.game-canvas")).toBeVisible();
   await page.locator("canvas.game-canvas").click();
   await page.waitForTimeout(500);
@@ -156,27 +158,34 @@ test.describe.serial("Lumi Island Phase 2.2 input and action lock", () => {
     );
     });
 
-  test("spends lumen on a recipe and grove repair, then saves the result", async ({
+  test("spends earned lumen on real island upgrades, then saves the result", async ({
     page,
   }) => {
-    await seedGame(page, { lumen: 120, groveRepairs: 0 });
+    await seedGame(page, { lumen: 60, groveRepairs: 0 });
     await page.getByRole("button", { name: "メニュー", exact: true }).click();
-    const shop = page.locator(".lumen-shop");
+    await page.getByRole("button", { name: /島づくり/ }).click();
+    const shop = page.locator(".unlock-shop-grid");
     await expect(shop).toBeVisible();
 
-    await shop.getByRole("button", { name: /杉のベンチ/ }).click();
-    await expect(shop.getByRole("button", { name: /杉のベンチ/ })).toBeDisabled();
-    await expect(page.locator(".menu-status")).toContainText("100");
+    await shop.getByRole("button", { name: "18 L" }).click();
+    await expect(shop.getByRole("button", { name: "できた！" })).toBeDisabled();
+    await expect(page.locator(".menu-status")).toContainText("42");
 
-    await shop.getByRole("button", { name: /木もれ日の森/ }).click();
+    await shop.getByRole("button", { name: "12 L" }).click();
     await expect(shop).toContainText("1/3");
-    await expect(page.locator(".menu-status")).toContainText("85");
+    await expect(page.locator(".menu-status")).toContainText("30");
 
-    await page.getByRole("button", { name: "セーブする" }).click();
-    await page.reload();
-    await page.getByRole("button", { name: /つづきから/ }).click();
+    await page.getByRole("button", { name: "閉じる" }).click();
     await page.getByRole("button", { name: "メニュー", exact: true }).click();
-    await expect(page.locator(".lumen-shop")).toContainText("1/3");
-    await expect(page.locator(".menu-status")).toContainText("85");
+    await page.getByRole("button", { name: /せってい/ }).click();
+    await page.getByRole("button", { name: /いま セーブする/ }).click();
+    await page.reload();
+    await page.getByRole("button", { name: /つづきから/ }).evaluate((button) => {
+    window.setTimeout(() => (button as HTMLButtonElement).click(), 0);
+  });
+    await page.getByRole("button", { name: "メニュー", exact: true }).click();
+    await page.getByRole("button", { name: /島づくり/ }).click();
+    await expect(page.locator(".unlock-shop-grid")).toContainText("1/3");
+    await expect(page.locator(".menu-status")).toContainText("30");
   });
 });

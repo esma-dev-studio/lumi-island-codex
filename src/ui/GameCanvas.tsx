@@ -145,12 +145,20 @@ export function GameCanvas({
   }, [state.dayMinute]);
 
   useEffect(() => {
-    controllerRef.current?.setProgression(
-      state.islandLevel,
-      state.groveRepairs,
-      state.collectionMilestones,
-    );
-  }, [state.collectionMilestones, state.groveRepairs, state.islandLevel]);
+    controllerRef.current?.setProgression({
+      islandRank: state.islandLevel,
+      groveRepairs: state.groveRepairs,
+      collectionMilestones: state.collectionMilestones,
+      bridgeRepaired: state.bridgeRepaired,
+      nollaFriendship: state.residentFriendship["ノラ"],
+    });
+  }, [
+    state.bridgeRepaired,
+    state.collectionMilestones,
+    state.groveRepairs,
+    state.islandLevel,
+    state.residentFriendship,
+  ]);
 
   useEffect(() => {
     controllerRef.current?.syncFurniture(state.placedFurniture);

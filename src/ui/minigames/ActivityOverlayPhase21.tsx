@@ -35,6 +35,7 @@ import {
   pullFishingLine,
 } from "@/src/fishing/FishingJourneyGame";
 import { resolveFishing } from "@/src/fishing/FishingSystem";
+import { fishHabitatForSource, fishingSpotLabel } from "@/src/world/FishingSpotController";
 import { playSound } from "@/src/audio/FileAudioSystem";
 import {
   activityInputIntent,
@@ -457,6 +458,15 @@ function ForagePanel({
   );
 }
 
+function stableFishingRoll(sourceId: string): number {
+  let hash = 2166136261;
+  for (const character of sourceId) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 4294967296;
+}
+
 function FishingPanel({
   request,
   easyMode,
@@ -466,9 +476,21 @@ function FishingPanel({
   easyMode: boolean;
   onResolve: (result: ActivityResult) => void;
 }) {
-  const [journey, setJourney] = useState(() => createFishingJourney(easyMode));
+  const habitat = fishHabitatForSource(request.sourceId);
+  const spotLabel = fishingSpotLabel(request.sourceId);
+  const [journey, setJourney] = useState(() =>
+    createFishingJourney(easyMode, Math.random(), habitat),
+  );
   const [selectedTarget, setSelectedTarget] = useState(journey.shadow);
-  const fish = useMemo(() => resolveFishing({ phase: "caught", elapsed: 0, biteAt: 0, biteWindow: 1 }), []);
+  const fish = useMemo(
+    () =>
+      resolveFishing(
+        { phase: "caught", elapsed: 0, biteAt: 0, biteWindow: 1 },
+        stableFishingRoll(request.sourceId),
+        habitat,
+      ),
+    [habitat, request.sourceId],
+  );
 
   useEffect(() => {
     if (!["waiting", "nibble", "bite"].includes(journey.phase)) return;
@@ -483,7 +505,7 @@ function FishingPanel({
   }, [journey.phase]);
 
   const restartFishing = () => {
-    const next = createFishingJourney(easyMode);
+    const next = createFishingJourney(easyMode, Math.random(), habitat);
     setJourney(next);
     setSelectedTarget(next.shadow);
   };
@@ -491,7 +513,7 @@ function FishingPanel({
   if (journey.phase === "aim") {
     return (
       <>
-        <p className="eyebrow">FISHING · 1</p>
+        <p className="eyebrow">FISHING · 1 · {spotLabel}</p>
         <h2>魚の かげへ なげよう</h2>
         <div className="fish-shadows" role="group" aria-label="魚影をえらぶ">
           {[0, 1, 2].map((target) => (
@@ -581,7 +603,7 @@ function FishingPanel({
               ? "コト… まだ まとう"
               : "しずかに まとう…"}
       </h2>
-      <div className={`fishing-water is-${journey.phase}`}>
+      <div className={`fishing-water is-${journey.phase} is-${habitat}`}>
         <span className="fishing-line" />
         <span className="fishing-bobber" />
         <i />

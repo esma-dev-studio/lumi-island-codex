@@ -25,8 +25,11 @@ import {
 } from "@/src/save/SaveSystem";
 import { TitleScreen } from "@/src/ui/TitleScreen";
 import { ResidentDialog } from "@/src/ui/ResidentDialog";
-import { GameHud } from "@/src/ui/GameHud";
-import { CraftPanel, InventoryPanel, MenuPanel, QuestPanel } from "@/src/ui/GamePanels";
+import { GameHud, type HudPanel } from "@/src/ui/GameHud";
+import { CraftPanel, InventoryPanel, QuestPanel } from "@/src/ui/GamePanels";
+import { MainMenu } from "@/src/ui/MainMenu";
+import { IslandBuildingPanel } from "@/src/ui/IslandBuildingPanel";
+import { SettingsPanel } from "@/src/ui/SettingsPanel";
 import type { InteractionHint } from "@/src/scenes/IslandScene";
 import {
   rotatePlacement,
@@ -52,7 +55,13 @@ import {
   TUTORIAL_TREE_SOURCE_ID,
 } from "@/src/tutorial/TutorialSteps";
 import { easyModeSettings } from "@/src/accessibility/EasyModeSettings";
-import { befriendResident, spendLumen } from "@/src/progression/ProgressionSystem";
+import { spendLumen } from "@/src/economy/EconomySystem";
+import {
+  applyNollaFurnitureBond,
+  befriendResident,
+  canGiveNollaWood,
+  giveNollaWood,
+} from "@/src/progression/FriendshipSystem";
 
 const CharacterShowcase = dynamic(
   () =>
@@ -67,7 +76,7 @@ const GameCanvas = dynamic(
 );
 
 type Screen = "title" | "showcase" | "game";
-type Panel = "inventory" | "craft" | "quests" | "collection" | "menu" | null;
+type Panel = HudPanel;
 
 interface Toast {
   id: number;
@@ -384,11 +393,18 @@ export function LumiIslandApp() {
             preview.position,
             preview.rotation,
           );
-          if (moved.ok) {
-            notify(`${ITEMS[mode.type].name}を うごかした`);
-            playSound("place");
-          }
-          return moved.state;
+          if (!moved.ok) return moved.state;
+          const bond = applyNollaFurnitureBond(
+            moved.state,
+            mode.type,
+            preview.position,
+          );
+          notify(
+            bond.message ?? `${ITEMS[mode.type].name}を うごかした`,
+            bond.increased ? "success" : "normal",
+          );
+          playSound(bond.increased ? "quest" : "place");
+          return bond.state;
         }
 
         const beforeQuest = QUEST_ORDER.find(
@@ -410,8 +426,18 @@ export function LumiIslandApp() {
             : `${ITEMS[mode.type].name}を おいた`,
           completed ? "success" : "normal",
         );
-        playSound(completed ? "quest" : "place");
-        return applyTutorialEventToState(result.state, { type: "place", item: mode.type });
+        const tutorialState = applyTutorialEventToState(result.state, {
+          type: "place",
+          item: mode.type,
+        });
+        const bond = applyNollaFurnitureBond(
+          tutorialState,
+          mode.type,
+          preview.position,
+        );
+        if (bond.increased && bond.message) notify(bond.message, "success");
+        playSound(completed || bond.increased ? "quest" : "place");
+        return bond.state;
       });
       setPlacementMode(null);
       setPlacementPreview(null);
@@ -489,6 +515,14 @@ export function LumiIslandApp() {
     }
   }, []);
 
+  const buyIslandUpgrade = (use: Parameters<typeof spendLumen>[1]) => {
+    setState((current) => {
+      const result = spendLumen(current, use);
+      notify(result.message, result.ok ? "success" : "normal");
+      playSound(result.ok ? "quest" : "ui");
+      return result.state;
+    });
+  };
   const manualSave = () => {
     saveGame(state);
     setCanContinue(true);
@@ -621,7 +655,7 @@ export function LumiIslandApp() {
       {panel && (
         <div className="panel-scrim" onMouseDown={() => setPanel(null)}>
           <section
-            className="game-panel"
+            className={`game-panel game-panel--${panel}`}
             onMouseDown={(event) => event.stopPropagation()}
             aria-label={
               panel === "inventory"
@@ -632,7 +666,11 @@ export function LumiIslandApp() {
                     ? "お願い"
                     : panel === "collection"
                       ? "島の図かん"
-                    : "メニュー"
+                      : panel === "building"
+                        ? "島づくり"
+                        : panel === "settings"
+                          ? "せってい"
+                          : "メニュー"
             }
           >
             <button className="panel-close" onClick={() => setPanel(null)}>
@@ -650,7 +688,27 @@ export function LumiIslandApp() {
             {panel === "collection" && <CollectionPanel counts={state.collectionCounts} easyMode={state.easyMode} />}
             {panel === "quests" && <QuestPanel state={state} />}
             {panel === "menu" && (
-              <MenuPanel
+              <MainMenu
+                state={state}
+                onOpenInventory={() => setPanel("inventory")}
+                onOpenCollection={() => setPanel("collection")}
+                onOpenBuilding={() => setPanel("building")}
+                onOpenSettings={() => setPanel("settings")}
+              />
+            )}
+            {panel === "building" && (
+              <IslandBuildingPanel
+                state={state}
+                onSpendLumen={buyIslandUpgrade}
+                onOpenCraft={() => setPanel("craft")}
+                onOpenQuests={() => setPanel("quests")}
+              />
+            )}
+            {panel === "settings" && (
+              <SettingsPanel
+                state={state}
+                tutorialActive={tutorialActive}
+                tutorialHidden={tutorialHidden}
                 onSave={manualSave}
                 onResumeTutorial={() => {
                   setTutorialHidden(false);
@@ -665,42 +723,25 @@ export function LumiIslandApp() {
                   setTutorialHidden(false);
                   setPanel(null);
                 }}
-                onOpenQuests={() => setPanel("quests")}
-                onOpenCollection={() => setPanel("collection")}
                 onCameraReset={() => {
                   setCameraResetToken((value) => value + 1);
                   setPanel(null);
                 }}
                 onTitle={returnToTitle}
-                easyMode={state.easyMode}
                 onEasyMode={(easyMode) =>
                   setState((current) => ({ ...current, easyMode }))
                 }
-                audioSettings={state.audioSettings}
                 onAudioSettings={(audioSettings) =>
                   setState((current) => ({ ...current, audioSettings }))
                 }
-                onSpendLumen={(use) => {
-                  setState((current) => {
-                    const result = spendLumen(current, use);
-                    notify(result.message, result.ok ? "success" : "normal");
-                    playSound(result.ok ? "quest" : "ui");
-                    return result.state;
-                  });
-                }}
-                tutorialActive={tutorialActive}
-                tutorialHidden={tutorialHidden}
-                state={state}
-                day={state.day}
-                lumen={state.lumen}
-                islandLevel={state.islandLevel}
               />
             )}
           </section>
         </div>
       )}
 
-      {tutorialVisible && (
+      {tutorialVisible &&
+        (panel === null || panel === "inventory" || panel === "craft") && (
         <TutorialOverlay
           progress={state.tutorialProgress}
           easyMode={state.easyMode}
@@ -735,11 +776,26 @@ export function LumiIslandApp() {
           resident={dialogResident}
           easyMode={state.easyMode}
           line={dialogLine}
+          friendshipLevel={state.residentFriendship[dialogResident]}
+          canGiveWood={dialogResident === "ノラ" && canGiveNollaWood(state)}
+          nightGardenUnlocked={state.collectionMilestones.includes(75)}
+          onGiveWood={() => {
+            setState((current) => {
+              const result = giveNollaWood(current);
+              if (result.message) notify(result.message, result.increased ? "success" : "normal");
+              playSound(result.increased ? "quest" : "ui");
+              return result.state;
+            });
+            setDialogLine(0);
+          }}
           onNext={() => {
             setDialogLine(1);
             playSound("ui");
           }}
           onClose={() => {
+            if (dialogResident === "ノラ" && state.residentFriendship["ノラ"] >= 3) {
+              setState((current) => ({ ...current, nollaMemorySeen: true }));
+            }
             setDialogResident(null);
             playSound("ui");
           }}

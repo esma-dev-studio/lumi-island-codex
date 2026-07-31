@@ -1,9 +1,7 @@
 import type { ResidentId } from "@/src/game/types";
+import { nollaDialogue } from "@/src/progression/FriendshipSystem";
 
-const RESIDENT_COPY: Record<
-  ResidentId,
-  { greeting: string; help: string }
-> = {
+const RESIDENT_COPY: Record<ResidentId, { greeting: string; help: string }> = {
   ノラ: {
     greeting: "広場の木が、朝の雨で少しゆるんだみたい。",
     help: "木のえだが3本あれば、すぐに直せるよ。",
@@ -13,8 +11,8 @@ const RESIDENT_COPY: Record<
     help: "波のあとには、音のちがう貝が見つかるんだ。",
   },
   セラ: {
-    greeting: "月のハーブは、夕方にいちばん香るの。",
-    help: "赤い実と合わせたら、みんなのお茶になるよ。",
+    greeting: "森のハーブは、夕方にいちばん香るの。",
+    help: "赤い実と合わせたら、みんなの元気になるよ。",
   },
 };
 
@@ -22,25 +20,51 @@ export function ResidentDialog({
   resident,
   easyMode,
   line,
+  friendshipLevel,
+  canGiveWood = false,
+  nightGardenUnlocked = false,
+  onGiveWood,
   onNext,
   onClose,
 }: {
   resident: ResidentId;
   easyMode: boolean;
   line: number;
+  friendshipLevel: number;
+  canGiveWood?: boolean;
+  nightGardenUnlocked?: boolean;
+  onGiveWood?: () => void;
   onNext: () => void;
   onClose: () => void;
 }) {
-  const copy = RESIDENT_COPY[resident];
+  const baseCopy =
+    resident === "ノラ" ? nollaDialogue(friendshipLevel) : RESIDENT_COPY[resident];
+  const copy =
+    resident === "セラ" && nightGardenUnlocked
+      ? {
+          greeting: "夜の庭に、月あかり花が咲いたよ。",
+          help: "夜7時をすぎたら、庭の小さな光を見においで。",
+        }
+      : baseCopy;
   const hasNextLine = easyMode && line === 0;
+
   return (
     <div className="dialog-wrap">
-      <section className="resident-dialog" aria-label={`${resident}との会話`}>
+      <section
+        className="resident-dialog resident-dialog--story"
+        aria-label={`${resident}との会話`}
+      >
         <div className={`resident-portrait resident-portrait--${resident}`}>
           <span />
         </div>
-        <div>
-          <p className="dialog-name">{resident}</p>
+        <div className="resident-dialog-copy">
+          <p className="dialog-name">
+            {resident}{" "}
+            <small>
+              {"★".repeat(friendshipLevel)}
+              {"☆".repeat(3 - friendshipLevel)}
+            </small>
+          </p>
           {easyMode ? (
             <p>{hasNextLine ? copy.greeting : copy.help}</p>
           ) : (
@@ -49,10 +73,23 @@ export function ResidentDialog({
               <p>{copy.help}</p>
             </>
           )}
+          {resident === "ノラ" && friendshipLevel === 1 && (
+            <p className="dialog-goal">つぎ：木のえだを 1こ プレゼント</p>
+          )}
+          {resident === "ノラ" && friendshipLevel === 2 && (
+            <p className="dialog-goal">つぎ：ノラの工具台を 近くに置く</p>
+          )}
         </div>
-        <button onClick={hasNextLine ? onNext : onClose}>
-          {hasNextLine ? "つぎ" : "またね"}
-        </button>
+        <div className="dialog-actions">
+          {canGiveWood && onGiveWood && (
+            <button className="dialog-gift" onClick={onGiveWood}>
+              木のえだを あげる
+            </button>
+          )}
+          <button onClick={hasNextLine ? onNext : onClose}>
+            {hasNextLine ? "つぎ" : "またね"}
+          </button>
+        </div>
       </section>
     </div>
   );

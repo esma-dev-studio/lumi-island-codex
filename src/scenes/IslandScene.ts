@@ -1,19 +1,16 @@
-import {
-  ArcRotateCamera,
-  Color3,
-  Color4,
-  DirectionalLight,
-  Engine,
-  GlowLayer,
-  HemisphericLight,
-  Mesh,
-  MeshBuilder,
-  Scene,
-  ShadowGenerator,
-  StandardMaterial,
-  TransformNode,
-  Vector3,
-} from "@babylonjs/core";
+import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
+import { Engine } from "@babylonjs/core/Engines/engine";
+import { GlowLayer } from "@babylonjs/core/Layers/glowLayer";
+import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
+import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
+import { Scene } from "@babylonjs/core/scene";
+import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
+import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { getCharacterConfig } from "@/src/characters/CharacterConfig";
 import { CharacterController } from "@/src/characters/CharacterController";
 import { createCharacterView } from "@/src/characters/CharacterView";
@@ -26,7 +23,17 @@ import {
   type WorldCollider,
 } from "@/src/world/CollisionWorld";
 import { HOUSE_LAYOUT, POND_LAYOUT } from "@/src/world/IslandLayout";
-import { RESOURCE_WORLD_DEFINITIONS } from "@/src/resources/ResourceDefinitions";
+import {
+  RESOURCE_WORLD_DEFINITIONS,
+  resourceDefinitionById,
+} from "@/src/resources/ResourceDefinitions";
+import { resourceIsAvailableAtTime } from "@/src/world/NightGardenController";
+import {
+  INITIAL_WORLD_PROGRESSION,
+  lockedAreaColliders,
+  resourceIsUnlocked,
+  type WorldProgressionSnapshot,
+} from "@/src/world/UnlockableAreaController";
 import { createResourceVisual } from "@/src/world/ResourceBuilder";
 import {
   smoothVisibility,
@@ -101,7 +108,7 @@ export interface IslandController {
   scene: Scene;
   setPaused: (paused: boolean) => void;
   setDayMinute: (minute: number) => void;
-  setProgression: (islandRank: number, groveRepairs: number, collectionMilestones: number[]) => void;
+  setProgression: (progression: WorldProgressionSnapshot) => void;
   syncFurniture: (placed: PlacedFurniture[]) => void;
   setPlacementMode: (mode: PlacementMode | null) => void;
   setTutorialGuide: (target: TutorialGuideTarget | null) => void;
@@ -121,6 +128,7 @@ interface Interactable {
   label: string;
   radius: number;
   available: boolean;
+  progressionAvailable?: boolean;
   respawnAt: number;
 }
 
@@ -541,53 +549,55 @@ export function createIslandScene(
   ghostInvalid.alpha = 0.62;
 
   const interactables: Interactable[] = [];
+  const fishingRipples: Mesh[] = [];
   RESOURCE_WORLD_DEFINITIONS
     .filter((definition) => definition.visualType !== "fishing-spot")
     .forEach((definition) => {
       const node = createResourceVisual(scene, definition, mats);
-      if (definition.visualType === "cedar-tree") occluderNodes.push(node);      interactables.push({
+      if (definition.visualType === "cedar-tree") occluderNodes.push(node);
+      interactables.push({
         node,
         resourceId: definition.id,
         kind: "resource",
         item: definition.item,
         label: ITEMS[definition.item].name,
         radius: definition.interactionRadius,
-        available: true,
+        available: !definition.unlockRequirement && !definition.timeWindow,
+        progressionAvailable: !definition.unlockRequirement && !definition.timeWindow,
         respawnAt: 0,
       });
     });
 
-  const fishingDefinition = RESOURCE_WORLD_DEFINITIONS.find(
-    (definition) => definition.visualType === "fishing-spot",
-  );
-  if (!fishingDefinition) throw new Error("Fishing resource definition is missing");
-  const fishingMarker = new TransformNode("fishing-spot-visual", scene);
-  fishingMarker.position.set(
-    fishingDefinition.position.x,
-    0.42,
-    fishingDefinition.position.z,
-  );
-  const ripple = setMaterial(
-    MeshBuilder.CreateTorus(
-      "fishing-ripple",
-      { diameter: 1.3, thickness: 0.055, tessellation: 36 },
-      scene,
-    ),
-    mats.shell,
-  );
-  ripple.parent = fishingMarker;
-  ripple.position.y = 0.08;
-  ripple.scaling.z = 0.65;
-  interactables.push({
-    node: fishingMarker,
-    resourceId: fishingDefinition.id,
-    kind: "resource",
-    item: fishingDefinition.item,
-    label: ITEMS[fishingDefinition.item].name,
-    radius: fishingDefinition.interactionRadius,
-    available: true,
-    respawnAt: 0,
-  });
+  RESOURCE_WORLD_DEFINITIONS
+    .filter((definition) => definition.visualType === "fishing-spot")
+    .forEach((definition, index) => {
+      const fishingMarker = new TransformNode(`fishing-spot-visual-${index}`, scene);
+      fishingMarker.position.set(definition.position.x, 0.42, definition.position.z);
+      const ripple = setMaterial(
+        MeshBuilder.CreateTorus(
+          `fishing-ripple-${index}`,
+          { diameter: index === 0 ? 1.3 : 1.55, thickness: 0.055, tessellation: 36 },
+          scene,
+        ),
+        index === 0 ? mats.shell : mats.glow,
+      );
+      ripple.parent = fishingMarker;
+      ripple.position.y = 0.08;
+      ripple.scaling.z = index === 0 ? 0.65 : 0.78;
+      fishingRipples.push(ripple);
+      interactables.push({
+        node: fishingMarker,
+        resourceId: definition.id,
+        kind: "resource",
+        item: definition.item,
+        label: index === 0 ? "月の池の魚" : "海辺の魚",
+        radius: definition.interactionRadius,
+        available: !definition.unlockRequirement,
+        progressionAvailable: !definition.unlockRequirement,
+        respawnAt: 0,
+      });
+    });
+
   const resourceTargets = new Map<string, Interactable>();
   const resourceVisuals = new Map<string, ResourceVisualController>();
   interactables
@@ -603,15 +613,30 @@ export function createIslandScene(
         new ResourceVisualController(target.node, target.item),
       );
     });
-  const syncResourceStates = (states: Record<string, ResourceState>) => {
+
+  let currentResourceStates: Record<string, ResourceState> = {};
+  const refreshResourceAvailability = () => {
     resourceTargets.forEach((target, sourceId) => {
-      target.available = isResourceAvailable(states, sourceId);
-      resourceVisuals.get(sourceId)?.apply(states[sourceId]);
+      const definition = resourceDefinitionById(sourceId);
+      const progressionAvailable = definition
+        ? resourceIsUnlocked(definition, currentProgression) &&
+          resourceIsAvailableAtTime(definition, currentDayMinute)
+        : true;
+      const stateAvailable = isResourceAvailable(currentResourceStates, sourceId);
+      target.progressionAvailable = progressionAvailable;
+      target.available = progressionAvailable && stateAvailable;
+      resourceVisuals.get(sourceId)?.apply(currentResourceStates[sourceId]);
+      if (!progressionAvailable) target.node.setEnabled(false);
     });
     if (closest && !closest.available) {
       closest = null;
       callbacks.onHint(null);
     }
+  };
+
+  const syncResourceStates = (states: Record<string, ResourceState>) => {
+    currentResourceStates = states;
+    refreshResourceAvailability();
     if (
       playerActionState.type === "activity" &&
       playerActionState.phase === "reward" &&
@@ -621,7 +646,6 @@ export function createIslandScene(
       keys.clear();
     }
   };
-
   const player = createCharacterView(
     scene,
     getCharacterConfig("mira"),
@@ -667,7 +691,7 @@ export function createIslandScene(
 
   const glow = new GlowLayer("island-glow", scene, { blurKernelSize: 22 });
   glow.intensity = 0.42;
-  glow.referenceMeshToUseItsOwnMaterial(ripple);
+  fishingRipples.forEach((mesh) => glow.referenceMeshToUseItsOwnMaterial(mesh));
   const tutorialGuideMaterial = makeMaterial(
     scene,
     "tutorial-guide-material",
@@ -725,6 +749,7 @@ export function createIslandScene(
   let lastFpsUpdate = 0;
   let lastPositionUpdate = 0;
   let currentDayMinute = 8 * 60;
+  let currentProgression: WorldProgressionSnapshot = INITIAL_WORLD_PROGRESSION;
   let footstepTimer = 0;
   const furnitureMeshes = new Map<string, TransformNode>();
   const furnitureTargets = new Map<string, Interactable>();
@@ -883,7 +908,6 @@ export function createIslandScene(
     }
     playerMotion.setInteraction("interact");
     player.setAnimation("interact", 1, true);
-    burst(closest.node.position.add(new Vector3(0, 0.8, 0)), ITEMS[closest.item].color);
     const activityKind: ActivityRequest["kind"] =
       closest.item === "wood"
         ? "wood"
@@ -971,6 +995,7 @@ export function createIslandScene(
 
   const setDayMinute = (minute: number) => {
     currentDayMinute = minute;
+    refreshResourceAvailability();
   };
 
   scene.onBeforeRenderObservable.add(() => {
@@ -1066,6 +1091,7 @@ export function createIslandScene(
     };
     const dynamicColliders: WorldCollider[] = [
       ...STATIC_WORLD_COLLIDERS,
+      ...lockedAreaColliders(currentProgression),
       ...npcs.map((npc, index) => ({
         kind: "circle" as const,
         id: `npc-${index}`,
@@ -1236,6 +1262,12 @@ export function createIslandScene(
       );
     }
 
+    if (process.env.NODE_ENV !== "production") {
+      canvas.dataset.debugClosestTarget = closest?.resident ?? closest?.resourceId ?? closest?.furnitureId ?? "";
+      canvas.dataset.debugNpcPositions = npcs
+        .map((npc) => `${npc.resident}:${npc.rig.root.position.x.toFixed(3)},${npc.rig.root.position.z.toFixed(3)}`)
+        .join(";");
+    }
     npcs.forEach((npc, index) => {
       const radius = 0.75 + index * 0.15;
       const target = npc.home.add(
@@ -1342,10 +1374,12 @@ export function createIslandScene(
       }
       callbacks.onFps(fps);
     }
-    ripple.rotation.y += delta * 0.3;
     const pulse = 1 + Math.sin(animationElapsedTime * 2) * 0.07;
-    ripple.scaling.x = pulse;
-    ripple.scaling.z = 0.65 * pulse;
+    fishingRipples.forEach((mesh, index) => {
+      mesh.rotation.y += delta * (index === 0 ? 0.3 : -0.24);
+      mesh.scaling.x = pulse;
+      mesh.scaling.z = (index === 0 ? 0.65 : 0.78) * pulse;
+    });
   });
 
   engine.runRenderLoop(() => scene.render());
@@ -1367,13 +1401,23 @@ export function createIslandScene(
       }
     },
     setDayMinute,
-    setProgression: (islandRank, groveRepairs, collectionMilestones) =>
+    setProgression: (progression) => {
+      currentProgression = progression;
       syncProgressionLandmarks(
         progressionLandmarks,
-        islandRank,
-        groveRepairs,
-        collectionMilestones,
-      ),
+        progression.islandRank,
+        progression.groveRepairs,
+        progression.collectionMilestones,
+        progression.bridgeRepaired,
+        progression.nollaFriendship,
+      );
+      refreshResourceAvailability();
+      if (process.env.NODE_ENV !== "production") {
+        canvas.dataset.debugBridgeRepaired = String(progression.bridgeRepaired);
+        canvas.dataset.debugCollectionUnlocks = progression.collectionMilestones.join(",");
+        canvas.dataset.debugGroveRepairs = String(progression.groveRepairs);
+      }
+    },
     syncFurniture,
     setPlacementMode,
     setTutorialGuide,
