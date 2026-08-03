@@ -15,6 +15,7 @@ import {
   estimatedCharacterScreenCoverage,
   thirdPersonCameraTarget,
 } from "@/src/world/ThirdPersonCamera";
+import { visiblePlayerAvatarPose } from "@/src/characters/VisiblePlayerAvatar";
 import {
   ISLAND_WALK_BOUNDS,
   resolveWorldMovement,
@@ -60,6 +61,21 @@ describe("third-person camera framing", () => {
     expect(target.x).toBe(3);
     expect(target.y).toBeCloseTo(1.59);
     expect(target.z).toBe(-2);
+  });
+});
+
+describe("visible player avatar", () => {
+  it("swings its limbs while walking", () => {
+    const pose = visiblePlayerAvatarPose("walk", Math.PI / 2);
+    expect(pose.armSwing).toBeGreaterThan(0.4);
+    expect(pose.legSwing).toBeGreaterThan(0.25);
+    expect(pose.bob).toBeGreaterThan(0);
+  });
+
+  it("keeps a calm silhouette while idle", () => {
+    const pose = visiblePlayerAvatarPose("idle", 0);
+    expect(Math.abs(pose.armSwing)).toBeLessThan(0.1);
+    expect(pose.legSwing).toBe(0);
   });
 });
 

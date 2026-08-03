@@ -14,6 +14,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { getCharacterConfig } from "@/src/characters/CharacterConfig";
 import { CharacterController } from "@/src/characters/CharacterController";
 import { createCharacterView } from "@/src/characters/CharacterView";
+import { createVisiblePlayerAvatar } from "@/src/characters/VisiblePlayerAvatar";
 import { ITEMS } from "@/src/data/gameData";
 import { cameraRelativeMovement } from "@/src/world/CameraRelativeMovement";
 import {
@@ -682,6 +683,17 @@ export function createIslandScene(
     shadows,
   );
   player.root.rotation.y = Math.PI;
+  const visiblePlayerAvatar = createVisiblePlayerAvatar(
+    scene,
+    player.root.position,
+    shadows,
+  );
+  visiblePlayerAvatar.sync(player.root.position, player.root.rotation.y);
+  visiblePlayerAvatar.update("idle", 0);
+  void player.ready.then(() => {
+    player.getMeshes().forEach((mesh) => mesh.setEnabled(false));
+  });
+  canvas.dataset.playerAvatar = "visible-chibi";
   const playerMotion = new CharacterController();
   playerMotion.setFacing(Math.PI);
   const playerMarkerMaterial = makeMaterial(
@@ -690,12 +702,12 @@ export function createIslandScene(
     "#f3c761",
     "#9c641e",
   );
-  playerMarkerMaterial.alpha = 0.72;
+  playerMarkerMaterial.alpha = 0.36;
   playerMarkerMaterial.disableLighting = true;
   const playerMarker = setMaterial(
     MeshBuilder.CreateTorus(
       "player-ground-marker",
-      { diameter: 1.25, thickness: 0.065, tessellation: 40 },
+      { diameter: 0.95, thickness: 0.04, tessellation: 40 },
       scene,
     ),
     playerMarkerMaterial,
@@ -1196,6 +1208,8 @@ export function createIslandScene(
     player.root.position.y = 0.44;
     playerMarker.position.x = player.root.position.x;
     playerMarker.position.z = player.root.position.z;
+    visiblePlayerAvatar.sync(player.root.position, player.root.rotation.y);
+    visiblePlayerAvatar.update(motion.animation, delta);
 
     const desiredCameraTarget = thirdPersonCameraTarget({
       x: player.root.position.x,
@@ -1504,6 +1518,7 @@ export function createIslandScene(
     resolveActivity,
     resetCamera,
     dispose: () => {
+      visiblePlayerAvatar.dispose();
       placementGhost?.dispose(false, true);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
