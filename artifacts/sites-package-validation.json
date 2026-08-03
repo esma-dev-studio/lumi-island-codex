@@ -1,0 +1,17 @@
+{
+  "preparedAt": "2026-08-03T19:13:00+09:00",
+  "helper": "Sites package-site.sh",
+  "archiveFormat": "tar.gz",
+  "archiveBytes": 12659781,
+  "validatedEntries": [
+    "dist/server/index.js",
+    "dist/.openai/hosting.json"
+  ],
+  "sourceOnlyDeploymentAttempts": {
+    "status": "failed",
+    "reason": "remote npm lockfile compatibility check"
+  },
+  "archiveDeployment": {
+    "status": "pending"
+  }
+}

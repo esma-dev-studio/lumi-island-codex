@@ -29,6 +29,8 @@ screenshots/90-point-rc/manifest.json にcurrent-live-browser、regression-e2e�
 ## failed / not run
 
 - production Character Gateは失敗。これはknown blockerで成功扱いしない。
+- Sitesのsource-only buildはlockfile互換判定で失敗したため、公式 package-site.sh でdist archiveを作成。
+- archiveは12,659,781 bytesで、dist/server/index.js と hosting metadataをhelperが検証済み。
 - browser接続の最初の127.0.0.1指定は環境のIPv6 bindと合わず、localhostへ切替。
 - current change後のPlaywright 19件full rerunは未実施。
 - physical iPad、low-end device、FPS/memory、normal-speed 30〜45 minute journeyは未実施。
