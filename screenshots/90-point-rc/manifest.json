@@ -1,0 +1,262 @@
+{
+  "version": 1,
+  "generatedAt": "2026-08-03T18:55:00+09:00",
+  "currentBrowserQa": {
+    "url": "http://localhost:3002",
+    "desktopViewport": [1280, 720],
+    "tabletViewport": [1024, 768],
+    "freshConsoleErrorsAndWarnings": 0,
+    "notes": "Current title, save confirmation, and tablet layout were captured with the in-app browser. Older progression scenes are copied from the repository's 2026-08-03 Playwright evidence and are labeled regression-e2e, not re-captured as a new normal journey."
+  },
+  "shots": [
+    {
+      "requirement": "title",
+      "file": "title-visual-master.png",
+      "status": "current-live-browser",
+      "saveState": "fresh title",
+      "gameTime": "not applicable",
+      "steps": ["open local app"],
+      "testSupport": "none",
+      "visibleEvidence": "ImageGen world art is loaded; title actions fit without horizontal overflow"
+    },
+    {
+      "requirement": "new-game save protection",
+      "file": "new-game-save-confirmation.png",
+      "status": "current-live-browser",
+      "saveState": "existing autosave",
+      "gameTime": "day 1",
+      "steps": ["create autosave", "reload title", "choose new story"],
+      "testSupport": "none",
+      "visibleEvidence": "continue is primary and deleting the save requires an explicit confirmation"
+    },
+    {
+      "requirement": "tutorial",
+      "file": "tutorial.png",
+      "status": "regression-e2e",
+      "source": "../rc-tutorial-complete.png",
+      "saveState": "fresh journey",
+      "gameTime": "day 1",
+      "steps": ["complete tutorial journey"],
+      "testSupport": "Playwright release-candidate fixture",
+      "visibleEvidence": "tutorial completion and next objective"
+    },
+    {
+      "requirement": "central village day",
+      "file": "central-village-day.png",
+      "status": "regression-e2e",
+      "source": "../phase2-2-island-day.png",
+      "saveState": "progression fixture",
+      "gameTime": "day",
+      "testSupport": "Playwright functional E2E"
+    },
+    {
+      "requirement": "central village sunset",
+      "file": null,
+      "status": "missing",
+      "reason": "no trustworthy current screenshot was produced"
+    },
+    {
+      "requirement": "central village night",
+      "file": "central-village-night.png",
+      "status": "regression-e2e",
+      "source": "../phase2-2-island-night.png",
+      "saveState": "progression fixture",
+      "gameTime": "night",
+      "testSupport": "Playwright functional E2E"
+    },
+    {
+      "requirement": "forest before repair",
+      "file": null,
+      "status": "missing",
+      "reason": "no isolated before-state frame"
+    },
+    {
+      "requirement": "forest after repair",
+      "file": "forest-after-repair.png",
+      "status": "regression-e2e",
+      "source": "../phase2-3-grove-unlock.png",
+      "saveState": "grove unlocked",
+      "gameTime": "day",
+      "testSupport": "Playwright functional E2E"
+    },
+    {
+      "requirement": "bridge before repair",
+      "file": null,
+      "status": "missing",
+      "reason": "no isolated before-state frame"
+    },
+    {
+      "requirement": "bridge after repair",
+      "file": "bridge-after-and-islet.png",
+      "status": "regression-e2e",
+      "source": "../rc-bridge-islet.png",
+      "saveState": "bridge repaired",
+      "gameTime": "day",
+      "testSupport": "Playwright functional E2E"
+    },
+    {
+      "requirement": "crossing bridge",
+      "file": null,
+      "status": "missing",
+      "reason": "still image does not prove mid-crossing"
+    },
+    {
+      "requirement": "islet arrival",
+      "file": "bridge-after-and-islet.png",
+      "status": "regression-e2e-reused",
+      "source": "../rc-bridge-islet.png",
+      "saveState": "bridge repaired",
+      "gameTime": "day",
+      "testSupport": "Playwright functional E2E",
+      "note": "same frame as bridge-after; not counted as an additional capture"
+    },
+    {
+      "requirement": "islet collection",
+      "file": null,
+      "status": "missing",
+      "reason": "no isolated collection-action frame"
+    },
+    {
+      "requirement": "harbor overview",
+      "file": "harbor-fish-one.png",
+      "status": "regression-e2e",
+      "source": "../rc-harbor-catch.png",
+      "saveState": "harbor unlocked",
+      "gameTime": "day",
+      "testSupport": "Playwright functional E2E"
+    },
+    {
+      "requirement": "harbor fishing",
+      "file": "harbor-fish-one.png",
+      "status": "regression-e2e-reused",
+      "source": "../rc-harbor-catch.png",
+      "testSupport": "Playwright functional E2E"
+    },
+    {
+      "requirement": "harbor fish one",
+      "file": "harbor-fish-one.png",
+      "status": "regression-e2e",
+      "source": "../rc-harbor-catch.png",
+      "testSupport": "Playwright functional E2E"
+    },
+    {
+      "requirement": "harbor fish two",
+      "file": "harbor-fish-two.png",
+      "status": "regression-e2e",
+      "source": "../rc-harbor-catch-2.png",
+      "testSupport": "Playwright functional E2E"
+    },
+    {
+      "requirement": "night garden day",
+      "file": null,
+      "status": "missing",
+      "reason": "no trustworthy daylight garden screenshot"
+    },
+    {
+      "requirement": "night garden night",
+      "file": "night-garden-night.png",
+      "status": "regression-e2e",
+      "source": "../rc-night-garden.png",
+      "saveState": "75 percent collection",
+      "gameTime": "night",
+      "testSupport": "Playwright functional E2E"
+    },
+    {
+      "requirement": "night-only plant",
+      "file": "night-garden-night.png",
+      "status": "regression-e2e-reused",
+      "source": "../rc-night-garden.png",
+      "testSupport": "Playwright functional E2E"
+    },
+    {
+      "requirement": "Nolla friendship 2",
+      "file": null,
+      "status": "missing",
+      "reason": "state covered by tests but not a dedicated frame"
+    },
+    {
+      "requirement": "Nolla friendship 3",
+      "file": null,
+      "status": "missing",
+      "reason": "state covered by tests but not a dedicated frame"
+    },
+    {
+      "requirement": "Nolla workshop",
+      "file": null,
+      "status": "missing",
+      "reason": "no dedicated frame"
+    },
+    {
+      "requirement": "collection 25 percent",
+      "file": null,
+      "status": "missing",
+      "reason": "no dedicated 25 percent frame"
+    },
+    {
+      "requirement": "collection 50 percent",
+      "file": "collection-50.png",
+      "status": "regression-e2e",
+      "source": "../rc-collection-50.png",
+      "testSupport": "Playwright functional E2E"
+    },
+    {
+      "requirement": "collection 75 percent",
+      "file": "collection-75.png",
+      "status": "regression-e2e",
+      "source": "../rc-collection-75.png",
+      "testSupport": "Playwright functional E2E"
+    },
+    {
+      "requirement": "collection 100 percent",
+      "file": "collection-100.png",
+      "status": "regression-e2e",
+      "source": "../rc-collection-100.png",
+      "testSupport": "Playwright functional E2E"
+    },
+    {
+      "requirement": "furniture placement",
+      "file": "furniture-placement.png",
+      "status": "regression-e2e",
+      "source": "../after-placement-valid.png",
+      "testSupport": "Playwright functional E2E"
+    },
+    {
+      "requirement": "daily goal",
+      "file": null,
+      "status": "missing",
+      "reason": "talk-goal connection is unit-tested but not separately captured"
+    },
+    {
+      "requirement": "tablet landscape",
+      "file": "tablet-landscape-game.png",
+      "status": "current-live-browser",
+      "saveState": "existing day-1 save",
+      "gameTime": "day 1",
+      "steps": ["set viewport to 1024x768", "continue save"],
+      "testSupport": "none",
+      "visibleEvidence": "third-person character, objective panel, and bottom menu fit with no page overflow"
+    },
+    {
+      "requirement": "tablet title",
+      "file": "tablet-landscape-title.png",
+      "status": "current-live-browser",
+      "saveState": "existing save",
+      "gameTime": "not applicable",
+      "steps": ["set viewport to 1024x768"],
+      "testSupport": "none"
+    },
+    {
+      "requirement": "touch operation",
+      "file": "touch-controls.png",
+      "status": "regression-e2e",
+      "source": "../rc-tablet-touch.png",
+      "testSupport": "mobile-emulation Playwright E2E"
+    },
+    {
+      "requirement": "low-performance setting",
+      "file": null,
+      "status": "missing",
+      "reason": "quality profile is code-tested; no dedicated current screenshot or physical low-end device run"
+    }
+  ]
+}

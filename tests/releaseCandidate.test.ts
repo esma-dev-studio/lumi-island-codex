@@ -14,6 +14,9 @@ import {
 import { primaryObjective } from "@/src/progression/ProgressionDirector";
 import { spendLumen } from "@/src/economy/EconomySystem";
 import { environmentDetailProfile } from "@/src/world/EnvironmentDetailController";
+import { COLLECTION_ENTRIES } from "@/src/collection/CollectionData";
+import { progressResidentTalk } from "@/src/progression/FriendshipSystem";
+import { createJourneyGoal } from "@/src/progression/DailyGoalSystem";
 
 function discoverFishAtSpot(
   fishingSpotId: string,
@@ -83,6 +86,46 @@ describe("release candidate economy and child progression", () => {
       bought.state.unlockedCollectionHintIds,
     );
   });
+  it("restores collection milestones from older saves without granting them twice", () => {
+    const countsAt75 = Object.fromEntries(
+      COLLECTION_ENTRIES.slice(0, 14).map((entry) => [entry.id, 1]),
+    );
+    const migrated = sanitizeState({ version: 3, collectionCounts: countsAt75 });
+    expect(migrated.version).toBe(5);
+    expect(migrated.collectionMilestones).toEqual([25, 50, 75]);
+    expect(sanitizeState(migrated).collectionMilestones).toEqual([25, 50, 75]);
+    expect(sanitizeState(migrated).lumen).toBe(migrated.lumen);
+  });
+
+  it("does not charge twice when every currently reachable hint was heard", () => {
+    let current = { ...createInitialState(), lumen: 999 };
+    for (let index = 0; index < 18; index += 1) {
+      const result = spendLumen(current, "hint");
+      if (!result.ok) break;
+      current = result.state;
+    }
+    const before = current.lumen;
+    const duplicate = spendLumen(current, "hint");
+    expect(duplicate.ok).toBe(false);
+    expect(duplicate.state.lumen).toBe(before);
+  });
+
+  it("connects a real resident talk to the daily talk goal exactly once", () => {
+    const initial = createInitialState();
+    const dayTwo = {
+      ...initial,
+      day: 2,
+      dailyGoalsStartDay: 2,
+      journeyGoal: createJourneyGoal(2),
+      residentFriendship: { ...initial.residentFriendship, ノラ: 1 },
+    };
+    const first = progressResidentTalk(dayTwo, "ノラ");
+    expect(first.state.journeyGoal.complete).toBe(true);
+    expect(first.state.lumen).toBe(dayTwo.lumen + 10);
+    const second = progressResidentTalk(first.state, "ノラ");
+    expect(second.state.lumen).toBe(first.state.lumen);
+  });
+
 
   it("unlocks real time-selection actions at island ranks two and three", () => {
     const rankTwo = { ...createInitialState(), islandLevel: 2 as const };
@@ -125,6 +168,7 @@ describe("release candidate economy and child progression", () => {
   it("starts with no contradictory free furniture", () => {
     expect(createInitialState().inventory).toEqual({});
     expect(createInitialState().placedFurniture).toEqual([]);
+    expect(createInitialState().easyMode).toBe(true);
   });
 });
 

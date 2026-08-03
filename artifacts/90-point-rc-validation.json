@@ -1,0 +1,47 @@
+{
+  "validatedAt": "2026-08-03T18:58:00+09:00",
+  "status": "passed_with_known_release_blockers",
+  "commands": {
+    "typecheck": {"command": "npm run typecheck", "status": "passed"},
+    "lint": {"command": "npm run lint", "status": "passed"},
+    "unit": {"command": "npm test", "status": "passed", "files": 7, "tests": 83, "failed": 0},
+    "build": {"command": "npm run build", "status": "passed", "warning": "client chunk above 500 kB"},
+    "characterGate": {
+      "command": "python scripts/validate_character_glbs.py --output artifacts/character-gate-phase2-3.json",
+      "status": "failed",
+      "expected": true,
+      "reason": "all four GLBs remain integration-placeholder and fail production requirements"
+    },
+    "currentFullE2e": {
+      "command": "npm run test:e2e",
+      "status": "not_run",
+      "reason": "existing same-day evidence reports 19 passing tests; the full suite was not rerun after this patch"
+    }
+  },
+  "browserQa": {
+    "status": "passed_after_fix",
+    "viewports": [[1280, 720], [1024, 768]],
+    "freshConsoleErrors": 0,
+    "freshConsoleWarnings": 0,
+    "horizontalOverflow": false,
+    "tabletTitleVerticalOverflow": false,
+    "newGameConfirmationButtonHeightPx": 56.375,
+    "runtimeIssueFound": "next/image caused a Vinext development runtime module export error",
+    "runtimeIssueResolution": "replaced with CSS background and verified in a fresh browser tab"
+  },
+  "bundle": {
+    "manifestJsBytes": 3472935,
+    "largestClientJsBytes": 1026065,
+    "titleWebpBytes": 168146
+  },
+  "score": {
+    "total": 82,
+    "maximum": 100,
+    "claim90": false
+  },
+  "evidence": {
+    "report": "docs/RELEASE_CANDIDATE_90_REPORT.md",
+    "blockers": "docs/90_POINT_BLOCKERS.md",
+    "screenshots": "screenshots/90-point-rc/manifest.json"
+  }
+}

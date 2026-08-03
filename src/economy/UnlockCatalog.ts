@@ -1,3 +1,4 @@
+import { COLLECTION_ENTRIES } from "@/src/collection/CollectionData";
 import type { FurnitureId, GameState } from "@/src/game/types";
 import { ECONOMY_PRICES } from "@/src/economy/EconomyConfig";
 
@@ -45,10 +46,20 @@ export function purchaseCost(state: GameState, use: LumenPurchase): number {
   }
   return ECONOMY_PRICES[use];
 }
+export function nextCollectionHint(state: GameState) {
+  return COLLECTION_ENTRIES.find((entry) => {
+    if ((state.collectionCounts[entry.id] ?? 0) > 0) return false;
+    if (state.unlockedCollectionHintIds.includes(entry.id)) return false;
+    if (entry.requires === "harbor" && !state.collectionMilestones.includes(50)) return false;
+    if (entry.requires === "night-garden" && !state.collectionMilestones.includes(75)) return false;
+    if (entry.requires === "bridge" && !state.bridgeRepaired) return false;
+    return true;
+  });
+}
 
 export function purchaseComplete(state: GameState, use: LumenPurchase): boolean {
   if (use === "recipe") return state.unlockedRecipes.includes(LUMEN_RECIPE);
   if (use === "bridge") return state.bridgeRepaired;
   if (use === "grove") return state.groveRepairs >= ECONOMY_PRICES.grove.length;
-  return false;
+  return nextCollectionHint(state) === undefined;
 }

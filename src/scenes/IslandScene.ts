@@ -824,7 +824,7 @@ export function createIslandScene(
   };
 
   const clearPlacementGhost = () => {
-    placementGhost?.dispose(false, true);
+    placementGhost?.dispose(false, false);
     placementGhost = null;
     placementPreview = null;
     callbacks.onPlacementPreview(null);
@@ -1041,7 +1041,7 @@ export function createIslandScene(
     const desired = new Set(placed.map((item) => item.id));
     furnitureMeshes.forEach((node, id) => {
       if (!desired.has(id)) {
-        node.dispose(false, true);
+        node.dispose(false, false);
         furnitureMeshes.delete(id);
         furnitureTargets.delete(id);
       }
@@ -1519,7 +1519,7 @@ export function createIslandScene(
     resetCamera,
     dispose: () => {
       visiblePlayerAvatar.dispose();
-      placementGhost?.dispose(false, true);
+      placementGhost?.dispose(false, false);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);

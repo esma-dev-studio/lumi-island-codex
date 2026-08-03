@@ -1,7 +1,7 @@
-import { COLLECTION_ENTRIES } from "@/src/collection/CollectionData";
 import type { GameState } from "@/src/game/types";
 import {
   LUMEN_RECIPE,
+  nextCollectionHint,
   purchaseComplete,
   purchaseCost,
   type LumenPurchase,
@@ -20,7 +20,9 @@ export function spendLumen(state: GameState, use: LumenPurchase): PurchaseResult
         ? "橋は もうなおっているよ"
         : use === "grove"
           ? "森は すっかり元気だよ"
-          : "この作り方は もうおぼえているよ";
+          : use === "hint"
+            ? "今きける ずかんヒントは ぜんぶ聞いたよ"
+            : "この作り方は もうおぼえているよ";
     return { state, ok: false, message };
   }
 
@@ -63,19 +65,9 @@ export function spendLumen(state: GameState, use: LumenPurchase): PurchaseResult
     };
   }
 
-  const undiscovered = COLLECTION_ENTRIES.filter(
-    (entry) => (state.collectionCounts[entry.id] ?? 0) === 0,
-  );
-  if (!undiscovered.length) {
-    return { state, ok: false, message: "ずかんは ぜんぶ見つけたよ！" };
-  }
-  const entry =
-    undiscovered.find(
-      (candidate) => !state.unlockedCollectionHintIds.includes(candidate.id),
-    ) ?? undiscovered[0];
-  const unlockedCollectionHintIds = state.unlockedCollectionHintIds.includes(entry.id)
-    ? state.unlockedCollectionHintIds
-    : [...state.unlockedCollectionHintIds, entry.id];
+  const entry = nextCollectionHint(state);
+  if (!entry) return { state, ok: false, message: "今きける ヒントは ぜんぶ聞いたよ" };
+  const unlockedCollectionHintIds = [...state.unlockedCollectionHintIds, entry.id];
   return {
     state: {
       ...state,

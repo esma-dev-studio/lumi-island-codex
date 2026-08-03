@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "generatedAt": "2026-08-03",
+  "generator": "OpenAI ImageGen",
+  "license": "Project-generated original artwork; no third-party source asset",
+  "assets": [
+    {
+      "file": "artifacts/art/style-board.png",
+      "role": "visual-master source",
+      "sourceSize": [1536, 1024],
+      "deliverySize": [1536, 1024],
+      "format": "png",
+      "bytes": 2960842,
+      "usedInGame": false,
+      "promptSection": "Style board"
+    },
+    {
+      "file": "artifacts/art/world-map-concept.png",
+      "role": "four-zone world concept source",
+      "sourceSize": [1536, 1024],
+      "deliverySize": [1536, 1024],
+      "format": "png",
+      "bytes": 2691673,
+      "usedInGame": false,
+      "promptSection": "Four-zone world map"
+    },
+    {
+      "file": "artifacts/art/color-script.png",
+      "role": "day-sunset-night color master",
+      "sourceSize": [1823, 863],
+      "deliverySize": [1823, 863],
+      "format": "png",
+      "bytes": 2416543,
+      "usedInGame": false,
+      "promptSection": "Color script"
+    },
+    {
+      "file": "artifacts/art/ui-direction.png",
+      "role": "child UI visual master",
+      "sourceSize": [1536, 1024],
+      "deliverySize": [1536, 1024],
+      "format": "png",
+      "bytes": 2705531,
+      "usedInGame": false,
+      "promptSection": "UI direction"
+    },
+    {
+      "file": "public/assets/generated/island-map.webp",
+      "role": "title-screen world art",
+      "source": "artifacts/art/world-map-concept.png",
+      "sourceSize": [1536, 1024],
+      "deliverySize": [1280, 720],
+      "format": "webp",
+      "bytes": 168146,
+      "usedInGame": true,
+      "integration": "src/ui/TitleScreen.tsx"
+    }
+  ]
+}

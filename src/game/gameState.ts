@@ -11,6 +11,7 @@ import type {
 } from "@/src/game/types";
 import { sanitizeResourceStates } from "@/src/resources/ResourceStateSystem";
 import {
+  collectionCompletion,
   migrateCollectionCounts,
   migrateCollectionIds,
 } from "@/src/collection/CollectionSystem";
@@ -37,7 +38,7 @@ const questProgress = (): Record<QuestId, QuestProgress> => ({
 export const createInitialState = (): GameState => ({
   version: 5,
   playerPosition: { x: 0, z: 6 },
-  easyMode: false,
+  easyMode: true,
   tutorialStep: 0,
   tutorialProgress: createTutorialProgress(),
   discoveredItems: [],
@@ -316,6 +317,25 @@ export function sanitizeState(value: unknown): GameState {
             createTutorialProgress(candidate.tutorialStep ?? 7),
           audioSettings: candidate.audioSettings ?? initial.audioSettings,
         };
+  const collectionCounts = migrateCollectionCounts(
+    migrated.collectionCounts,
+    Array.isArray(migrated.discoveredItems) ? migrated.discoveredItems : [],
+    Array.isArray(migrated.caughtFish) ? migrated.caughtFish : [],
+  );
+  const completion = collectionCompletion(collectionCounts);
+  const savedMilestones = Array.isArray(migrated.collectionMilestones)
+    ? migrated.collectionMilestones.filter(
+        (value): value is 25 | 50 | 75 =>
+          value === 25 || value === 50 || value === 75,
+      )
+    : [];
+  const impliedMilestones = ([25, 50, 75] as const).filter(
+    (milestone) => completion.percent >= milestone,
+  );
+  const collectionMilestones = [
+    ...new Set<25 | 50 | 75>([...savedMilestones, ...impliedMilestones]),
+  ].sort((left, right) => left - right);
+
   return withCalculatedRank({
     ...initial,
     ...migrated,
@@ -340,15 +360,7 @@ export function sanitizeState(value: unknown): GameState {
               .map(([sourceId, count]) => [sourceId, Math.floor(count as number)]),
           )
         : {},
-    collectionCounts: migrateCollectionCounts(
-      migrated.collectionCounts,
-      Array.isArray(migrated.discoveredItems)
-        ? migrated.discoveredItems
-        : [],
-      Array.isArray(migrated.caughtFish)
-        ? migrated.caughtFish
-        : [],
-    ),
+    collectionCounts,
     collectionFirstSeenDay:
       migrated.collectionFirstSeenDay && typeof migrated.collectionFirstSeenDay === 'object'
         ? Object.fromEntries(
@@ -371,11 +383,7 @@ export function sanitizeState(value: unknown): GameState {
     unlockedRecipes: Array.isArray(migrated.unlockedRecipes)
       ? migrated.unlockedRecipes
       : [...BASE_RECIPES],
-    collectionMilestones: Array.isArray(migrated.collectionMilestones)
-      ? migrated.collectionMilestones.filter(
-          (value): value is number => value === 25 || value === 50 || value === 75,
-        )
-      : [],
+    collectionMilestones,
     groveRepairs:
       typeof migrated.groveRepairs === "number"
         ? Math.max(0, Math.min(3, Math.floor(migrated.groveRepairs)))

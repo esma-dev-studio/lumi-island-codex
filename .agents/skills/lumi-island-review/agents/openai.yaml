@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lumi Island Review"
+  short_description: "子ども向け3Dゲームの進行・UX・3D・QAを再監査"
+  default_prompt: "Use $lumi-island-review to audit the current release candidate and fix the highest-risk issues."

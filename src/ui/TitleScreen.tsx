@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 export function TitleScreen({
   canContinue,
   onNewGame,
@@ -13,10 +15,13 @@ export function TitleScreen({
   onShowcase: () => void;
   showShowcase?: boolean;
 }) {
+  const [confirmNewGame, setConfirmNewGame] = useState(false);
+
   return (
     <main className="title-screen">
       <div className="title-sky" aria-hidden="true">
         <span className="cloud cloud--one" />
+        <span className="title-map-art" />
         <span className="cloud cloud--two" />
         <span className="sun-disc" />
         <div className="title-island">
@@ -41,17 +46,27 @@ export function TitleScreen({
         </h1>
         <p className="title-subtitle">ひかりを集めて、島の暮らしをつくろう。</p>
         <div className="title-actions">
-          <button className="primary-button" onClick={onNewGame}>
+          <button className={canContinue ? "secondary-button" : "primary-button"} onClick={() => canContinue ? setConfirmNewGame(true) : onNewGame()}>
             <span>あたらしく始める</span>
             <small>NEW STORY</small>
           </button>
           {canContinue && (
-            <button className="secondary-button" onClick={onContinue}>
+            <button className="primary-button title-continue-button" onClick={onContinue}>
               <span>つづきから</span>
               <small>CONTINUE</small>
             </button>
           )}
         </div>
+        {confirmNewGame && (
+          <div className="title-new-game-confirm" role="dialog" aria-modal="true" aria-labelledby="new-game-title">
+            <strong id="new-game-title">島のきろくが 消えるよ</strong>
+            <p>いまの つづきは できなくなります。</p>
+            <div>
+              <button className="secondary-button" onClick={() => setConfirmNewGame(false)}>もどる</button>
+              <button className="danger-button" onClick={onNewGame}>消して 始める</button>
+            </div>
+          </div>
+        )}
         {showShowcase && (
           <button className="text-button" onClick={onShowcase}>
             キャラクター確認（開発用） →

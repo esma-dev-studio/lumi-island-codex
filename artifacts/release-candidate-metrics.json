@@ -1,20 +1,20 @@
 {
   "phase": "release-candidate",
-  "generatedAt": "2026-08-03T04:42:27.935Z",
+  "generatedAt": "2026-08-03T10:01:49.523Z",
   "tests": {
-    "unit": 76,
+    "unit": 83,
     "e2e": 19,
     "emptySaveJourney": "e2e/release-candidate.spec.ts"
   },
   "bundle": {
-    "manifestJsBytes": 3465947,
+    "manifestJsBytes": 3472935,
     "largestClientJs": {
-      "file": "assets/CharacterView-BgqSf84m.js",
+      "file": "assets/CharacterView-DergKTcp.js",
       "bytes": 1026065
     },
-    "gameCanvasInitialStaticBytes": 1868205,
+    "gameCanvasInitialStaticBytes": 1873545,
     "gameCanvasInitialStaticFiles": 36,
-    "gameCanvasDynamicBytes": 2737156,
+    "gameCanvasDynamicBytes": 2738804,
     "gameCanvasDynamicFiles": 130
   },
   "assets": {

@@ -38,4 +38,14 @@ Lumi Islandの世界観、名称、コード、キャラクターGLB仮素材、
 - Modifications: 1200×630へ中央トリミング・リサイズ
 - Production use: SNSプレビューのみ
 
+## 90点版Visual Master
+
+- Assets: `artifacts/art/style-board.png`, `world-map-concept.png`, `color-script.png`, `ui-direction.png`
+- Delivery asset: `public/assets/generated/island-map.webp`
+- Author: OpenAI ImageGen（本プロジェクト向けにディレクション・生成・選定）
+- Source URL: なし
+- License/provenance: 第三者配布物を含まない、プロジェクト用オリジナル生成物
+- Prompt record: `.prompts/lumi-island-visual-master.md`
+- Production use: `island-map.webp`のみタイトル画面で使用。他4点は制作基準資料
+
 このファイルが権利・出典の唯一のSource of Truthです。ルートの `ATTRIBUTIONS.md` はこのファイルへの案内だけを保持します。

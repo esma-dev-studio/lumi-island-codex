@@ -59,7 +59,7 @@ import { spendLumen } from "@/src/economy/EconomySystem";
 import { applyRankAction, type RankAction } from "@/src/progression/UnlockEffects";
 import {
   applyNollaFurnitureBond,
-  befriendResident,
+  progressResidentTalk,
   canGiveNollaWood,
   giveNollaWood,
 } from "@/src/progression/FriendshipSystem";
@@ -488,7 +488,7 @@ export function LumiIslandApp() {
     setDialogResident(resident);
     setDialogLine(0);
     setState((current) => {
-      const friendship = befriendResident(current, resident);
+      const friendship = progressResidentTalk(current, resident);
       if (friendship.increased) {
         notify(`${resident}と なかよし ${friendship.level}/3に なった！`, "success");
       }

@@ -1,4 +1,4 @@
-import { inventoryCount } from "@/src/game/gameState";
+import { applyEvent, inventoryCount } from "@/src/game/gameState";
 import type { FurnitureId, GameState, ResidentId } from "@/src/game/types";
 import { withCalculatedRank } from "@/src/progression/IslandRankSystem";
 
@@ -30,6 +30,17 @@ export function befriendResident(
     increased: true,
     level: 1,
     message: "ノラと なかよしになった！",
+  };
+}
+
+export function progressResidentTalk(
+  state: GameState,
+  resident: ResidentId,
+): FriendshipResult {
+  const friendship = befriendResident(state, resident);
+  return {
+    ...friendship,
+    state: applyEvent(friendship.state, { type: "talk", resident }),
   };
 }
 
