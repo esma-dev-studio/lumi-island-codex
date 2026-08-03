@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   advanceTime,
   applyEvent,
@@ -54,15 +54,16 @@ describe("Phase 2.3 economy and unlock play", () => {
     expect(spendLumen(state, "recipe").ok).toBe(false);
     const rewarded = gatherItem(state, "wood", 3);
     expect(rewarded.lumen).toBe(INITIAL_LUMEN + 12);
-    expect(spendLumen(rewarded, "recipe").ok).toBe(true);
+    expect(spendLumen(rewarded, "hint").ok).toBe(true);
+    expect(spendLumen(rewarded, "recipe").ok).toBe(false);
   });
 
   it("repairs the bridge and changes both collision and exploration resources", () => {
     const locked = lockedAreaColliders(INITIAL_WORLD_PROGRESSION);
     expect(locked.map((collider) => collider.id)).toContain("locked-bridge-islet");
-    const purchased = spendLumen({ ...createInitialState(), lumen: 30 }, "bridge");
+    const purchased = spendLumen({ ...createInitialState(), lumen: 40 }, "bridge");
     expect(purchased.ok).toBe(true);
-    expect(purchased.state.lumen).toBe(5);
+    expect(purchased.state.lumen).toBe(8);
     const progression = { ...INITIAL_WORLD_PROGRESSION, bridgeRepaired: true };
     expect(lockedAreaColliders(progression)).toEqual([]);
     const starleaf = resourceDefinitionById("starleaf-bridge-islet-01");
@@ -84,7 +85,7 @@ describe("Phase 2.3 economy and unlock play", () => {
         groveRepairs: state.groveRepairs,
       })).toBe(true);
     }
-    expect(costs).toEqual([12, 18, 24]);
+    expect(costs).toEqual([18, 26, 34]);
     expect(state.groveRepairs).toBe(3);
   });
 
@@ -192,7 +193,7 @@ describe("Phase 2.3 child progression and input", () => {
 
   it("migrates older saves into the new progression fields", () => {
     const migrated = sanitizeState({ version: 3, lumen: 77, inventory: { wood: 2 } });
-    expect(migrated.version).toBe(4);
+    expect(migrated.version).toBe(5);
     expect(migrated.lumen).toBe(77);
     expect(migrated.bridgeRepaired).toBe(false);
     expect(migrated.dailyGoalsStartDay).toBeNull();

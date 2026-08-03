@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+
 import {
   COLLECTION_CATEGORIES,
   COLLECTION_ENTRIES,
@@ -9,16 +10,19 @@ import {
   collectionCategoryCompletion,
   collectionCompletion,
 } from "@/src/collection/CollectionSystem";
+import type { GameState } from "@/src/game/types";
+import { nextReachableCollectionId } from "@/src/progression/ProgressionReachability";
 
-export function CollectionPanel({
-  counts,
-  easyMode,
-}: {
-  counts: Record<string, number>;
-  easyMode: boolean;
-}) {
+function timeRecommendation(timeHint: string): string {
+  if (timeHint.endsWith("見つけやすい")) return `${timeHint}よ。`;
+  if (timeHint === "いつでも") return "いつでも 見つけられるよ。";
+  if (timeHint.endsWith("だけ")) return `${timeHint} 見つけられるよ。`;
+  return `${timeHint}に 見つけやすいよ。`;
+}
+
+export function CollectionPanel({ state }: { state: GameState }) {
   const [category, setCategory] = useState<CollectionCategory | "all">("all");
-  const completion = collectionCompletion(counts);
+  const completion = collectionCompletion(state.collectionCounts);
   const entries = useMemo(
     () =>
       COLLECTION_ENTRIES.filter(
@@ -26,13 +30,21 @@ export function CollectionPanel({
       ),
     [category],
   );
+  const recommendedId = nextReachableCollectionId(
+    state.collectionCounts,
+    state.collectionMilestones,
+    state.bridgeRepaired,
+  );
+  const recommended = COLLECTION_ENTRIES.find(
+    (entry) => entry.id === recommendedId,
+  );
 
   return (
     <div className="collection-panel" data-testid="collection-panel">
       <header className="panel-heading collection-heading">
         <div>
-          <p className="eyebrow">ISLAND COLLECTION</p>
-          <h2>{easyMode ? "しまの ずかん" : "島の図かん"}</h2>
+          <p className="eyebrow">島のきろく</p>
+          <h2>{state.easyMode ? "しまの ずかん" : "島の図かん"}</h2>
           <span>{completion.found} / {completion.total} 見つけた</span>
         </div>
         <div
@@ -45,9 +57,19 @@ export function CollectionPanel({
           <b>{completion.percent}%</b>
         </div>
       </header>
+      {recommended && (
+        <aside className="collection-next" data-testid="collection-next">
+          <span className="collection-next-mark" aria-hidden="true" />
+          <div>
+            <small>つぎの おすすめは 1つだけ</small>
+            <strong>{recommended.place}を さがそう</strong>
+            <p>{timeRecommendation(recommended.timeHint)}</p>
+          </div>
+        </aside>
+      )}
       <div className="collection-tabs" aria-label="図かんの種類">
         {COLLECTION_CATEGORIES.map((item) => {
-          const progress = collectionCategoryCompletion(counts, item.id);
+          const progress = collectionCategoryCompletion(state.collectionCounts, item.id);
           return (
             <button
               key={item.id}
@@ -61,8 +83,9 @@ export function CollectionPanel({
       </div>
       <div className="collection-grid">
         {entries.map((entry) => {
-          const count = counts[entry.id] ?? 0;
+          const count = state.collectionCounts[entry.id] ?? 0;
           const found = count > 0;
+          const hinted = state.unlockedCollectionHintIds.includes(entry.id);
           return (
             <article
               key={entry.id}
@@ -84,11 +107,18 @@ export function CollectionPanel({
                 <p>
                   {found
                     ? entry.description
-                    : `${entry.place}を さがしてみよう。`}
+                    : hinted
+                      ? `ヒント：${entry.place}を さがそう。`
+                      : "見つけると 名前がわかるよ。"}
                 </p>
-                <small>{entry.place} · {entry.timeHint}</small>
+                <small>
+                  {found || hinted ? `${entry.place} · ${entry.timeHint}` : entry.timeHint}
+                  {found && state.collectionFirstSeenDay[entry.id]
+                    ? ` · はじめて ${state.collectionFirstSeenDay[entry.id]}日目`
+                    : ""}
+                </small>
               </div>
-              <b>{found ? `${count}回` : "—"}</b>
+              <b>{found ? `${count}回` : hinted ? "ヒント" : "—"}</b>
             </article>
           );
         })}

@@ -56,6 +56,7 @@ import {
 } from "@/src/tutorial/TutorialSteps";
 import { easyModeSettings } from "@/src/accessibility/EasyModeSettings";
 import { spendLumen } from "@/src/economy/EconomySystem";
+import { applyRankAction, type RankAction } from "@/src/progression/UnlockEffects";
 import {
   applyNollaFurnitureBond,
   befriendResident,
@@ -142,10 +143,6 @@ export function LumiIslandApp() {
     [],
   );
 
-  const activeQuestId = useMemo(
-    () => QUEST_ORDER.find((id) => state.quests[id].status === "active"),
-    [state.quests],
-  );
   const easySettings = useMemo(
     () => easyModeSettings(state.easyMode),
     [state.easyMode],
@@ -171,10 +168,15 @@ export function LumiIslandApp() {
 
   useEffect(() => {
     if (screen !== "game" || isPaused) return;
+    const testAcceleration =
+      process.env.NODE_ENV !== "production" &&
+      new URLSearchParams(window.location.search).has("e2e")
+        ? 10
+        : 1;
     const timer = window.setInterval(() => {
       setState((current) => {
-        const advanced = advanceTimeWhileRunning(current, 3, false);
-        const playSeconds = advanced.playSeconds + 1;
+        const advanced = advanceTimeWhileRunning(current, 3 * testAcceleration, false);
+        const playSeconds = advanced.playSeconds + testAcceleration;
         return {
           ...advanced,
           playSeconds,
@@ -310,6 +312,19 @@ export function LumiIslandApp() {
     },
     [notify],
   );
+
+  const useRankAction = (action: RankAction["id"]) => {
+    setState((current) => applyRankAction(current, action));
+    notify(
+      action === "wait-night"
+        ? "夜になった！ 光る花をさがそう"
+        : action === "start-morning"
+          ? "朝になった！ 昼の生きものをさがそう"
+          : "夕方になった！ 生きものをさがそう",
+    );
+    playSound("ui");
+    setPanel(null);
+  };
 
   const craft = (item: FurnitureId) => {
     setState((current) => {
@@ -581,7 +596,6 @@ export function LumiIslandApp() {
 
       <GameHud
         state={state}
-        activeQuestId={activeQuestId}
         tutorialVisible={tutorialVisible}
         hint={hint}
         paused={isPaused}
@@ -685,7 +699,7 @@ export function LumiIslandApp() {
             {panel === "craft" && (
               <CraftPanel state={state} onCraft={craft} />
             )}
-            {panel === "collection" && <CollectionPanel counts={state.collectionCounts} easyMode={state.easyMode} />}
+            {panel === "collection" && <CollectionPanel state={state} />}
             {panel === "quests" && <QuestPanel state={state} />}
             {panel === "menu" && (
               <MainMenu
@@ -702,6 +716,7 @@ export function LumiIslandApp() {
                 onSpendLumen={buyIslandUpgrade}
                 onOpenCraft={() => setPanel("craft")}
                 onOpenQuests={() => setPanel("quests")}
+                onRankAction={useRankAction}
               />
             )}
             {panel === "settings" && (
@@ -765,7 +780,9 @@ export function LumiIslandApp() {
           request={activity}
           easyMode={state.easyMode}
           day={state.day}
-          discoveredIds={state.discoveredItems}
+          dayMinute={state.dayMinute}
+          discoveredIds={[...state.discoveredItems, ...state.caughtFish]}
+          fishingCatchCount={state.fishingCatchCounts[activity.sourceId] ?? 0}
           onResolve={queueActivityResult}
           onCancel={cancelActivity}
         />
@@ -779,6 +796,8 @@ export function LumiIslandApp() {
           friendshipLevel={state.residentFriendship[dialogResident]}
           canGiveWood={dialogResident === "ノラ" && canGiveNollaWood(state)}
           nightGardenUnlocked={state.collectionMilestones.includes(75)}
+          groveRepairs={state.groveRepairs}
+          groveQuestComplete={state.groveQuestComplete}
           onGiveWood={() => {
             setState((current) => {
               const result = giveNollaWood(current);

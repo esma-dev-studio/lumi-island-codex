@@ -28,6 +28,8 @@ export function settleActivityResult(
     discoveryId && (current.collectionCounts[discoveryId] ?? 0) === 0,
   );
   const collectionBefore = collectionCompletion(current.collectionCounts);
+  const groveQuestCompleted =
+    result.sourceId === "glowcap-restored-grove-01" && !current.groveQuestComplete;
   const tutorialGather =
     current.tutorialProgress.step === 2 &&
     result.sourceId === TUTORIAL_TREE_SOURCE_ID &&
@@ -53,6 +55,19 @@ export function settleActivityResult(
         ? [...next.caughtFish, result.fishId]
         : next.caughtFish,
     collectionCounts: registerActivityDiscovery(next.collectionCounts, result),
+    collectionFirstSeenDay:
+      discoveryId && firstDiscovery
+        ? { ...next.collectionFirstSeenDay, [discoveryId]: next.day }
+        : next.collectionFirstSeenDay,
+    fishingCatchCounts:
+      result.fishId
+        ? {
+            ...next.fishingCatchCounts,
+            [result.sourceId]: (next.fishingCatchCounts[result.sourceId] ?? 0) + 1,
+          }
+        : next.fishingCatchCounts,
+    groveQuestComplete: current.groveQuestComplete || groveQuestCompleted,
+    lumen: next.lumen + (groveQuestCompleted ? 6 : 0),
     resourceStates: depleteResource(
       next.resourceStates,
       result.sourceId,
@@ -77,6 +92,14 @@ export function settleActivityResult(
   );
   next = progression.state;
 
+  if (groveQuestCompleted) {
+    return {
+      state: next,
+      message: "森のひみつ発見！ 6ルーメンを もらった",
+      sound: "quest",
+      collectionAction: true,
+    };
+  }
   if (progression.milestone) {
     return {
       state: next,

@@ -64,7 +64,7 @@ describe("Lumi Island game loop", () => {
 
   it("recovers safely from invalid save data", () => {
     const recovered = sanitizeState({ version: 99, lumen: 99999 });
-    expect(recovered.version).toBe(4);
+    expect(recovered.version).toBe(5);
     expect(recovered.lumen).toBe(8);
     expect(recovered.placedFurniture).toEqual([]);
   });

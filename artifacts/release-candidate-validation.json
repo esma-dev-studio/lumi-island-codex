@@ -1,0 +1,73 @@
+{
+  "validatedAt": "2026-08-03T13:42:28+09:00",
+  "status": "passed_with_known_character_gate",
+  "commands": {
+    "npmCi": {
+      "command": "npm ci --ignore-scripts --no-audit --no-fund",
+      "status": "passed",
+      "packages": 522
+    },
+    "typecheck": {
+      "command": "npm run typecheck",
+      "status": "passed"
+    },
+    "lint": {
+      "command": "npm run lint",
+      "status": "passed"
+    },
+    "unit": {
+      "command": "npm test -- --run",
+      "status": "passed",
+      "files": 7,
+      "tests": 76,
+      "failed": 0,
+      "durationSeconds": 2.57
+    },
+    "e2e": {
+      "status": "passed",
+      "tests": 19,
+      "failed": 0,
+      "execution": "single-worker files aggregated to avoid SwiftShader CPU contention and a 30-minute command wrapper limit",
+      "files": [
+        { "file": "e2e/phase2-1.spec.ts", "passed": 5, "durationMinutes": 5.8 },
+        { "file": "e2e/phase2-2.spec.ts", "passed": 6, "durationMinutes": 5.7 },
+        { "file": "e2e/phase2-2-tutorial.spec.ts", "passed": 4, "durationMinutes": 3.2 },
+        { "file": "e2e/phase2-3-journey.spec.ts", "passed": 1, "durationMinutes": 1.7 },
+        { "file": "e2e/release-candidate.spec.ts", "passed": 3, "durationMinutes": 11.4 }
+      ]
+    },
+    "build": {
+      "command": "npm run build",
+      "status": "passed",
+      "durationSeconds": 22.0,
+      "warning": "CharacterView client chunk remains above 500 kB"
+    },
+    "characterGate": {
+      "status": "failed",
+      "expected": true,
+      "reason": "production-ready rights-cleared character GLB has not been supplied"
+    }
+  },
+  "browserQa": {
+    "status": "passed",
+    "viewports": [
+      { "width": 1280, "height": 720 },
+      { "width": 1024, "height": 640 }
+    ],
+    "primaryObjectiveCount": 1,
+    "topMenuItemCount": 4,
+    "buildingTabCount": 3,
+    "collectionEntryCount": 18,
+    "pageHorizontalOverflow": false,
+    "homeVerticalOverflowAtTablet": false,
+    "consoleErrors": 0,
+    "consoleWarnings": 0,
+    "verifiedHintCopy": "昼に 見つけやすいよ。"
+  },
+  "evidence": {
+    "screenshotsRequired": 16,
+    "screenshotsPresent": 16,
+    "metrics": "artifacts/release-candidate-metrics.json",
+    "report": "docs/RELEASE_CANDIDATE_REPORT.md"
+  }
+}

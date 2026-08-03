@@ -50,11 +50,16 @@ export function discoverForage(
   item: ForageResource,
   sourceId: string,
   day: number,
+  discoveredIds: readonly string[] = [],
 ): ForageDiscovery {
   const choices = DISCOVERIES[item];
+  const unseen = choices.filter(
+    (choice) => !discoveredIds.includes(choice.discoveryId),
+  );
+  const pool = unseen.length ? unseen : choices;
   const seed = [...`${sourceId}-${day}`].reduce(
     (total, character) => total + character.charCodeAt(0),
     0,
   );
-  return { ...choices[seed % choices.length], item };
+  return { ...pool[seed % pool.length], item };
 }

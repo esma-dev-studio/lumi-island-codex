@@ -27,7 +27,7 @@ import {
   RESOURCE_WORLD_DEFINITIONS,
   resourceDefinitionById,
 } from "@/src/resources/ResourceDefinitions";
-import { resourceIsAvailableAtTime } from "@/src/world/NightGardenController";
+import { nightGardenPresentation, resourceIsAvailableAtTime } from "@/src/world/NightGardenController";
 import {
   INITIAL_WORLD_PROGRESSION,
   lockedAreaColliders,
@@ -67,6 +67,7 @@ import {
 import { isResourceAvailable } from "@/src/resources/ResourceStateSystem";
 import { ResourceVisualController } from "@/src/resources/ResourceVisualController";
 import { playSound } from "@/src/audio/FileAudioSystem";
+import { environmentDetailProfile } from "@/src/world/EnvironmentDetailController";
 import { advanceFootstepCadence } from "@/src/audio/FootstepCadence";
 import {
   FREE_PLAYER_ACTION,
@@ -472,12 +473,25 @@ export function createIslandScene(
   initialFurniture: PlacedFurniture[],
   callbacks: IslandSceneCallbacks,
 ): IslandController {
+  const deviceNavigator = window.navigator as Navigator & { deviceMemory?: number };
+  const e2eMode =
+    process.env.NODE_ENV !== "production" &&
+    new URLSearchParams(window.location.search).has("e2e");
+  const debugPositionInterval = e2eMode ? 0.12 : 0.5;
+  const movementSimulationScale = e2eMode ? 3 : 1;
+  const detail = environmentDetailProfile({
+    hardwareConcurrency: deviceNavigator.hardwareConcurrency,
+    deviceMemory: deviceNavigator.deviceMemory,
+    devicePixelRatio: window.devicePixelRatio,
+    prefersReducedMotion: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
+  });
   const engine = new Engine(canvas, true, {
     antialias: true,
     preserveDrawingBuffer: false,
     stencil: true,
   });
-  engine.setHardwareScalingLevel(Math.min(1.35, 1 / window.devicePixelRatio));
+  engine.setHardwareScalingLevel(detail.hardwareScalingLevel);
+  canvas.dataset.detailLevel = detail.level;
   const scene = new Scene(engine);
   scene.clearColor = Color4.FromHexString("#b8d4cf00");
   scene.ambientColor = Color3.FromHexString("#51685f");
@@ -511,9 +525,9 @@ export function createIslandScene(
   );
   sun.position.set(16, 24, -12);
   sun.intensity = 1.25;
-  const shadows = new ShadowGenerator(1024, sun);
+  const shadows = new ShadowGenerator(detail.shadowMapSize, sun);
   shadows.useBlurExponentialShadowMap = true;
-  shadows.blurKernel = 18;
+  shadows.blurKernel = detail.shadowBlurKernel;
   shadows.bias = 0.0008;
 
   const mats = {
@@ -820,6 +834,22 @@ export function createIslandScene(
   window.addEventListener("keydown", onKeyDown);
   window.addEventListener("keyup", onKeyUp);
   window.addEventListener("blur", onBlur);
+  const onTestTravel = (event: Event) => {
+    if (!e2eMode) return;
+    const detail = (event as CustomEvent<{ x: number; z: number }>).detail;
+    if (!detail || !Number.isFinite(detail.x) || !Number.isFinite(detail.z)) return;
+    const next = resolveWorldMovement(
+      { x: player.root.position.x, z: player.root.position.z },
+      { x: detail.x, z: detail.z },
+      0.58,
+      [...STATIC_WORLD_COLLIDERS, ...lockedAreaColliders(currentProgression)],
+    );
+    player.root.position.x = next.x;
+    player.root.position.z = next.z;
+    canvas.dataset.debugPlayerPosition = `${next.x.toFixed(3)},${next.z.toFixed(3)}`;
+    callbacks.onPlayerMove(next);
+  };
+  if (e2eMode) canvas.addEventListener("lumi-test-travel", onTestTravel);
 
   const burstMaterialCache = new Map<string, StandardMaterial>();
   const burst = (position: Vector3, color: string) => {
@@ -829,7 +859,7 @@ export function createIslandScene(
       burstMaterialCache.set(color, mat);
     }
     const particles: Mesh[] = [];
-    for (let index = 0; index < 7; index += 1) {
+    for (let index = 0; index < detail.particleCount; index += 1) {
       const particle = setMaterial(
         MeshBuilder.CreateIcoSphere(
           `pickup-burst-${index}`,
@@ -1086,8 +1116,8 @@ export function createIslandScene(
       z: player.root.position.z,
     };
     const desiredPosition = {
-      x: currentPosition.x + motion.velocity.x * delta,
-      z: currentPosition.z + motion.velocity.z * delta,
+      x: currentPosition.x + motion.velocity.x * delta * movementSimulationScale,
+      z: currentPosition.z + motion.velocity.z * delta * movementSimulationScale,
     };
     const dynamicColliders: WorldCollider[] = [
       ...STATIC_WORLD_COLLIDERS,
@@ -1336,6 +1366,11 @@ export function createIslandScene(
       npc.rig.root.position.y = 0.44;
     });
 
+    const nightGarden = nightGardenPresentation(
+      currentProgression.collectionMilestones.includes(75),
+      currentDayMinute,
+    );
+    progressionLandmarks.collectionSeventyFive.setEnabled(nightGarden.active);
     const hour = currentDayMinute / 60;
     const daylight = Math.max(0.18, Math.sin(((hour - 5) / 14) * Math.PI));
     const evening = hour >= 16.5 || hour < 6;
@@ -1344,7 +1379,7 @@ export function createIslandScene(
     sun.diffuse = evening
       ? Color3.FromHexString("#e49a67")
       : Color3.FromHexString("#fff2d0");
-    glow.intensity = evening ? 0.75 : 0.26;
+    glow.intensity = (evening ? 0.75 : 0.26) * detail.glowIntensityScale;
     if (tutorialGuideRing.isEnabled()) {
       const guidePulse = 1 + Math.sin(animationElapsedTime * 3.2) * 0.08;
       tutorialGuideRing.scaling.x = tutorialGuideScale * guidePulse;
@@ -1358,7 +1393,7 @@ export function createIslandScene(
       : Color3.FromHexString("#a9d0c6");
 
     lastPositionUpdate += delta;
-    if (lastPositionUpdate >= 0.5) {
+    if (lastPositionUpdate >= debugPositionInterval) {
       lastPositionUpdate = 0;
       callbacks.onPlayerMove({
         x: Number(player.root.position.x.toFixed(2)),
@@ -1429,6 +1464,7 @@ export function createIslandScene(
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
+      canvas.removeEventListener("lumi-test-travel", onTestTravel);
       window.removeEventListener("resize", resize);
       scene.dispose();
       resourceVisuals.forEach((controller) => controller.dispose());

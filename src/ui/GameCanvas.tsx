@@ -189,6 +189,14 @@ export function GameCanvas({
       ref={canvasRef}
       className="game-canvas"
       aria-label="Lumi Islandの3Dゲーム画面"
+      data-debug-fishing-catch-counts={
+        process.env.NODE_ENV !== "production"
+          ? JSON.stringify(state.fishingCatchCounts)
+          : undefined
+      }
+      data-debug-day-minute={
+        process.env.NODE_ENV !== "production" ? state.dayMinute : undefined
+      }
       tabIndex={0}
     />
   );

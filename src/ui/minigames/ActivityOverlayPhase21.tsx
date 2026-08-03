@@ -35,6 +35,10 @@ import {
   pullFishingLine,
 } from "@/src/fishing/FishingJourneyGame";
 import { resolveFishing } from "@/src/fishing/FishingSystem";
+import {
+  fishingTimeOfDay,
+  type FishingContext,
+} from "@/src/fishing/FishSpawnSystem";
 import { fishHabitatForSource, fishingSpotLabel } from "@/src/world/FishingSpotController";
 import { playSound } from "@/src/audio/FileAudioSystem";
 import {
@@ -52,14 +56,18 @@ export function ActivityOverlayPhase21({
   request,
   easyMode,
   day,
+  dayMinute,
   discoveredIds,
+  fishingCatchCount,
   onResolve,
   onCancel,
 }: {
   request: ActivityRequest;
   easyMode: boolean;
   day: number;
+  dayMinute: number;
   discoveredIds: readonly string[];
+  fishingCatchCount: number;
   onResolve: (result: ActivityResult) => void;
   onCancel: () => void;
 }) {
@@ -226,7 +234,15 @@ export function ActivityOverlayPhase21({
           />
         )}
         {request.kind === "fishing" && (
-          <FishingPanel request={request} easyMode={easyMode} onResolve={onResolve} />
+          <FishingPanel
+            request={request}
+            easyMode={easyMode}
+            day={day}
+            dayMinute={dayMinute}
+            discoveredIds={discoveredIds}
+            catchCount={fishingCatchCount}
+            onResolve={onResolve}
+          />
         )}
       </section>
     </div>
@@ -425,13 +441,14 @@ function ForagePanel({
     request.item as ForageResource,
     request.sourceId,
     day,
+    discoveredIds,
   );
   const alreadyDiscovered = discoveredIds.includes(discovery.discoveryId);
   return (
     <>
       <p className="eyebrow">LITTLE DISCOVERY</p>
       <h2>{alreadyDiscovered ? "また 見つけた！" : "はじめて 見つけた！"}</h2>
-      <div className="discovery-orb" aria-hidden="true">✿</div>
+      <div className="discovery-orb" aria-hidden="true"><span /></div>
       <div className="discovery-copy">
         <h3><ruby>{discovery.title}<rt>{discovery.reading}</rt></ruby></h3>
         <p>{discovery.note}</p>
@@ -458,22 +475,21 @@ function ForagePanel({
   );
 }
 
-function stableFishingRoll(sourceId: string): number {
-  let hash = 2166136261;
-  for (const character of sourceId) {
-    hash ^= character.charCodeAt(0);
-    hash = Math.imul(hash, 16777619);
-  }
-  return (hash >>> 0) / 4294967296;
-}
-
 function FishingPanel({
   request,
   easyMode,
+  day,
+  dayMinute,
+  discoveredIds,
+  catchCount,
   onResolve,
 }: {
   request: ActivityRequest;
   easyMode: boolean;
+  day: number;
+  dayMinute: number;
+  discoveredIds: readonly string[];
+  catchCount: number;
   onResolve: (result: ActivityResult) => void;
 }) {
   const habitat = fishHabitatForSource(request.sourceId);
@@ -482,14 +498,21 @@ function FishingPanel({
     createFishingJourney(easyMode, Math.random(), habitat),
   );
   const [selectedTarget, setSelectedTarget] = useState(journey.shadow);
+  const [fishingContext] = useState<FishingContext>(() => ({
+    fishingSpotId: request.sourceId,
+    gameDay: day,
+    timeOfDay: fishingTimeOfDay(dayMinute),
+    catchCountAtSpot: catchCount,
+    discoveredFishIds: [...discoveredIds],
+  }));
   const fish = useMemo(
     () =>
       resolveFishing(
         { phase: "caught", elapsed: 0, biteAt: 0, biteWindow: 1 },
-        stableFishingRoll(request.sourceId),
+        fishingContext,
         habitat,
       ),
-    [habitat, request.sourceId],
+    [fishingContext, habitat],
   );
 
   useEffect(() => {

@@ -30,7 +30,7 @@ export function SettingsPanel({
   return (
     <>
       <header className="panel-heading settings-heading">
-        <p className="eyebrow">SETTINGS</p>
+        <p className="eyebrow">見やすさ・音・セーブ</p>
         <h2>せってい</h2>
         <span>見やすさと 音をえらべます</span>
       </header>
@@ -39,18 +39,14 @@ export function SettingsPanel({
           className={state.easyMode ? "is-selected" : ""}
           onClick={() => onEasyMode(!state.easyMode)}
         >
-          <span className="settings-symbol" aria-hidden="true">
-            👓
-          </span>
+          <span className="settings-symbol settings-symbol--easy" aria-hidden="true"><i /></span>
           <span>
             <strong>やさしい表示 {state.easyMode ? "ON" : "OFF"}</strong>
             <small>大きな案内・ゆっくりした操作</small>
           </span>
         </button>
         <div className="audio-settings-card settings-audio">
-          <span className="settings-symbol" aria-hidden="true">
-            🔊
-          </span>
+          <span className="settings-symbol settings-symbol--sound" aria-hidden="true"><i /></span>
           <div>
             <strong>こうか音</strong>
             <small>{audioLabel}</small>
@@ -84,9 +80,7 @@ export function SettingsPanel({
         </div>
         {tutorialActive && (
           <button onClick={onResumeTutorial}>
-            <span className="settings-symbol" aria-hidden="true">
-              🧭
-            </span>
+            <span className="settings-symbol settings-symbol--guide" aria-hidden="true"><i /></span>
             <span>
               <strong>
                 {tutorialHidden
@@ -98,36 +92,28 @@ export function SettingsPanel({
           </button>
         )}
         <button onClick={onRestartTutorial}>
-          <span className="settings-symbol" aria-hidden="true">
-            🔁
-          </span>
+          <span className="settings-symbol settings-symbol--restart" aria-hidden="true"><i /></span>
           <span>
             <strong>遊びかたを 最初から</strong>
             <small>歩くところから もう一度</small>
           </span>
         </button>
         <button onClick={onCameraReset}>
-          <span className="settings-symbol" aria-hidden="true">
-            📷
-          </span>
+          <span className="settings-symbol settings-symbol--camera" aria-hidden="true"><i /></span>
           <span>
             <strong>カメラを もどす</strong>
             <small>見やすい向きにします</small>
           </span>
         </button>
         <button onClick={onSave}>
-          <span className="settings-symbol" aria-hidden="true">
-            💾
-          </span>
+          <span className="settings-symbol settings-symbol--save" aria-hidden="true"><i /></span>
           <span>
             <strong>いま セーブする</strong>
             <small>この端末に島のようすを保存</small>
           </span>
         </button>
         <button onClick={onTitle}>
-          <span className="settings-symbol" aria-hidden="true">
-            🏠
-          </span>
+          <span className="settings-symbol settings-symbol--home" aria-hidden="true"><i /></span>
           <span>
             <strong>タイトルへ もどる</strong>
             <small>先に自動でセーブします</small>

@@ -18,8 +18,8 @@ export const COLLECTION_LUMEN_REWARDS = {
 } as const;
 
 export const ECONOMY_PRICES = {
-  hint: 6,
-  recipe: 18,
-  bridge: 25,
-  grove: [12, 18, 24] as const,
+  hint: 10,
+  recipe: 24,
+  bridge: 32,
+  grove: [18, 26, 34] as const,
 } as const;

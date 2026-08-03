@@ -100,14 +100,16 @@ export interface JourneyGoalState {
 }
 
 export interface GameState {
-  version: 4;
+  version: 5;
   playerPosition: Position2D;
   easyMode: boolean;
   tutorialStep: number;
   tutorialProgress: TutorialProgressState;
   discoveredItems: string[];
   caughtFish: string[];
+  fishingCatchCounts: Record<string, number>;
   collectionCounts: Record<string, number>;
+  collectionFirstSeenDay: Record<string, number>;
   resourceStates: Record<string, ResourceState>;
   audioSettings: AudioSettings;
   characterModelId: "mira";
@@ -122,8 +124,9 @@ export interface GameState {
   unlockedRecipes: FurnitureId[];
   collectionMilestones: number[];
   groveRepairs: number;
+  groveQuestComplete: boolean;
   bridgeRepaired: boolean;
-  collectionHintsBought: number;
+  unlockedCollectionHintIds: string[];
   residentFriendship: Record<ResidentId, number>;
   residentLastTalkDay: Partial<Record<ResidentId, number>>;
   nollaMemorySeen: boolean;

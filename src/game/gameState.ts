@@ -35,14 +35,16 @@ const questProgress = (): Record<QuestId, QuestProgress> => ({
 });
 
 export const createInitialState = (): GameState => ({
-  version: 4,
+  version: 5,
   playerPosition: { x: 0, z: 6 },
   easyMode: false,
   tutorialStep: 0,
   tutorialProgress: createTutorialProgress(),
   discoveredItems: [],
   caughtFish: [],
+  fishingCatchCounts: {},
   collectionCounts: {},
+  collectionFirstSeenDay: {},
   resourceStates: {},
   audioSettings: { muted: false, effectsVolume: 0.72 },
   characterModelId: "mira",
@@ -57,8 +59,9 @@ export const createInitialState = (): GameState => ({
   unlockedRecipes: [...BASE_RECIPES],
   collectionMilestones: [],
   groveRepairs: 0,
+  groveQuestComplete: false,
   bridgeRepaired: false,
-  collectionHintsBought: 0,
+  unlockedCollectionHintIds: [],
   residentFriendship: { ノラ: 0, カイ: 0, セラ: 0 },
   residentLastTalkDay: {},
   nollaMemorySeen: false,
@@ -284,7 +287,8 @@ export function sanitizeState(value: unknown): GameState {
     candidate.version !== 1 &&
     candidate.version !== 2 &&
     candidate.version !== 3 &&
-    candidate.version !== 4
+    candidate.version !== 4 &&
+    candidate.version !== 5
   ) {
     return initial;
   }
@@ -292,7 +296,7 @@ export function sanitizeState(value: unknown): GameState {
     candidate.version === 1
       ? {
           ...candidate,
-          version: 4 as const,
+          version: 5 as const,
           easyMode: false,
           tutorialStep: 7,
           tutorialProgress: createTutorialProgress(7),
@@ -306,7 +310,7 @@ export function sanitizeState(value: unknown): GameState {
         }
       : {
           ...candidate,
-          version: 4 as const,
+          version: 5 as const,
           tutorialProgress:
             candidate.tutorialProgress ??
             createTutorialProgress(candidate.tutorialStep ?? 7),
@@ -315,7 +319,7 @@ export function sanitizeState(value: unknown): GameState {
   return withCalculatedRank({
     ...initial,
     ...migrated,
-    version: 4,
+    version: 5,
     playerPosition: {
       ...initial.playerPosition,
       ...(migrated.playerPosition ?? {}),
@@ -328,6 +332,14 @@ export function sanitizeState(value: unknown): GameState {
       createTutorialProgress(migrated.tutorialStep ?? 7),
     discoveredItems: migrateCollectionIds(migrated.discoveredItems),
     caughtFish: migrateCollectionIds(migrated.caughtFish),
+    fishingCatchCounts:
+      migrated.fishingCatchCounts && typeof migrated.fishingCatchCounts === 'object'
+        ? Object.fromEntries(
+            Object.entries(migrated.fishingCatchCounts)
+              .filter(([, count]) => typeof count === 'number' && count > 0)
+              .map(([sourceId, count]) => [sourceId, Math.floor(count as number)]),
+          )
+        : {},
     collectionCounts: migrateCollectionCounts(
       migrated.collectionCounts,
       Array.isArray(migrated.discoveredItems)
@@ -337,6 +349,14 @@ export function sanitizeState(value: unknown): GameState {
         ? migrated.caughtFish
         : [],
     ),
+    collectionFirstSeenDay:
+      migrated.collectionFirstSeenDay && typeof migrated.collectionFirstSeenDay === 'object'
+        ? Object.fromEntries(
+            Object.entries(migrated.collectionFirstSeenDay)
+              .filter(([, day]) => typeof day === 'number' && day > 0)
+              .map(([id, day]) => [id, Math.floor(day as number)]),
+          )
+        : {},
     resourceStates: sanitizeResourceStates(migrated.resourceStates),
     audioSettings: {
       muted: Boolean(migrated.audioSettings?.muted),
@@ -360,11 +380,11 @@ export function sanitizeState(value: unknown): GameState {
       typeof migrated.groveRepairs === "number"
         ? Math.max(0, Math.min(3, Math.floor(migrated.groveRepairs)))
         : 0,
+    groveQuestComplete: Boolean(migrated.groveQuestComplete),
     bridgeRepaired: Boolean(migrated.bridgeRepaired),
-    collectionHintsBought:
-      typeof migrated.collectionHintsBought === "number"
-        ? Math.max(0, Math.floor(migrated.collectionHintsBought))
-        : 0,
+    unlockedCollectionHintIds: Array.isArray(migrated.unlockedCollectionHintIds)
+      ? migrateCollectionIds(migrated.unlockedCollectionHintIds)
+      : [],
     residentFriendship: {
       ...initial.residentFriendship,
       ...(migrated.residentFriendship ?? {}),

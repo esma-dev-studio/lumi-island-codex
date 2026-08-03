@@ -1,13 +1,9 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { QUESTS } from "@/src/data/gameData";
-import type { GameState, QuestId } from "@/src/game/types";
+import type { GameState } from "@/src/game/types";
 import type { InteractionHint } from "@/src/scenes/IslandScene";
-import {
-  dailyGoalIsActive,
-  journeyGoalLabel,
-} from "@/src/progression/DailyGoalSystem";
+import { primaryObjective } from "@/src/progression/ProgressionDirector";
 import { tapGameKey } from "@/src/player/PlayerInputController";
 import {
   TouchMovementController,
@@ -26,7 +22,6 @@ export type HudPanel =
 
 export function GameHud({
   state,
-  activeQuestId,
   tutorialVisible,
   hint,
   paused,
@@ -38,7 +33,6 @@ export function GameHud({
   onToggleCraft,
 }: {
   state: GameState;
-  activeQuestId?: QuestId;
   tutorialVisible: boolean;
   hint: InteractionHint | null;
   paused: boolean;
@@ -49,9 +43,7 @@ export function GameHud({
   onToggleInventory: () => void;
   onToggleCraft: () => void;
 }) {
-  const activeQuest = activeQuestId ? QUESTS[activeQuestId] : null;
-  const questProgress = activeQuestId ? state.quests[activeQuestId] : null;
-  const dailyActive = dailyGoalIsActive(state.dailyGoalsStartDay, state.day);
+  const objective = useMemo(() => primaryObjective(state), [state]);
   const touchMovement = useMemo(() => new TouchMovementController(), []);
 
   useEffect(() => {
@@ -97,51 +89,14 @@ export function GameHud({
       </header>
 
       {!tutorialVisible && (
-        <aside className="quest-ribbon">
+        <aside className="quest-ribbon" data-objective-kind={objective.kind}>
           <p className="eyebrow">いま すること</p>
-          {activeQuest && questProgress ? (
-            <>
-              <span className="quest-resident">{activeQuest.resident}より</span>
-              <h2>{activeQuest.goalLabel}</h2>
-              <div className="quest-progress">
-                <span
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      ((questProgress.amount || 0) / activeQuest.target) * 100,
-                    )}%`,
-                  }}
-                />
-              </div>
-              <small>{questProgress.amount} / {activeQuest.target}</small>
-            </>
-          ) : dailyActive ? (
-            <>
-              <span className="quest-resident">きょうの 島しごと</span>
-              <h2>{journeyGoalLabel(state.journeyGoal)}</h2>
-              <div className="quest-progress">
-                <span
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      (state.journeyGoal.amount / state.journeyGoal.target) * 100,
-                    )}%`,
-                  }}
-                />
-              </div>
-              <small>
-                {state.journeyGoal.complete
-                  ? `できた！ ${state.journeyGoal.reward}ルーメン`
-                  : `${state.journeyGoal.amount} / ${state.journeyGoal.target}`}
-              </small>
-            </>
-          ) : (
-            <>
-              <span className="quest-resident">つぎの お楽しみ</span>
-              <h2>あしたから 島しごとが はじまるよ</h2>
-              <small>今日は 島を見てまわろう</small>
-            </>
-          )}
+          <span className="quest-resident">{objective.kicker}</span>
+          <h2>{objective.label}</h2>
+          <div className="quest-progress">
+            <span style={{ width: `${Math.min(100, objective.percent)}%` }} />
+          </div>
+          <small>{objective.progressLabel}</small>
         </aside>
       )}
 

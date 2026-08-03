@@ -211,16 +211,16 @@ describe("Phase 2.2 continuation progression", () => {
     let state = { ...initial, lumen: 60 };
     const recipe = spendLumen(state, "recipe");
     expect(recipe.ok).toBe(true);
-    expect(recipe.state.lumen).toBe(42);
+    expect(recipe.state.lumen).toBe(36);
     expect(recipe.state.unlockedRecipes).toContain("cedar-bench");
 
     state = spendLumen(recipe.state, "grove").state;
-    expect(state.lumen).toBe(30);
+    expect(state.lumen).toBe(18);
     expect(state.groveRepairs).toBe(1);
 
     state = spendLumen(state, "hint").state;
-    expect(state.lumen).toBe(24);
-    expect(state.collectionHintsBought).toBe(1);
+    expect(state.lumen).toBe(8);
+    expect(state.unlockedCollectionHintIds).toHaveLength(1);
   });
   it("unlocks a visible collection reward at 25 percent", () => {
     const initial = createInitialState();

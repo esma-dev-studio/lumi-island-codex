@@ -17,3 +17,20 @@ export function nightGardenStatus(dayMinute: number): string {
     ? "花が ひらいているよ"
     : "夜になると 花がひらくよ";
 }
+export interface NightGardenPresentation {
+  active: boolean;
+  lightIntensity: number;
+  soundCue: "night-garden" | null;
+}
+
+export function nightGardenPresentation(
+  unlocked: boolean,
+  dayMinute: number,
+): NightGardenPresentation {
+  const active = unlocked && isNightMinute(dayMinute);
+  return {
+    active,
+    lightIntensity: active ? 1 : 0,
+    soundCue: active ? "night-garden" : null,
+  };
+}

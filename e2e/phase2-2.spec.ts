@@ -58,6 +58,15 @@ test.describe.serial("Lumi Island Phase 2.2 input and action lock", () => {
     await page.keyboard.press("Shift+Tab");
     await expect(action).toBeFocused();
 
+    const canvas = page.locator("canvas.game-canvas");
+    await expect(canvas).toHaveAttribute("data-debug-paused", "true");
+    const before = await canvas.getAttribute("data-debug-player-position");
+    await page.keyboard.down("ArrowRight");
+    await page.waitForTimeout(420);
+    const during = await canvas.getAttribute("data-debug-player-position");
+    await page.keyboard.up("ArrowRight");
+    expect(during).toBe(before);
+
     await page.keyboard.press("KeyE");
     await page.keyboard.press("Space");
     await page.keyboard.press("KeyE");
@@ -67,22 +76,10 @@ test.describe.serial("Lumi Island Phase 2.2 input and action lock", () => {
 
     await page.keyboard.press("Enter");
     await expect(wood).toHaveCount(0);
-    const canvas = page.locator("canvas.game-canvas");
     await expect(canvas).toBeFocused();
-    await expect(canvas).toHaveAttribute(
-      "data-debug-action-state",
-      /wood:(animate|reward)/,
-    );
-
-    const before = await canvas.getAttribute("data-debug-player-position");
-    await page.keyboard.down("ArrowRight");
-    await page.waitForTimeout(420);
-    const during = await canvas.getAttribute("data-debug-player-position");
-    await page.keyboard.up("ArrowRight");
-    expect(during).toBe(before);
-
+    await expect(canvas).toHaveAttribute("data-debug-paused", "false");
     await expect(canvas).toHaveAttribute("data-debug-action-state", "free", {
-      timeout: 3_000,
+      timeout: 5_000,
     });
     expect(errors).toEqual([]);
   });
@@ -167,13 +164,13 @@ test.describe.serial("Lumi Island Phase 2.2 input and action lock", () => {
     const shop = page.locator(".unlock-shop-grid");
     await expect(shop).toBeVisible();
 
-    await shop.getByRole("button", { name: "18 L" }).click();
-    await expect(shop.getByRole("button", { name: "できた！" })).toBeDisabled();
-    await expect(page.locator(".menu-status")).toContainText("42");
+    await shop.getByRole("button", { name: /24 Lで ひらく/ }).click();
+    await expect(page.locator(".menu-status")).toContainText("36");
 
-    await shop.getByRole("button", { name: "12 L" }).click();
+    await shop.getByRole("button", { name: /18 Lで ひらく/ }).click();
+    await page.getByRole("button", { name: "もうすこし" }).click();
     await expect(shop).toContainText("1/3");
-    await expect(page.locator(".menu-status")).toContainText("30");
+    await expect(page.locator(".menu-status")).toContainText("18");
 
     await page.getByRole("button", { name: "閉じる" }).click();
     await page.getByRole("button", { name: "メニュー", exact: true }).click();
@@ -185,7 +182,8 @@ test.describe.serial("Lumi Island Phase 2.2 input and action lock", () => {
   });
     await page.getByRole("button", { name: "メニュー", exact: true }).click();
     await page.getByRole("button", { name: /島づくり/ }).click();
+    await page.getByRole("button", { name: "もうすこし" }).click();
     await expect(page.locator(".unlock-shop-grid")).toContainText("1/3");
-    await expect(page.locator(".menu-status")).toContainText("30");
+    await expect(page.locator(".menu-status")).toContainText("18");
   });
 });

@@ -175,7 +175,7 @@ describe("collection, animation ordering, and save migration", () => {
         },
       },
     });
-    expect(migrated.version).toBe(4);
+    expect(migrated.version).toBe(5);
     expect(migrated.lumen).toBe(432);
     expect(migrated.tutorialProgress.step).toBe(5);
     expect(migrated.collectionCounts["lumi-minnow"]).toBe(1);

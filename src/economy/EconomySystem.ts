@@ -49,32 +49,38 @@ export function spendLumen(state: GameState, use: LumenPurchase): PurchaseResult
     return {
       state: { ...state, lumen: state.lumen - cost, bridgeRepaired: true },
       ok: true,
-      message: "橋が なおった！ 小島へ行ってみよう",
+      message: "橋が なおった！ 光る小島へ行ってみよう",
     };
   }
 
   if (use === "grove") {
     const groveRepairs = state.groveRepairs + 1;
-    const additions = ["あかい実", "月のハーブ", "ひかりキノコ"];
+    const additions = ["実の木と採集場所", "香り草とセラの話", "光るキノコと森の依頼"];
     return {
       state: { ...state, lumen: state.lumen - cost, groveRepairs },
       ok: true,
-      message: `森が ${groveRepairs}/3 げんきになった！ ${additions[groveRepairs - 1]}の場所がふえた`,
+      message: `森が ${groveRepairs}/3 げんきになった！ ${additions[groveRepairs - 1]}がふえた`,
     };
   }
 
-  const remaining = COLLECTION_ENTRIES.filter(
+  const undiscovered = COLLECTION_ENTRIES.filter(
     (entry) => (state.collectionCounts[entry.id] ?? 0) === 0,
   );
-  if (!remaining.length) {
+  if (!undiscovered.length) {
     return { state, ok: false, message: "ずかんは ぜんぶ見つけたよ！" };
   }
-  const entry = remaining[state.collectionHintsBought % remaining.length];
+  const entry =
+    undiscovered.find(
+      (candidate) => !state.unlockedCollectionHintIds.includes(candidate.id),
+    ) ?? undiscovered[0];
+  const unlockedCollectionHintIds = state.unlockedCollectionHintIds.includes(entry.id)
+    ? state.unlockedCollectionHintIds
+    : [...state.unlockedCollectionHintIds, entry.id];
   return {
     state: {
       ...state,
       lumen: state.lumen - cost,
-      collectionHintsBought: state.collectionHintsBought + 1,
+      unlockedCollectionHintIds,
     },
     ok: true,
     message: `${entry.name}は「${entry.place}」で ${entry.timeHint}に 見つかるかも！`,

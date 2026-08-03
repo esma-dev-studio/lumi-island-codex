@@ -23,6 +23,8 @@ export function ResidentDialog({
   friendshipLevel,
   canGiveWood = false,
   nightGardenUnlocked = false,
+  groveRepairs = 0,
+  groveQuestComplete = false,
   onGiveWood,
   onNext,
   onClose,
@@ -33,6 +35,8 @@ export function ResidentDialog({
   friendshipLevel: number;
   canGiveWood?: boolean;
   nightGardenUnlocked?: boolean;
+  groveRepairs?: number;
+  groveQuestComplete?: boolean;
   onGiveWood?: () => void;
   onNext: () => void;
   onClose: () => void;
@@ -45,7 +49,16 @@ export function ResidentDialog({
           greeting: "夜の庭に、月あかり花が咲いたよ。",
           help: "夜7時をすぎたら、庭の小さな光を見においで。",
         }
-      : baseCopy;
+      : resident === "セラ" && groveRepairs >= 2
+        ? {
+            greeting: groveRepairs >= 3
+              ? "森の奥まで、光がもどったよ。"
+              : "香り草がもどって、森が深呼吸しているみたい。",
+            help: groveRepairs >= 3 && !groveQuestComplete
+              ? "新しい場所の ひかりキノコを 1つ見つけてみて。"
+              : "いっしょに森を元気にしてくれて、ありがとう。",
+          }
+        : baseCopy;
   const hasNextLine = easyMode && line === 0;
 
   return (
@@ -72,6 +85,9 @@ export function ResidentDialog({
               <p>{copy.greeting}</p>
               <p>{copy.help}</p>
             </>
+          )}
+          {resident === "セラ" && groveRepairs >= 3 && !groveQuestComplete && (
+            <p className="dialog-goal">森のしごと：新しい場所の ひかりキノコを 1つ</p>
           )}
           {resident === "ノラ" && friendshipLevel === 1 && (
             <p className="dialog-goal">つぎ：木のえだを 1こ プレゼント</p>

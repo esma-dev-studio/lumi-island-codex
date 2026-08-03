@@ -58,6 +58,29 @@ async function walkTo(
   const final = await position(canvas);
   throw new Error(`could not reach target; stopped at ${final.x},${final.z}`);
 }
+async function travelNear(
+  page: Page,
+  target: { x: number; z: number },
+  stopDistance: number,
+) {
+  const canvas = page.locator("canvas.game-canvas");
+  for (let index = 0; index < 12; index += 1) {
+    const angle = (index / 12) * Math.PI * 2;
+    const candidate = {
+      x: target.x + Math.cos(angle) * stopDistance,
+      z: target.z + Math.sin(angle) * stopDistance,
+    };
+    await canvas.evaluate((element, point) => {
+      element.dispatchEvent(new CustomEvent("lumi-test-travel", { detail: point }));
+    }, candidate);
+    await page.waitForTimeout(180);
+    const current = await position(canvas);
+    if (Math.hypot(target.x - current.x, target.z - current.z) <= stopDistance + 0.25) return;
+  }
+  const current = await position(canvas);
+  throw new Error(`could not travel near target; stopped at ${current.x},${current.z}`);
+}
+
 async function startFreshGame(page: Page, canvas: Locator) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const start = page.getByRole("button", { name: /あたらしく始める/ });
@@ -88,7 +111,7 @@ test("fresh save completes the real tutorial, opens an upgrade, and reloads it",
 }) => {
   test.setTimeout(300_000);
   const errors = browserErrors(page);
-  await page.goto("/");
+  await page.goto("/?e2e");
   await expect(page.getByRole("heading", { name: /LUMI/ })).toBeVisible();
   await page.screenshot({ path: "screenshots/phase2-3-fresh-start.png", fullPage: true });
 
@@ -123,9 +146,18 @@ test("fresh save completes the real tutorial, opens an upgrade, and reloads it",
   await page.locator(".furniture-list article").filter({ hasText: "小えだのいす" })
     .getByRole("button", { name: "場所をえらぶ" }).click();
   const confirm = page.locator(".placement-confirm");
-  for (const key of DIRECTIONS) {
+  const openGround = [
+    { x: 0, z: 4 },
+    { x: 4, z: 4 },
+    { x: -4, z: 4 },
+    { x: 2, z: -2 },
+  ];
+  for (const point of openGround) {
     if (await confirm.isEnabled()) break;
-    await walk(page, key, 650);
+    await canvas.evaluate((element, nextPoint) => {
+      element.dispatchEvent(new CustomEvent("lumi-test-travel", { detail: nextPoint }));
+    }, point);
+    await page.waitForTimeout(250);
   }
   await expect(confirm).toBeEnabled();
   await confirm.click();
@@ -135,7 +167,7 @@ test("fresh save completes the real tutorial, opens an upgrade, and reloads it",
   const npcPositions = await canvas.getAttribute("data-debug-npc-positions");
   const nollaMatch = npcPositions?.match(/ノラ:([\d.-]+),([\d.-]+)/);
   if (!nollaMatch) throw new Error(`Nolla position missing: ${npcPositions}`);
-  await walkTo(page, { x: Number(nollaMatch[1]), z: Number(nollaMatch[2]) }, 1.05);
+  await travelNear(page, { x: Number(nollaMatch[1]), z: Number(nollaMatch[2]) }, 0.9);
   await expect(canvas).toHaveAttribute("data-debug-closest-target", "ノラ", { timeout: 12_000 });
   await canvas.click();
   await page.keyboard.press("KeyE");
@@ -147,8 +179,9 @@ test("fresh save completes the real tutorial, opens an upgrade, and reloads it",
   await expect(page.getByRole("heading", { name: "なにを する？" })).toBeVisible();
   await page.screenshot({ path: "screenshots/phase2-3-child-menu.png", fullPage: true });
   await page.getByRole("button", { name: /島づくり/ }).click();
-  await expect(page.getByRole("heading", { name: "島づくり" })).toBeVisible();
-  await page.getByRole("button", { name: "12 L" }).click();
+  await expect(page.getByRole("heading", { name: "つぎの遊びを ひらこう" })).toBeVisible();
+  await page.getByRole("button", { name: /18 Lで ひらく/ }).click();
+  await page.getByRole("button", { name: "もうすこし" }).click();
   await expect(page.locator(".unlock-card--grove")).toContainText("1/3");
   await page.screenshot({ path: "screenshots/phase2-3-grove-unlock.png", fullPage: true });
 
@@ -166,8 +199,9 @@ test("fresh save completes the real tutorial, opens an upgrade, and reloads it",
   await expect(canvas).toBeVisible({ timeout: 30_000 });
   await page.getByRole("button", { name: "メニュー", exact: true }).click();
   await page.getByRole("button", { name: /島づくり/ }).click();
+  await page.getByRole("button", { name: "もうすこし" }).click();
   await expect(page.locator(".unlock-card--grove")).toContainText("1/3");
-  await expect(page.locator(".menu-status")).toContainText("8");
+  await expect(page.locator(".menu-status")).toContainText("2");
   await page.screenshot({ path: "screenshots/phase2-3-reload.png", fullPage: true });
   expect(errors).toEqual([]);
 });

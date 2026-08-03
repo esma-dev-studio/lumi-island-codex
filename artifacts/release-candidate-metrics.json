@@ -1,0 +1,101 @@
+{
+  "phase": "release-candidate",
+  "generatedAt": "2026-08-03T04:42:27.935Z",
+  "tests": {
+    "unit": 76,
+    "e2e": 19,
+    "emptySaveJourney": "e2e/release-candidate.spec.ts"
+  },
+  "bundle": {
+    "manifestJsBytes": 3465947,
+    "largestClientJs": {
+      "file": "assets/CharacterView-BgqSf84m.js",
+      "bytes": 1026065
+    },
+    "gameCanvasInitialStaticBytes": 1868205,
+    "gameCanvasInitialStaticFiles": 36,
+    "gameCanvasDynamicBytes": 2737156,
+    "gameCanvasDynamicFiles": 130
+  },
+  "assets": {
+    "glb": {
+      "files": 4,
+      "bytes": 1100168
+    },
+    "audio": {
+      "files": 12,
+      "bytes": 123718
+    }
+  },
+  "characterGate": {
+    "validatorStatus": "failed",
+    "productionGateStatus": "failed",
+    "passed": false
+  },
+  "screenshots": {
+    "rc-title.png": {
+      "present": true,
+      "bytes": 289869
+    },
+    "rc-tutorial-complete.png": {
+      "present": true,
+      "bytes": 396754
+    },
+    "phase2-1-wood-game.png": {
+      "present": true,
+      "bytes": 273981
+    },
+    "phase2-1-rock-game.png": {
+      "present": true,
+      "bytes": 324401
+    },
+    "phase2-1-fishing-catch.png": {
+      "present": true,
+      "bytes": 310033
+    },
+    "rc-first-purchase-area.png": {
+      "present": true,
+      "bytes": 384820
+    },
+    "rc-collection-50.png": {
+      "present": true,
+      "bytes": 316940
+    },
+    "rc-harbor-catch.png": {
+      "present": true,
+      "bytes": 260431
+    },
+    "rc-harbor-catch-2.png": {
+      "present": true,
+      "bytes": 262200
+    },
+    "rc-bridge-islet.png": {
+      "present": true,
+      "bytes": 368518
+    },
+    "rc-collection-75.png": {
+      "present": true,
+      "bytes": 334361
+    },
+    "rc-night-garden.png": {
+      "present": true,
+      "bytes": 366394
+    },
+    "rc-collection-100.png": {
+      "present": true,
+      "bytes": 349022
+    },
+    "rc-save-reload.png": {
+      "present": true,
+      "bytes": 354399
+    },
+    "rc-tablet-landscape.png": {
+      "present": true,
+      "bytes": 225610
+    },
+    "rc-tablet-touch.png": {
+      "present": true,
+      "bytes": 309894
+    }
+  }
+}

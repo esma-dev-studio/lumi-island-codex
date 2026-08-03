@@ -1,4 +1,6 @@
-import { chooseFish, type FishDefinition } from "@/src/fishing/FishData";
+import type { FishDefinition } from "@/src/fishing/FishDefinitions";
+import { selectFish } from "@/src/fishing/FishSelectionSystem";
+import type { FishingContext } from "@/src/fishing/FishSpawnSystem";
 import type { FishHabitat } from "@/src/world/FishingSpotController";
 
 export interface FishingResolutionState {
@@ -14,20 +16,19 @@ export interface FishingResult {
 
 export function resolveFishing(
   state: FishingResolutionState,
-  fishRoll = Math.random(),
+  context: FishingContext,
   habitat: FishHabitat = "pond",
 ): FishingResult {
   if (state.phase !== "caught") {
     return {
       caught: false,
-      message: "おしい！ 魚はまたすぐに来るよ。",
+      message: "おしい！ 魚がまたすぐに来るよ。",
     };
   }
-  const fish = chooseFish(fishRoll, habitat);
+  const fish = selectFish(context, habitat);
   return {
     caught: true,
     fish,
     message: `${fish.name}を つった！`,
   };
 }
-
