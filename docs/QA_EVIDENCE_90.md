@@ -17,6 +17,7 @@
 | fresh console | 0 error / 0 warning | fix後の新規browser tab |
 | horizontal overflow | none | desktop/tablet title and tablet game |
 | repo skill validation | passed | Skill is valid! |
+| Sites production deploy | passed | official dist archive、owner-only access |
 
 ## browser regression found and fixed
 

@@ -3,6 +3,8 @@
 作成日: 2026-08-03
 判定: **82 / 100 — 条件付きRelease Candidate。90点未達。**
 
+公開URL: https://lumi-island-game.neon-acorn-2741.chatgpt.site
+
 ## outcome
 
 今回の価値は、見た目だけの加点ではなく、進行とsaveを壊すP0を除き、タイトルの品質と子どもの誤操作防止を実画面で確認したこと。ImageGenは4点を生成したが、ゲーム内加点は実装した1280×720 WebP 1点だけ。

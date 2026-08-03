@@ -12,6 +12,7 @@
     "reason": "remote npm lockfile compatibility check"
   },
   "archiveDeployment": {
-    "status": "pending"
+    "status": "succeeded",
+    "url": "https://lumi-island-game.neon-acorn-2741.chatgpt.site"
   }
 }
