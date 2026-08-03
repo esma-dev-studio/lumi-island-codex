@@ -11,6 +11,11 @@ import {
 } from "@/src/game/gameState";
 import { cameraRelativeMovement } from "@/src/world/CameraRelativeMovement";
 import {
+  THIRD_PERSON_CAMERA,
+  estimatedCharacterScreenCoverage,
+  thirdPersonCameraTarget,
+} from "@/src/world/ThirdPersonCamera";
+import {
   ISLAND_WALK_BOUNDS,
   resolveWorldMovement,
   type WorldCollider,
@@ -38,6 +43,23 @@ describe("camera-relative movement", () => {
   it("normalizes diagonal input", () => {
     const movement = cameraRelativeMovement(1, 1, { x: 0, z: -1 });
     expect(Math.hypot(movement.x, movement.z)).toBeCloseTo(1);
+  });
+});
+
+describe("third-person camera framing", () => {
+  it("keeps the camera outside the player while showing a readable full body", () => {
+    expect(THIRD_PERSON_CAMERA.minimumRadius).toBeGreaterThanOrEqual(8);
+    expect(THIRD_PERSON_CAMERA.radius).toBeGreaterThan(
+      THIRD_PERSON_CAMERA.minimumRadius,
+    );
+    expect(estimatedCharacterScreenCoverage(2)).toBeGreaterThan(0.2);
+  });
+
+  it("follows the player's torso instead of using an eye-level first-person target", () => {
+    const target = thirdPersonCameraTarget({ x: 3, y: 0.44, z: -2 });
+    expect(target.x).toBe(3);
+    expect(target.y).toBeCloseTo(1.59);
+    expect(target.z).toBe(-2);
   });
 });
 

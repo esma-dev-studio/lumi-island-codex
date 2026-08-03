@@ -17,6 +17,10 @@ import { createCharacterView } from "@/src/characters/CharacterView";
 import { ITEMS } from "@/src/data/gameData";
 import { cameraRelativeMovement } from "@/src/world/CameraRelativeMovement";
 import {
+  THIRD_PERSON_CAMERA,
+  thirdPersonCameraTarget,
+} from "@/src/world/ThirdPersonCamera";
+import {
   resolveWorldMovement,
   resolveNpcMovement,
   STATIC_WORLD_COLLIDERS,
@@ -497,23 +501,33 @@ export function createIslandScene(
   scene.ambientColor = Color3.FromHexString("#51685f");
   scene.skipPointerMovePicking = true;
 
+  const initialCameraTarget = thirdPersonCameraTarget({
+    x: startPosition.x,
+    y: 0.44,
+    z: startPosition.z,
+  });
   const camera = new ArcRotateCamera(
     "follow-camera",
-    -Math.PI / 4,
-    0.95,
-    20,
-    new Vector3(startPosition.x, 1.6, startPosition.z),
+    THIRD_PERSON_CAMERA.alpha,
+    THIRD_PERSON_CAMERA.beta,
+    THIRD_PERSON_CAMERA.radius,
+    new Vector3(
+      initialCameraTarget.x,
+      initialCameraTarget.y,
+      initialCameraTarget.z,
+    ),
     scene,
   );
-  camera.fov = 0.68;
-  camera.lowerRadiusLimit = 13.5;
-  camera.upperRadiusLimit = 22;
-  camera.lowerBetaLimit = 0.72;
-  camera.upperBetaLimit = 1.18;
+  camera.fov = THIRD_PERSON_CAMERA.fov;
+  camera.lowerRadiusLimit = THIRD_PERSON_CAMERA.minimumRadius;
+  camera.upperRadiusLimit = THIRD_PERSON_CAMERA.maximumRadius;
+  camera.lowerBetaLimit = THIRD_PERSON_CAMERA.minimumBeta;
+  camera.upperBetaLimit = THIRD_PERSON_CAMERA.maximumBeta;
   camera.attachControl(canvas, true);
   camera.inputs.attached.keyboard?.detachControl();
   camera.panningSensibility = 0;
   camera.wheelPrecision = 80;
+  canvas.dataset.cameraMode = "third-person";
 
   const hemi = new HemisphericLight("sky-light", new Vector3(0, 1, 0), scene);
   hemi.intensity = 0.88;
@@ -670,6 +684,24 @@ export function createIslandScene(
   player.root.rotation.y = Math.PI;
   const playerMotion = new CharacterController();
   playerMotion.setFacing(Math.PI);
+  const playerMarkerMaterial = makeMaterial(
+    scene,
+    "player-marker-material",
+    "#f3c761",
+    "#9c641e",
+  );
+  playerMarkerMaterial.alpha = 0.72;
+  playerMarkerMaterial.disableLighting = true;
+  const playerMarker = setMaterial(
+    MeshBuilder.CreateTorus(
+      "player-ground-marker",
+      { diameter: 1.25, thickness: 0.065, tessellation: 40 },
+      scene,
+    ),
+    playerMarkerMaterial,
+  );
+  playerMarker.position.set(player.root.position.x, 0.47, player.root.position.z);
+  playerMarker.isPickable = false;
 
   const npcData = [
     { id: "nolla" as const, position: new Vector3(-8.7, 0.44, 4.4), resident: "ノラ" as const },
@@ -705,6 +737,7 @@ export function createIslandScene(
 
   const glow = new GlowLayer("island-glow", scene, { blurKernelSize: 22 });
   glow.intensity = 0.42;
+  glow.referenceMeshToUseItsOwnMaterial(playerMarker);
   fishingRipples.forEach((mesh) => glow.referenceMeshToUseItsOwnMaterial(mesh));
   const tutorialGuideMaterial = makeMaterial(
     scene,
@@ -773,9 +806,9 @@ export function createIslandScene(
   let placementGhost: TransformNode | null = null;
 
   const resetCamera = () => {
-    camera.alpha = -Math.PI / 4;
-    camera.beta = 0.95;
-    camera.radius = 18;
+    camera.alpha = THIRD_PERSON_CAMERA.alpha;
+    camera.beta = THIRD_PERSON_CAMERA.beta;
+    camera.radius = THIRD_PERSON_CAMERA.radius;
   };
 
   const clearPlacementGhost = () => {
@@ -1161,11 +1194,22 @@ export function createIslandScene(
       playerMotion.stop();
     }
     player.root.position.y = 0.44;
+    playerMarker.position.x = player.root.position.x;
+    playerMarker.position.z = player.root.position.z;
 
+    const desiredCameraTarget = thirdPersonCameraTarget({
+      x: player.root.position.x,
+      y: player.root.position.y,
+      z: player.root.position.z,
+    });
     camera.target = Vector3.Lerp(
       camera.target,
-      player.root.position.add(new Vector3(0, 1.6, 0)),
-      Math.min(1, delta * 5),
+      new Vector3(
+        desiredCameraTarget.x,
+        desiredCameraTarget.y,
+        desiredCameraTarget.z,
+      ),
+      Math.min(1, delta * THIRD_PERSON_CAMERA.followSpeed),
     );
 
     const cameraPoint = { x: camera.position.x, z: camera.position.z };
