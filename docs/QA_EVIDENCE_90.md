@@ -5,6 +5,7 @@
 | check | result | evidence/limit |
 |---|---|---|
 | npm test | 83/83 passed | 7 files |
+| npm ci | passed、522 packages | Sites互換lockfileへ正規化後 |
 | typecheck | passed | tsc --noEmit |
 | lint | passed | eslint |
 | production build | passed | Vinext; >500k chunk warning |

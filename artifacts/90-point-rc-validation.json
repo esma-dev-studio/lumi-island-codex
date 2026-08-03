@@ -2,6 +2,7 @@
   "validatedAt": "2026-08-03T18:58:00+09:00",
   "status": "passed_with_known_release_blockers",
   "commands": {
+    "npmCi": {"command": "npm ci --ignore-scripts --no-audit --no-fund", "status": "passed", "packages": 522},
     "typecheck": {"command": "npm run typecheck", "status": "passed"},
     "lint": {"command": "npm run lint", "status": "passed"},
     "unit": {"command": "npm test", "status": "passed", "files": 7, "tests": 83, "failed": 0},

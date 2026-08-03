@@ -29,7 +29,7 @@
 - old saveから25/50/75 collection milestoneを復元、二重rewardなし。
 - reachable hintだけ販売し、重複時はchargeなし。
 - real NPC talkがdaily goalへ接続しrewardは1回。
-- 83 unit tests、typecheck、lint、production build passed。
+- npm ci（522 packages）、83 unit tests、typecheck、lint、production build passed。
 
 ## external asset blocked
 

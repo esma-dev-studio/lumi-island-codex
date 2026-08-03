@@ -1,6 +1,6 @@
 {
   "phase": "release-candidate",
-  "generatedAt": "2026-08-03T10:01:49.523Z",
+  "generatedAt": "2026-08-03T10:09:46.350Z",
   "tests": {
     "unit": 83,
     "e2e": 19,
