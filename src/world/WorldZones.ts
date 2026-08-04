@@ -28,19 +28,45 @@ export const WORLD_ZONES: readonly WorldZoneDefinition[] = [
   { id: "moon-garden", name: "月しずくの庭", reading: "つきしずくの にわ", center: { x: 0, z: -11.5 }, radiusX: 9.5, radiusZ: 7.5, texturePath: publicAsset("/assets/generated/zone-moon-garden.webp"), tint: "#687cb5" },
 ] as const;
 
+// The painted zone discs overlap. Giving each disc a tiny, deterministic
+// height prevents coplanar surfaces from fighting at the seams.
+export const WORLD_ZONE_GROUND_BASE_Y = 0.386;
+export const WORLD_ZONE_GROUND_LAYER_STEP = 0.003;
+export const WORLD_ZONE_SWITCH_HYSTERESIS = 0.045;
+
+export function worldZoneGroundY(index: number): number {
+  return WORLD_ZONE_GROUND_BASE_Y + index * WORLD_ZONE_GROUND_LAYER_STEP;
+}
+
+function zoneScore(position: Position2D, zone: WorldZoneDefinition): number {
+  const dx = (position.x - zone.center.x) / zone.radiusX;
+  const dz = (position.z - zone.center.z) / zone.radiusZ;
+  return dx * dx + dz * dz;
+}
+
 export function worldZoneAt(position: Position2D): WorldZoneDefinition {
   let best = WORLD_ZONES[0];
   let bestScore = Number.POSITIVE_INFINITY;
   for (const zone of WORLD_ZONES) {
-    const dx = (position.x - zone.center.x) / zone.radiusX;
-    const dz = (position.z - zone.center.z) / zone.radiusZ;
-    const score = dx * dx + dz * dz;
+    const score = zoneScore(position, zone);
     if (score < bestScore) {
       best = zone;
       bestScore = score;
     }
   }
   return best;
+}
+export function stableWorldZoneAt(
+  position: Position2D,
+  currentZone: WorldZoneDefinition | null,
+): WorldZoneDefinition {
+  const candidate = worldZoneAt(position);
+  if (!currentZone || candidate.id === currentZone.id) return candidate;
+  const currentScore = zoneScore(position, currentZone);
+  const candidateScore = zoneScore(position, candidate);
+  return candidateScore + WORLD_ZONE_SWITCH_HYSTERESIS < currentScore
+    ? candidate
+    : currentZone;
 }
 
 function material(scene: Scene, name: string, color: string): StandardMaterial {
@@ -124,13 +150,13 @@ function createLandmark(scene: Scene, zone: WorldZoneDefinition, parent: Transfo
 
 export function createWorldZones(scene: Scene): TransformNode {
   const root = new TransformNode("four-zone-world", scene);
-  for (const zone of WORLD_ZONES) {
+  for (const [index, zone] of WORLD_ZONES.entries()) {
     const ground = finish(
       MeshBuilder.CreateCylinder(`zone-ground-${zone.id}`, { height: 0.08, diameter: zone.radiusX * 2, tessellation: 64 }, scene),
       root,
       paintedMaterial(scene, zone),
     );
-    ground.position.set(zone.center.x, 0.39, zone.center.z);
+    ground.position.set(zone.center.x, worldZoneGroundY(index), zone.center.z);
     ground.scaling.z = zone.radiusZ / zone.radiusX;
     createLandmark(scene, zone, root);
   }

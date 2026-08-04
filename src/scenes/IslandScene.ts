@@ -51,10 +51,12 @@ import {
 import type { ActivityRequest } from "@/src/ui/minigames/ActivityOverlayPhase21";
 import {
   createWorldZones,
-  worldZoneAt,
+  stableWorldZoneAt,
   type WorldZoneDefinition,
 } from "@/src/world/WorldZones";
 import { createProductionEnvironmentAssets } from "@/src/world/ProductionEnvironmentAssets";
+import { RESIDENT_WORLD_SPAWNS } from "@/src/world/ResidentSpawns";
+import { createResidentMarker } from "@/src/world/ResidentMarker";
 import {
   rotatedFootprint,
   validateFurniturePlacement,
@@ -694,9 +696,10 @@ export function createIslandScene(
       keys.clear();
     }
   };
+  const playerConfig = getCharacterConfig("mira");
   const player = createCharacterView(
     scene,
-    getCharacterConfig("mira"),
+    playerConfig,
     new Vector3(startPosition.x, 0.44, startPosition.z),
     0.78,
     shadows,
@@ -737,20 +740,52 @@ export function createIslandScene(
   playerMarker.position.set(player.root.position.x, 0.47, player.root.position.z);
   playerMarker.isPickable = false;
 
-  const npcData = [
-    { id: "nolla" as const, position: new Vector3(-8.7, 0.44, 4.4), resident: "ノラ" as const },
-    { id: "kai" as const, position: new Vector3(8.8, 0.44, 3.2), resident: "カイ" as const },
-    { id: "sera" as const, position: new Vector3(4.8, 0.44, -5.6), resident: "セラ" as const },
-  ];
-  const npcs = npcData.map((npc, index) => {
+  const residentMarkerAccents: Record<ResidentId, string> = {
+    ノラ: "#e3aa3f",
+    カイ: "#58a8ba",
+    セラ: "#82aa67",
+  };
+  const npcs = RESIDENT_WORLD_SPAWNS.map((npc, index) => {
+    const config = getCharacterConfig(npc.id);
+    const position = new Vector3(
+      npc.position.x,
+      npc.position.y,
+      npc.position.z,
+    );
     const rig = createCharacterView(
       scene,
-      getCharacterConfig(npc.id),
-      npc.position,
+      config,
+      position,
       0.76,
       shadows,
     );
-    rig.root.rotation.y = (index - 1) * 0.7;
+    rig.root.rotation.y = npc.facing;
+    const fallbackAvatar = createVisiblePlayerAvatar(
+      scene,
+      position,
+      shadows,
+      npc.id === "nolla" ? "nolla" : "player",
+    );
+    fallbackAvatar.sync(rig.root.position, rig.root.rotation.y);
+    fallbackAvatar.update("idle", 0);
+    canvas.setAttribute(
+      "data-resident-avatar-" + npc.id,
+      "loading-with-visible-fallback",
+    );
+    void rig.ready.then((loaded) => {
+      if (disposalStarted) return;
+      fallbackAvatar.setEnabled(!loaded);
+      canvas.setAttribute(
+        "data-resident-avatar-" + npc.id,
+        loaded ? "production-glb" : "visible-fallback",
+      );
+    });
+    const marker = createResidentMarker(
+      scene,
+      npc.resident,
+      residentMarkerAccents[npc.resident],
+    );
+    marker.sync(rig.root.position);
     interactables.push({
       node: rig.root,
       kind: "resident",
@@ -762,12 +797,18 @@ export function createIslandScene(
     });
     return {
       rig,
-      home: npc.position.clone(),
+      fallbackAvatar,
+      marker,
+      home: position.clone(),
       phase: index * 2.1,
       resident: npc.resident,
       actionUntil: 0,
+      collisionRadius: config.colliderSize.radius,
+      wanderRadius: npc.wanderRadius,
     };
   });
+  canvas.dataset.residentWayfinding =
+    String(npcs.length) + "/" + String(RESIDENT_WORLD_SPAWNS.length);
   const pendingAssetLoads: Promise<unknown>[] = [
     productionEnvironment.ready,
     player.ready,
@@ -781,22 +822,64 @@ export function createIslandScene(
   const tutorialGuideMaterial = makeMaterial(
     scene,
     "tutorial-guide-material",
-    "#f4c65e",
-    "#f4c65e",
+    "#ffe27d",
+    "#f4b92f",
   );
-  tutorialGuideMaterial.alpha = 0.82;
+  tutorialGuideMaterial.alpha = 0.96;
+  tutorialGuideMaterial.disableLighting = true;
+  const tutorialGuideBeamMaterial = makeMaterial(
+    scene,
+    "tutorial-guide-beam-material",
+    "#ffe9a3",
+    "#efad26",
+  );
+  tutorialGuideBeamMaterial.alpha = 0.18;
+  tutorialGuideBeamMaterial.disableLighting = true;
+  const tutorialGuideRoot = new TransformNode("tutorial-guide-beacon", scene);
   const tutorialGuideRing = setMaterial(
     MeshBuilder.CreateTorus(
       "tutorial-guide-ring",
-      { diameter: 2.7, thickness: 0.11, tessellation: 48 },
+      { diameter: 3.15, thickness: 0.15, tessellation: 48 },
       scene,
     ),
     tutorialGuideMaterial,
   );
+  tutorialGuideRing.parent = tutorialGuideRoot;
+  tutorialGuideRing.position.y = 0.03;
   tutorialGuideRing.isPickable = false;
-  tutorialGuideRing.setEnabled(false);
+  const tutorialGuideBeam = setMaterial(
+    MeshBuilder.CreateCylinder(
+      "tutorial-guide-light-column",
+      { height: 3.8, diameter: 0.16, tessellation: 16 },
+      scene,
+    ),
+    tutorialGuideBeamMaterial,
+  );
+  tutorialGuideBeam.parent = tutorialGuideRoot;
+  tutorialGuideBeam.position.y = 1.9;
+  tutorialGuideBeam.isPickable = false;
+  const tutorialGuideArrow = setMaterial(
+    MeshBuilder.CreateCylinder(
+      "tutorial-guide-down-arrow",
+      {
+        height: 0.72,
+        diameterTop: 0.58,
+        diameterBottom: 0,
+        tessellation: 4,
+      },
+      scene,
+    ),
+    tutorialGuideMaterial,
+  );
+  tutorialGuideArrow.parent = tutorialGuideRoot;
+  tutorialGuideArrow.position.y = 2.55;
+  tutorialGuideArrow.isPickable = false;
+  tutorialGuideRoot.setEnabled(false);
   let tutorialGuideScale = 1;
+  let tutorialGuideTargetNode: TransformNode | null = null;
   glow.referenceMeshToUseItsOwnMaterial(tutorialGuideRing);
+  glow.referenceMeshToUseItsOwnMaterial(tutorialGuideArrow);
+  canvas.dataset.tutorialGuideVisual = "gold-ring-light-column";
   const setTutorialGuide = (guide: TutorialGuideTarget | null) => {
     const target = guide?.sourceId
       ? resourceTargets.get(guide.sourceId)
@@ -804,21 +887,20 @@ export function createIslandScene(
         ? interactables.find((entry) => entry.resident === guide.resident)
         : null;
     if (!target) {
-      tutorialGuideRing.parent = null;
-      tutorialGuideRing.setEnabled(false);
+      tutorialGuideTargetNode = null;
+      tutorialGuideRoot.setEnabled(false);
       return;
     }
     if (process.env.NODE_ENV !== "production") {
       canvas.dataset.debugTutorialGuide =
         target.resourceId ?? target.resident ?? target.node.name;
     }
-    tutorialGuideRing.parent = target.node;
-    tutorialGuideRing.position.set(0, 0.12, 0);
-    tutorialGuideScale = target.kind === "resident" ? 0.62 : 1;
+    tutorialGuideTargetNode = target.node;
+    tutorialGuideRoot.position.copyFrom(target.node.getAbsolutePosition());
+    tutorialGuideScale = target.kind === "resident" ? 0.78 : 1;
     tutorialGuideRing.scaling.setAll(tutorialGuideScale);
-    tutorialGuideRing.setEnabled(true);
+    tutorialGuideRoot.setEnabled(true);
   };
-
   const keys = new Set<string>();
   let paused = false;
   let closest: Interactable | null = null;
@@ -836,6 +918,7 @@ export function createIslandScene(
   let lastPositionUpdate = 0;
   const performanceSamples: number[] = [];
   let currentDayMinute = 8 * 60;
+  let activeZone: WorldZoneDefinition | null = null;
   let currentProgression: WorldProgressionSnapshot = INITIAL_WORLD_PROGRESSION;
   let footstepTimer = 0;
   const furnitureMeshes = new Map<string, TransformNode>();
@@ -1200,7 +1283,7 @@ export function createIslandScene(
         id: `npc-${index}`,
         x: npc.rig.root.position.x,
         z: npc.rig.root.position.z,
-        radius: 0.52,
+        radius: npc.collisionRadius,
       })),
       ...currentFurniture
         .filter((item) => item.id !== placementMode?.editingId)
@@ -1220,7 +1303,7 @@ export function createIslandScene(
     const resolvedPosition = resolveWorldMovement(
       currentPosition,
       desiredPosition,
-      0.48,
+      playerConfig.colliderSize.radius,
       dynamicColliders,
     );
     player.root.position.x = resolvedPosition.x;
@@ -1237,11 +1320,15 @@ export function createIslandScene(
     playerMarker.position.x = player.root.position.x;
     playerMarker.position.z = player.root.position.z;
     visiblePlayerAvatar.sync(player.root.position, player.root.rotation.y);
-    const nextZone = worldZoneAt({
-      x: player.root.position.x,
-      z: player.root.position.z,
-    });
-    if (canvas.dataset.zone !== nextZone.id) {
+    const nextZone = stableWorldZoneAt(
+      {
+        x: player.root.position.x,
+        z: player.root.position.z,
+      },
+      activeZone,
+    );
+    if (activeZone?.id !== nextZone.id) {
+      activeZone = nextZone;
       canvas.dataset.zone = nextZone.id;
       callbacks.onZoneChange(nextZone);
     }
@@ -1392,8 +1479,9 @@ export function createIslandScene(
         .map((npc) => `${npc.resident}:${npc.rig.root.position.x.toFixed(3)},${npc.rig.root.position.z.toFixed(3)}`)
         .join(";");
     }
-    npcs.forEach((npc, index) => {
-      const radius = 0.75 + index * 0.15;
+    npcs.forEach((npc) => {
+      let npcAnimation: AnimationName = "idle";
+      const radius = npc.wanderRadius;
       const target = npc.home.add(
         new Vector3(
           Math.sin(gameElapsedTime * 0.18 + npc.phase) * radius,
@@ -1425,14 +1513,14 @@ export function createIslandScene(
         const resolvedNpcPosition = resolveNpcMovement(
           currentNpcPosition,
           desiredNpcPosition,
-          0.48,
+          npc.collisionRadius,
           [...STATIC_WORLD_COLLIDERS, ...furnitureColliders],
           [
             {
               id: "player",
               x: player.root.position.x,
               z: player.root.position.z,
-              radius: 0.48,
+              radius: playerConfig.colliderSize.radius,
             },
             ...npcs
               .filter((other) => other !== npc)
@@ -1440,24 +1528,32 @@ export function createIslandScene(
                 id: `other-npc-${otherIndex}`,
                 x: other.rig.root.position.x,
                 z: other.rig.root.position.z,
-                radius: 0.48,
+                radius: other.collisionRadius,
               })),
           ],
         );
         npc.rig.root.position.x = resolvedNpcPosition.x;
         npc.rig.root.position.z = resolvedNpcPosition.z;
         npc.rig.root.rotation.y = Math.atan2(direction.x, direction.z);
+        npcAnimation =
+          gameElapsedTime < npc.actionUntil ? "talk" : "walk";
         npc.rig.setAnimation(
-          gameElapsedTime < npc.actionUntil ? "talk" : "walk",
+          npcAnimation,
           gameElapsedTime < npc.actionUntil ? 1 : 0.82,
         );
       } else {
-        npc.rig.setAnimation(
-          gameElapsedTime < npc.actionUntil ? "talk" : "idle",
-        );
+        npcAnimation =
+          gameElapsedTime < npc.actionUntil ? "talk" : "idle";
+        npc.rig.setAnimation(npcAnimation);
       }
       npc.rig.update(delta);
       npc.rig.root.position.y = 0.44;
+      npc.fallbackAvatar.sync(
+        npc.rig.root.position,
+        npc.rig.root.rotation.y,
+      );
+      npc.fallbackAvatar.update(npcAnimation, delta);
+      npc.marker.sync(npc.rig.root.position);
     });
 
     const nightGarden = nightGardenPresentation(
@@ -1474,11 +1570,19 @@ export function createIslandScene(
       ? Color3.FromHexString("#e49a67")
       : Color3.FromHexString("#fff2d0");
     glow.intensity = (evening ? 0.75 : 0.26) * detail.glowIntensityScale;
-    if (tutorialGuideRing.isEnabled()) {
-      const guidePulse = 1 + Math.sin(animationElapsedTime * 3.2) * 0.08;
+    if (tutorialGuideRoot.isEnabled() && tutorialGuideTargetNode) {
+      tutorialGuideRoot.position.copyFrom(
+        tutorialGuideTargetNode.getAbsolutePosition(),
+      );
+      const guidePulse = 1 + Math.sin(animationElapsedTime * 3.2) * 0.1;
       tutorialGuideRing.scaling.x = tutorialGuideScale * guidePulse;
       tutorialGuideRing.scaling.y = tutorialGuideScale;
       tutorialGuideRing.scaling.z = tutorialGuideScale * guidePulse;
+      tutorialGuideArrow.position.y =
+        2.55 + Math.sin(animationElapsedTime * 2.7) * 0.22;
+      tutorialGuideArrow.rotation.y = animationElapsedTime * 1.25;
+      tutorialGuideBeamMaterial.alpha =
+        0.14 + (Math.sin(animationElapsedTime * 2.4) + 1) * 0.055;
     }
     scene.fogMode = Scene.FOGMODE_EXP2;
     scene.fogDensity = 0.006;
@@ -1580,7 +1684,11 @@ export function createIslandScene(
       disposalStarted = true;
       engine.stopRenderLoop();
       player.dispose();
-      npcs.forEach((npc) => npc.rig.dispose());
+      npcs.forEach((npc) => {
+        npc.marker.dispose();
+        npc.fallbackAvatar.dispose();
+        npc.rig.dispose();
+      });
       placementGhost?.dispose(false, false);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);

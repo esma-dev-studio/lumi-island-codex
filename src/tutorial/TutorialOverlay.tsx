@@ -19,6 +19,12 @@ export function TutorialOverlay({
   const step = TUTORIAL_STEPS[progress.step];
   if (!step) return null;
   const distance = Math.min(3, progress.walkedDistance);
+  const guideCopy =
+    step.id === "hint" || step.id === "gather"
+      ? "金色の輪と 光の柱が『光のしるし』"
+      : step.id === "talk"
+        ? "『ノラ』の名ふだと 金色の光を さがそう"
+        : null;
   return (
     <aside
       className={`tutorial-coach ${easyMode ? "tutorial-coach--easy" : ""}`}
@@ -31,6 +37,12 @@ export function TutorialOverlay({
       <div className="tutorial-coach__goal">
         <span>いま やること</span>
         <h2>{easyMode ? step.easyTitle : step.title}</h2>
+        {guideCopy && (
+          <p className="tutorial-marker-key">
+            <i aria-hidden="true">◆</i>
+            <span>{guideCopy}</span>
+          </p>
+        )}
         {step.id === "move" && (
           <div
             className="tutorial-distance"

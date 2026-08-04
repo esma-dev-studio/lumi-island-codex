@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { ISLAND_WALK_BOUNDS } from "@/src/world/CollisionWorld";
-import { WORLD_ZONES, worldZoneAt } from "@/src/world/WorldZones";
+import {
+  WORLD_ZONES,
+  stableWorldZoneAt,
+  worldZoneAt,
+  worldZoneGroundY,
+} from "@/src/world/WorldZones";
 import { ZONE_AMBIENT_PROFILES } from "@/src/audio/ZoneAmbientAudioSystem";
 import { PRODUCTION_ENVIRONMENT_PLACEMENTS } from "@/src/world/ProductionEnvironmentAssets";
 
@@ -16,6 +21,19 @@ describe("production four-zone world", () => {
     for (const zone of WORLD_ZONES) {
       expect(worldZoneAt(zone.center).id).toBe(zone.id);
     }
+  });
+
+  it("uses distinct surface layers so overlapping zone edges cannot flicker", () => {
+    const heights = WORLD_ZONES.map((_, index) => worldZoneGroundY(index));
+    expect(new Set(heights).size).toBe(WORLD_ZONES.length);
+    expect(Math.max(...heights) - Math.min(...heights)).toBeLessThan(0.01);
+  });
+
+  it("does not rapidly switch the location label at a zone boundary", () => {
+    const boundary = { x: -7.25, z: 0.75 };
+    const meadow = WORLD_ZONES.find((zone) => zone.id === "meadow") ?? null;
+    expect(stableWorldZoneAt(boundary, meadow).id).toBe("meadow");
+    expect(stableWorldZoneAt(WORLD_ZONES[1].center, meadow).id).toBe("forest");
   });
 
   it("expands the walkable island to at least 2.5 times the old area", () => {

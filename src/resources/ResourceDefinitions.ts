@@ -144,10 +144,10 @@ export const RESOURCE_WORLD_DEFINITIONS: readonly ResourceDefinition[] = [
   ...points("wood", "cedar-tree", [
     [-13, -4], [-11, -7], [-7, -8.8], [-4, -9.4], [10.8, -5.8],
     [13.2, -2.5], [-14, 1], [14.5, 2], [-7.7, 7.6],
-  ], 2.2, "島の外がわにある大きな木", "cedar-tree", { kind: "circle", radius: 1.05 }),
+  ], 2.2, "島の外がわにある大きな木", "cedar-tree", { kind: "circle", radius: 0.48 }),
   ...points("stone", "moon-rock", [
     [-5.3, 4.5], [8, 7], [11.4, -0.8], [-3, -7.2],
-  ], 2, "広場や森の近く", "rock-cluster", { kind: "circle", radius: 0.95 }),
+  ], 2, "広場や森の近く", "rock-cluster", { kind: "ellipse", radiusX: 0.78, radiusZ: 0.62 }),
   ...points("berry", "berry-bush", [
     [-7.5, 1.6], [5, 4.9], [7.5, -4.2],
   ], 1.8, "森の木かげ", "berry-bush"),

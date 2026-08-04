@@ -46,26 +46,26 @@ const object = (
 export const HOUSE_LAYOUT = [
   object("house-mira", "house", 0, 8.7, 0, {
     kind: "box",
-    halfWidth: 2.45,
-    halfDepth: 2.05,
+    halfWidth: 2.05,
+    halfDepth: 1.6,
     rotation: 0,
   }),
   object("house-nolla", "house", -10.5, 5.4, 0.55, {
     kind: "box",
-    halfWidth: 2.45,
-    halfDepth: 2.05,
+    halfWidth: 2.05,
+    halfDepth: 1.6,
     rotation: 0.55,
   }),
   object("house-kai", "house", 10.5, 3.9, -0.55, {
     kind: "box",
-    halfWidth: 2.45,
-    halfDepth: 2.05,
+    halfWidth: 2.05,
+    halfDepth: 1.6,
     rotation: -0.55,
   }),
   object("house-sera", "house", 5.8, -7.8, 2.55, {
     kind: "box",
-    halfWidth: 2.45,
-    halfDepth: 2.05,
+    halfWidth: 2.05,
+    halfDepth: 1.6,
     rotation: 2.55,
   }),
 ] as const;
@@ -73,13 +73,13 @@ export const HOUSE_LAYOUT = [
 export const TREE_LAYOUT = RESOURCE_WORLD_DEFINITIONS
   .filter((entry) => entry.visualType === "cedar-tree")
   .map((entry) =>
-    object(entry.id, "tree", entry.position.x, entry.position.z, entry.rotation ?? 0, entry.collider ?? { kind: "circle", radius: 1.05 }),
+    object(entry.id, "tree", entry.position.x, entry.position.z, entry.rotation ?? 0, entry.collider ?? { kind: "circle", radius: 0.48 }),
   );
 
 export const ROCK_LAYOUT = RESOURCE_WORLD_DEFINITIONS
   .filter((entry) => entry.visualType === "moon-rock")
   .map((entry) =>
-    object(entry.id, "rock", entry.position.x, entry.position.z, entry.rotation ?? 0, entry.collider ?? { kind: "circle", radius: 0.95 }),
+    object(entry.id, "rock", entry.position.x, entry.position.z, entry.rotation ?? 0, entry.collider ?? { kind: "ellipse", radiusX: 0.78, radiusZ: 0.62 }),
   );
 
 const fishingSpot = RESOURCE_WORLD_DEFINITIONS.find(

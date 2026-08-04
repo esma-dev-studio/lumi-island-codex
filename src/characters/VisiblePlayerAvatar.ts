@@ -51,8 +51,10 @@ export function createVisiblePlayerAvatar(
   scene: Scene,
   position: Vector3,
   shadows?: ShadowGenerator,
+  variant: "player" | "nolla" = "player",
 ) {
-  const root = new TransformNode("visible-player-avatar", scene);
+  const isNolla = variant === "nolla";
+  const root = new TransformNode("visible-" + variant + "-avatar", scene);
   const body = new TransformNode("visible-player-body-pivot", scene);
   const leftArm = new TransformNode("visible-player-left-arm", scene);
   const rightArm = new TransformNode("visible-player-right-arm", scene);
@@ -71,16 +73,41 @@ export function createVisiblePlayerAvatar(
     return material;
   };
   const material = {
-    skin: makeMaterial("visible-player-skin", "#f2b58f"),
-    hair: makeMaterial("visible-player-hair", "#243f55"),
-    jacket: makeMaterial("visible-player-jacket", "#f5c84b"),
-    jacketLight: makeMaterial("visible-player-jacket-light", "#ffe486"),
-    shorts: makeMaterial("visible-player-shorts", "#287f86"),
-    scarf: makeMaterial("visible-player-scarf", "#e8664d"),
-    boots: makeMaterial("visible-player-boots", "#6b4938"),
-    pack: makeMaterial("visible-player-pack", "#d9584b"),
-    eye: makeMaterial("visible-player-eye", "#19313c"),
-    cheek: makeMaterial("visible-player-cheek", "#e9857d"),
+    skin: makeMaterial(
+      "visible-" + variant + "-skin",
+      isNolla ? "#cda37a" : "#f2b58f",
+    ),
+    hair: makeMaterial(
+      "visible-" + variant + "-hair",
+      isNolla ? "#6d503b" : "#243f55",
+    ),
+    jacket: makeMaterial(
+      "visible-" + variant + "-jacket",
+      isNolla ? "#71815a" : "#f5c84b",
+    ),
+    jacketLight: makeMaterial(
+      "visible-" + variant + "-jacket-light",
+      isNolla ? "#a8b778" : "#ffe486",
+    ),
+    shorts: makeMaterial(
+      "visible-" + variant + "-shorts",
+      isNolla ? "#665748" : "#287f86",
+    ),
+    scarf: makeMaterial(
+      "visible-" + variant + "-scarf",
+      isNolla ? "#d18d47" : "#e8664d",
+    ),
+    boots: makeMaterial("visible-" + variant + "-boots", "#6b4938"),
+    pack: makeMaterial(
+      "visible-" + variant + "-pack",
+      isNolla ? "#8c6044" : "#d9584b",
+    ),
+    eye: makeMaterial("visible-" + variant + "-eye", "#19313c"),
+    cheek: makeMaterial(
+      "visible-" + variant + "-cheek",
+      isNolla ? "#b97966" : "#e9857d",
+    ),
+    horn: makeMaterial("visible-" + variant + "-horn", "#ead8b5"),
   };
   const finish = (mesh: Mesh, parent: TransformNode, paint: StandardMaterial) => {
     mesh.parent = parent;
@@ -146,6 +173,27 @@ export function createVisiblePlayerAvatar(
   const mouth = finish(MeshBuilder.CreateSphere("visible-player-mouth", { diameter: 0.07, segments: 8 }, scene), body, material.eye);
   mouth.position.set(0, 1.76, 0.47);
   mouth.scaling.set(1.35, 0.42, 0.35);
+
+  if (isNolla) {
+    [-1, 1].forEach((side) => {
+      const horn = finish(
+        MeshBuilder.CreateCylinder(
+          "visible-nolla-horn-" + side,
+          {
+            height: 0.48,
+            diameterTop: 0.08,
+            diameterBottom: 0.2,
+            tessellation: 10,
+          },
+          scene,
+        ),
+        body,
+        material.horn,
+      );
+      horn.position.set(side * 0.24, 2.28, 0.02);
+      horn.rotation.z = side * -0.28;
+    });
+  }
 
   const scarf = finish(MeshBuilder.CreateTorus("visible-player-scarf", { diameter: 0.5, thickness: 0.09, tessellation: 20 }, scene), body, material.scarf);
   scarf.position.y = 1.48;

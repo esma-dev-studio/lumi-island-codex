@@ -262,3 +262,25 @@
     grid-template-columns: 1fr;
   }
 }
+.tutorial-marker-key {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  margin: 0.42rem 0 0;
+  color: #72511d;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.tutorial-marker-key i {
+  display: grid;
+  flex: 0 0 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  place-items: center;
+  color: #fff9dc;
+  background: #d79b2c;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(255, 223, 130, 0.38), 0 0 16px rgba(232, 176, 60, 0.65);
+  font-style: normal;
+}

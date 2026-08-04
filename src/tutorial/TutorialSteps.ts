@@ -34,8 +34,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "hint",
-    title: "金色に光る 木へ ちかづこう",
-    easyTitle: "きんいろに ひかる 木へ いこう",
+    title: "金色の輪と 光の柱がある 木へ ちかづこう",
+    easyTitle: "きんいろの わと 光のはしらへ いこう",
     keyLabel: "↑ ↓ ← →",
   },
   {
@@ -64,8 +64,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "talk",
-    title: "ノラに はなしかけよう",
-    easyTitle: "ノラと はなそう",
+    title: "『ノラ』の名ふだと 光の柱を さがそう",
+    easyTitle: "『ノラ』の なふだへ いこう",
     keyLabel: "はなす",
   },
 ];
