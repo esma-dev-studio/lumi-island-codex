@@ -7,7 +7,8 @@
   },
   "scripts": {
     "dev": "vinext dev",
-    "build": "node scripts/clean_dist.mjs && vinext build && node scripts/finalize_sites_build.mjs",
+    "build": "node scripts/clean_dist.mjs && vinext build",
+    "build:sites": "node scripts/clean_dist.mjs && node scripts/build_sites_static.mjs",
     "start": "vinext start",
     "test": "vitest run --config vitest.config.ts",
     "test:e2e": "playwright test",
