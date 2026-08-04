@@ -45,8 +45,8 @@ const EPSILON = 0.000001;
 export const ISLAND_WALK_BOUNDS: IslandBounds = {
   x: 0,
   z: 0,
-  radiusX: 17.45,
-  radiusZ: 12.55,
+  radiusX: 27,
+  radiusZ: 20,
 };
 
 export const STATIC_WORLD_COLLIDERS: WorldCollider[] =

@@ -2,36 +2,58 @@
 
 検証日: 2026-08-03
 
-| check | result | evidence/limit |
+## Final gates
+
+| check | result | evidence / limitation |
 |---|---|---|
-| npm test | 83/83 passed | 7 files |
-| npm ci | passed、522 packages | Sites互換lockfileへ正規化後 |
-| typecheck | passed | tsc --noEmit |
-| lint | passed | eslint |
-| production build | passed | Vinext; >500k chunk warning |
-| Character Gate | failed as expected | 4 placeholder GLB、Khronos error各4 |
-| existing Playwright suite | 19 passed in earlier same-day RC evidence | 今回変更後の全件再実行はしていない |
-| current browser title | passed | 1280×720 |
-| current browser tablet | passed | 1024×768 |
-| save protection | passed | dialog visible、back keeps continue |
-| fresh console | 0 error / 0 warning | fix後の新規browser tab |
-| horizontal overflow | none | desktop/tablet title and tablet game |
-| repo skill validation | passed | Skill is valid! |
-| Sites production deploy | passed | official dist archive、owner-only access |
+| Vitest | passed | 8 files / 88 tests |
+| TypeScript | passed | `tsc --noEmit` |
+| ESLint | passed | 単独実行75.1秒 |
+| production build | passed | clean `dist`; 500k chunk warningのみ |
+| Character Gate | passed | 4/4、Khronos error 0、visual review passed |
+| production environment | passed | Kenney CC0、runtime 10/10 |
+| normal-speed first loop | passed | 6.6分、teleport/倍率/progress injectionなし |
+| 4-zone visual E2E | passed | production player、4 texture、10 environment placements |
+| iPad-equivalent touch E2E | passed | 1024×640、touch/mobile、平均54FPS |
+| console errors | 0 | normal/visual E2Eとlive browser |
+| save migration | passed | unit + E2E reload、version 5 |
 
-## browser regression found and fixed
+## Playwright evidence
 
-最初のImageGen title統合で next/image がVinext devのreact JSX runtime export errorを起こした。browser screenshotで検出し、CSS backgroundへ変更。fix後のfresh tabはconsole 0件。
+Playwrightは7 files / 22 tests。各テストには最終作業中の分割・対象実行で成功証跡がある。
 
-## screenshot evidence
+- phase2-2 tutorial 4件、input/action 6件、visual 2件、release tablet 1件: full run内で13件success。
+- phase2-3 journey、release 100%、release tablet/touch: targeted runで4件success（tablet 1件は重複）。
+- normal-speed journey、phase2-1 title/save、wood: targeted runで3件success。
+- Scene teardown修正後、phase2-1 rock/forage、fishing、character showcase: 3/3 success。
 
-screenshots/90-point-rc/manifest.json にcurrent-live-browser、regression-e2e、missingを分離した。現在の新規captureはtitle、new-game confirmation、tablet title、tablet game。既存E2E画像13枚を明示的に再利用した。未取得場面はmissingで、追加captureとして数えない。
+Unique coverageは22/22。全22件を2 workersで1コマンド実行した最終試行は、途中failure出力なしのまま外側30分制限に達したため、one-shot greenとは報告しない。分割実行の成功と一括timeoutを区別する。
 
-## failed / not run
+## Regression found and fixed
 
-- production Character Gateは失敗。これはknown blockerで成功扱いしない。
-- Sitesのsource-only buildはlockfile互換判定で失敗したため、公式 package-site.sh でdist archiveを作成。
-- archiveは12,659,781 bytesで、dist/server/index.js と hosting metadataをhelperが検証済み。
-- browser接続の最初の127.0.0.1指定は環境のIPv6 bindと合わず、localhostへ切替。
-- current change後のPlaywright 19件full rerunは未実施。
-- physical iPad、low-end device、FPS/memory、normal-speed 30〜45 minute journeyは未実施。
+1. easy modeを新規既定にした後、旧E2Eが標準文言と1段階会話を期待していた。やさしい文言、ON→OFF→ON、つぎ→またねへ更新。
+2. normal journey中にNollaが移動し、過去座標へ到着するflaky case。最新NPC位置へ追従し、実際のclosest targetとdialogで判定。
+3. touch専用contextだけlocalhost:3000を固定。`PLAYWRIGHT_BASE_URL`を共有。
+4. scene遷移中のGLB load完了がdisposed WebGL programへ触れる競合。render loopを即停止し、pending character/environment loadsをsettleしてからScene/Engineを破棄。対象連続3件で再発なし。
+5. save toastは短時間で消えるため、永続結果であるreload後のcontinue表示を正本に変更。
+
+## Runtime measurements
+
+- desktop 1280×720: 60秒、平均59FPS、最低53FPS、p95 17.86ms。
+- tablet equivalent 1024×640: 13秒、平均54FPS、最低10FPS、p95 20ms。
+- scene: 501 meshes、88 materials、20 textures、37 animation groups。
+- clean build: 26,510,719 bytes。stale build比59.67%削減。
+
+## Visual evidence
+
+`screenshots/90-point-rc/manifest.json`は39 entries。今回追加した4zone、production player、normal first loop、iPad-equivalentはcurrent source capture。zone画像のtest travelはscreenshot用途として明記し、normal journey証跡には使わない。
+
+## Not verified
+
+- 物理iPad / Android / low-end PC。
+- 30〜45分の全normal journey。
+- CPU 4倍、slow network、15分memory delta。
+- required screenshotのmissing dedicated frames。
+- bespoke facial animationと全game verb専用clips。
+
+上記不足により厳格自己採点は89/100。

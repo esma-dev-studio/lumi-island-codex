@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-03T18:55:00+09:00",
+  "generatedAt": "2026-08-03T22:05:00+09:00",
   "currentBrowserQa": {
     "url": "http://localhost:3002",
     "desktopViewport": [1280, 720],
     "tabletViewport": [1024, 768],
     "freshConsoleErrorsAndWarnings": 0,
-    "notes": "Current title, save confirmation, and tablet layout were captured with the in-app browser. Older progression scenes are copied from the repository's 2026-08-03 Playwright evidence and are labeled regression-e2e, not re-captured as a new normal journey."
+    "notes": "Current production player, four zones, normal-speed first loop, and iPad-equivalent touch layout were captured from the final local source state. Zone overview images use disclosed screenshot-only test travel; the normal first loop does not."
   },
   "shots": [
     {
@@ -257,6 +257,66 @@
       "file": null,
       "status": "missing",
       "reason": "quality profile is code-tested; no dedicated current screenshot or physical low-end device run"
+    },
+    {
+      "requirement": "production central meadow",
+      "file": "live-central-meadow-90-plus.png",
+      "status": "current-live-playwright",
+      "saveState": "fresh save",
+      "gameTime": "day 1",
+      "steps": ["start a fresh game", "capture the meadow overview"],
+      "testSupport": "screenshot-only test travel",
+      "visibleEvidence": "production Mira GLB, meadow texture, zone name, child objective UI"
+    },
+    {
+      "requirement": "production forest",
+      "file": "live-forest-90-plus.png",
+      "status": "current-live-playwright",
+      "saveState": "fresh save",
+      "gameTime": "day 1",
+      "steps": ["start a fresh game", "travel to forest for visual capture"],
+      "testSupport": "screenshot-only test travel",
+      "visibleEvidence": "forest texture, dense planting, Kenney environment meshes, zone name"
+    },
+    {
+      "requirement": "production harbor",
+      "file": "live-harbor-90-plus.png",
+      "status": "current-live-playwright",
+      "saveState": "fresh save",
+      "gameTime": "day 1",
+      "steps": ["start a fresh game", "travel to harbor for visual capture"],
+      "testSupport": "screenshot-only test travel",
+      "visibleEvidence": "shell-sand texture, harbor props, production player, zone name"
+    },
+    {
+      "requirement": "production moon garden",
+      "file": "live-moon-garden-90-plus.png",
+      "status": "current-live-playwright",
+      "saveState": "fresh save",
+      "gameTime": "day 1",
+      "steps": ["start a fresh game", "travel to moon garden for visual capture"],
+      "testSupport": "screenshot-only test travel",
+      "visibleEvidence": "blue flower texture, crystal landmark, production character, zone name"
+    },
+    {
+      "requirement": "normal-speed first loop",
+      "file": "live-normal-speed-first-loop-90-plus.png",
+      "status": "current-normal-speed-e2e",
+      "saveState": "fresh save then manual save and reload",
+      "gameTime": "day 1",
+      "steps": ["walk", "gather", "craft", "place", "talk", "buy first unlock", "save", "reload"],
+      "testSupport": "none; no teleport, speed multiplier, time multiplier, or progress injection",
+      "visibleEvidence": "continue action after the completed real-input first loop"
+    },
+    {
+      "requirement": "iPad-equivalent production layout",
+      "file": "live-ipad-landscape-90-plus.png",
+      "status": "current-live-playwright",
+      "saveState": "fresh save",
+      "gameTime": "day 1",
+      "steps": ["open at 1024x640", "enable touch/mobile context", "start game"],
+      "testSupport": "browser device emulation only",
+      "visibleEvidence": "zone name, one objective, D-pad, action tools, production player all fit"
     }
   ]
 }

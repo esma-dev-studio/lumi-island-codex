@@ -1,0 +1,49 @@
+{
+  "measuredAt": "2026-08-03T22:00:00+09:00",
+  "runtime": "Chromium with native GPU",
+  "desktop": {
+    "viewport": [1280, 720],
+    "sampleSeconds": 60,
+    "averageFps": 59,
+    "minimumFps": 53,
+    "p95FrameMs": 17.86,
+    "meshes": 501,
+    "activeMeshes": 106,
+    "materials": 88,
+    "textures": 20,
+    "animationGroups": 37,
+    "detailLevel": "low",
+    "consoleErrors": 0
+  },
+  "tabletEquivalent": {
+    "viewport": [1024, 640],
+    "hasTouch": true,
+    "isMobile": true,
+    "sampleSeconds": 13,
+    "averageFps": 54,
+    "minimumFps": 10,
+    "p95FrameMs": 20,
+    "meshes": 501,
+    "activeMeshes": 90,
+    "materials": 88,
+    "textures": 20,
+    "animationGroups": 37,
+    "detailLevel": "low",
+    "consoleErrors": 0,
+    "physicalDevice": false
+  },
+  "build": {
+    "distBytesBeforeClean": 65727879,
+    "distBytesAfterClean": 26510719,
+    "reductionPercent": 59.67,
+    "clientBytes": 17488992,
+    "clientJavaScriptBytes": 4118809,
+    "largestClientChunkBytes": 886761,
+    "largeChunkWarning": true
+  },
+  "limits": [
+    "Tablet result is browser emulation with touch and mobile flags, not a physical iPad.",
+    "The tablet minimum includes the initial asset-loading interval.",
+    "15-minute memory growth, CPU 4x throttling, and slow-network timings were not measured."
+  ]
+}

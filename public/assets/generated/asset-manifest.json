@@ -54,6 +54,64 @@
       "bytes": 168146,
       "usedInGame": true,
       "integration": "src/ui/TitleScreen.tsx"
+    },
+    {
+      "file": "artifacts/art/zone-texture-atlas.png",
+      "role": "four-zone painted texture source atlas",
+      "sourceSize": [1536, 1024],
+      "deliverySize": [1536, 1024],
+      "format": "png",
+      "bytes": 2541025,
+      "usedInGame": false,
+      "promptRecord": ".prompts/lumi-island-zone-textures.md"
+    },
+    {
+      "file": "public/assets/generated/zone-meadow.webp",
+      "role": "central meadow ground texture",
+      "source": "artifacts/art/zone-texture-atlas.png",
+      "sourceSize": [768, 512],
+      "deliverySize": [512, 512],
+      "format": "webp",
+      "bytes": 38750,
+      "usedInGame": true,
+      "integration": "src/world/WorldZones.ts",
+      "vramBytes": 1048576
+    },
+    {
+      "file": "public/assets/generated/zone-forest.webp",
+      "role": "forest ground texture",
+      "source": "artifacts/art/zone-texture-atlas.png",
+      "sourceSize": [768, 512],
+      "deliverySize": [512, 512],
+      "format": "webp",
+      "bytes": 37986,
+      "usedInGame": true,
+      "integration": "src/world/WorldZones.ts",
+      "vramBytes": 1048576
+    },
+    {
+      "file": "public/assets/generated/zone-harbor.webp",
+      "role": "harbor sand and shallows texture",
+      "source": "artifacts/art/zone-texture-atlas.png",
+      "sourceSize": [768, 512],
+      "deliverySize": [512, 512],
+      "format": "webp",
+      "bytes": 24638,
+      "usedInGame": true,
+      "integration": "src/world/WorldZones.ts",
+      "vramBytes": 1048576
+    },
+    {
+      "file": "public/assets/generated/zone-moon-garden.webp",
+      "role": "moon garden ground texture",
+      "source": "artifacts/art/zone-texture-atlas.png",
+      "sourceSize": [768, 512],
+      "deliverySize": [512, 512],
+      "format": "webp",
+      "bytes": 31406,
+      "usedInGame": true,
+      "integration": "src/world/WorldZones.ts",
+      "vramBytes": 1048576
     }
   ]
 }

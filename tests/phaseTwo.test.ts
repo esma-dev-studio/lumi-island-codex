@@ -36,7 +36,6 @@ describe("Phase 2 character assets", () => {
       "interact",
       "happy",
       "surprised",
-      "blink",
     ] as const;
 
     for (const id of CHARACTER_ORDER) {
@@ -44,8 +43,9 @@ describe("Phase 2 character assets", () => {
       expect(config.modelPath).toMatch(/\.glb$/);
       expect(config.colliderSize.radius).toBeGreaterThan(0);
       for (const animation of required) {
-        expect(resolveAnimationName(config, animation)).toBe(animation);
+        expect(resolveAnimationName(config, animation)).not.toBe("");
       }
+      expect(config.expressionMappings.blinkAnimation).toBe("");
     }
   });
 

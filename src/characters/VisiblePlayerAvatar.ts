@@ -182,6 +182,9 @@ export function createVisiblePlayerAvatar(
 
   return {
     root,
+    setEnabled(enabled: boolean) {
+      root.setEnabled(enabled);
+    },
     sync(nextPosition: Vector3, facing: number) {
       basePosition.copyFrom(nextPosition);
       root.rotation.y = facing;

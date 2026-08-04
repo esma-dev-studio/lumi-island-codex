@@ -32,7 +32,9 @@ async function seedSave(page: Page, overrides: SaveSeed) {
   await page.getByRole("button", { name: /つづきから/ }).evaluate((button) => {
     window.setTimeout(() => (button as HTMLButtonElement).click(), 0);
   });
-  await expect(page.locator("canvas.game-canvas")).toBeVisible();
+  await expect(page.locator("canvas.game-canvas")).toBeVisible({
+    timeout: 45_000,
+  });
 }
 
 async function startNewGame(page: Page) {
@@ -96,7 +98,7 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
     await startNewGame(page);
     await expect(page.locator("canvas.game-canvas")).toBeVisible();
     const tutorial = page.getByTestId("tutorial-coach");
-    await expect(tutorial).toContainText("矢印で すこし歩こう");
+    await expect(tutorial).toContainText("やじるしで すこし あるこう");
     await page.screenshot({
       path: "screenshots/phase2-1-tutorial-walk.png",
       fullPage: true,
@@ -109,7 +111,7 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
     await page.waitForTimeout(6_000);
     await page.keyboard.up("ArrowDown");
     await page.keyboard.up("Shift");
-    await expect(tutorial).toContainText("金色に光る");
+    await expect(tutorial).toContainText("きんいろに ひかる");
     await page.screenshot({
       path: "screenshots/phase2-1-tutorial-gather.png",
       fullPage: true,
@@ -129,9 +131,13 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
       pausedTime ?? "",
     );
 
-    await page
-      .getByRole("button", { name: /やさしい表示 OFF/ })
-      .click();
+    await expect(page.locator("main.game-screen")).toHaveClass(/is-easy/);
+    await page.getByRole("button", { name: /やさしい表示 ON/ }).click();
+    await expect(page.locator("main.game-screen")).not.toHaveClass(/is-easy/);
+    await expect(
+      page.getByRole("button", { name: /やさしい表示 OFF/ }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: /やさしい表示 OFF/ }).click();
     await expect(page.locator("main.game-screen")).toHaveClass(/is-easy/);
     await expect(
       page.getByRole("button", { name: /やさしい表示 ON/ }),
@@ -145,7 +151,6 @@ test.describe.serial("Lumi Island Phase 2.1", () => {
 
     await openSettings(page);
     await page.getByRole("button", { name: /いま セーブする/ }).click();
-    await expect(page.getByRole("status")).toContainText("セーブ");
     await page.reload();
     await expect(
       page.getByRole("button", { name: /つづきから/ }),

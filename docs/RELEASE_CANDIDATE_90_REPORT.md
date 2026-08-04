@@ -1,74 +1,58 @@
 # Lumi Island 90 Point RC Report
 
 作成日: 2026-08-03
-判定: **82 / 100 — 条件付きRelease Candidate。90点未達。**
+判定: **89 / 100 — 大幅改善済み。ただし厳格な90点必須ゲート未完。**
 
-公開URL: https://lumi-island-game.neon-acorn-2741.chatgpt.site
+公開先: https://lumi-island-game.neon-acorn-2741.chatgpt.site
 
 ## outcome
 
-今回の価値は、見た目だけの加点ではなく、進行とsaveを壊すP0を除き、タイトルの品質と子どもの誤操作防止を実画面で確認したこと。ImageGenは4点を生成したが、ゲーム内加点は実装した1280×720 WebP 1点だけ。
+旧82点RCの最大blockerだったplaceholder character、単一島感、primitive中心環境、zone音響なし、性能未測定、通常速度証跡なしを実装で改善した。技術・実画面の素点は90点台に届く構成だが、専用キャラクターanimation、30〜45分normal journey、物理tablet/長時間性能が不足するため89点とする。
 
-## implemented and browser-verified
+## 実装済み・実画面確認済み
 
-- original four-zone world artをtitleへ統合。
-- 既存saveではcontinueをprimary表示。
-- new gameは「記録が消える」confirmation必須。backでsave継続可能。
-- 1280×720、1024×768でtitle overflowなし。
-- tablet gameでthird-person character、objective、menuがviewport内。
-- fix後fresh tabのconsole error/warning 0。
+- Quaternius CC0のRanger/Monk/Rogue/ClericをMira/Nolla/Kai/Seraへ統合。third-person playerが可視。
+- 4 GLBはUV、画像texture、32 joints、multi-joint weights、11〜14 animations、Khronos error 0。
+- ひかりの広場、こもれびの森、さんごの港、月しずくの庭の4zone。
+- 4種類のImageGen WebP terrain texture、zone badge、landmark、固有ambient profile。
+- Kenney Nature Kit CC0の橋、木、丸太、石段、岩、カヌー等を10配置し、runtime 10/10。
+- iPad横相当で現在地、1目的、touch移動、バッグ、工作が同時に表示。
+- desktop平均59FPS、tablet相当平均54FPS、console error 0。
+- `dist`のstale hash混入を防ぎ、65.7MBから26.5MBへ59.67%削減。
 
-## implemented but not physical-device verified
+## 通常速度で確認済み
 
-- easy modeをnew player defaultへ。
-- 主要補助buttonに44px minimum。
-- shared Babylon materialをmesh disposeから保護。
-- title WebPを168,146 bytesへ最適化。
-- 100%後のcontinuation objective。
+`e2e/normal-speed-journey.spec.ts` は `?e2e`、teleport、3x movement、10x time、progress state injectionなし。実歩行で採取、工作、配置、ノラ会話、最初の解放購入、保存、再読込を6.6分で完走。
 
-## verified by tests
+## テスト・静的検証
 
-- old saveから25/50/75 collection milestoneを復元、二重rewardなし。
-- reachable hintだけ販売し、重複時はchargeなし。
-- real NPC talkがdaily goalへ接続しrewardは1回。
-- npm ci（522 packages）、83 unit tests、typecheck、lint、production build passed。
+- Vitest: 8 files / 88 tests passed。
+- TypeScript: passed。
+- ESLint: passed。
+- Production build: passed。500kB超chunk warningあり。
+- Character Gate: 4/4 passed、Khronos error 0。
+- 4-zone visual E2E: 2/2 passed。
+- iPad相当performance E2E: passed、平均54FPS。
+- Save migrationはversion 5を維持。旧saveの位置、inventory、lumen、unlockを保持し、missing milestoneだけをidempotentに復元。
 
-## external asset blocked
-
-- production player/NPC GLB。現行4体は全てCharacter Gate failed。
-- rights-cleared high-quality environment GLB/texture production。
-
-## unimplemented or incomplete
-
-- 4独立3D zoneと35〜55秒world traversal。
-- zone-specific ambient/audio/camera arrival。
-- normal-speed 30〜45 minute Journey。
-- physical iPad/low-end performance measurement。
-- screenshot manifestのmissing場面。
-- IslandScene responsibility splitとlargest chunk削減。
-
-## score
+## 採点
 
 | 領域 | 配点 | 得点 | 根拠 |
 |---|---:|---:|---|
-| コアループ・進行・経済 | 20 | 19 | P0 save、hint、talkを修正。通常時間実測は不足 |
-| ワールド・探索・解放 | 15 | 11 | 行動解放は成立。4独立terrain未達 |
-| 3D・アート・animation・音 | 20 | 11 | Visual Masterと実装title、既存音。production GLB未達 |
-| 小学2年生向けUX | 15 | 14 | easy default、save保護、44px、1目的。児童test未実施 |
-| game feel・演出 | 10 | 8 | 既存mini-gameとday/night。zone演出不足 |
-| code・test・performance | 15 | 14 | 83 unit、build、browser。performance実測とfull current E2E不足 |
-| 独自性・安全性・license | 5 | 5 | original/CC0、provenance明記 |
-| **総合** | **100** | **82** | **90 gate未達を反映** |
+| コアループ・進行・経済 | 20 | 18 | 初回normal loopと100%有限到達test。30〜45分normal完走は未達 |
+| ワールド・探索・解放 | 15 | 14 | 4 zone、2.45倍以上、landmark、texture、ambient。高低差と固有行動の深さに余地 |
+| 3D・アート・animation・音 | 20 | 17 | production CC0 character/environment、ImageGen texture、zone音。表情と専用clip不足 |
+| 小学2年生向けUX | 15 | 14 | やさしい表示、1目的、ふりがな、44px、touch。実児童testなし |
+| game feel・演出 | 10 | 8 | third-person avatar、mini-game、zone arrival/音。cameraと解放演出に余地 |
+| code・test・performance | 15 | 13 | 88 unit、type/lint/build、normal/visual E2E、FPS提出。長時間/実機/chunk課題 |
+| 独自性・安全性・license | 5 | 5 | original/CC0、provenance、unknown license 0 |
+| **総合** | **100** | **89** | **不足を90へ丸めない** |
 
-## save migration
+## 90点到達に必要な最短工程
 
-save versionは5のまま。新field追加ではなく、sanitize時にcollectionCountsからmissing milestoneを復元するrepair migration。旧save位置、inventory、lumen、unlock flagを維持し、復元だけではrewardを再付与しない。
+1. 現行rigへ表情差分とFish/Mine/Craft/Talk/Celebrate専用clipを追加し再gate。
+2. 通常速度Journeyを複数の連続suiteへ分割し、30〜45分中間到達点まで完走。
+3. 物理iPadで主要導線、15分memory、tab復帰、最低FPSを測定。
+4. 必須screenshotのmissing場面を専用stateと手順付きで取得。
 
-## changed areas
-
-- state/progression/economy: gameState、FriendshipSystem、ProgressionDirector、UnlockCatalog、EconomySystem。
-- rendering: IslandScene material ownership。
-- UX/art: TitleScreen、release-candidate.css、generated asset。
-- evidence: tests、artifacts、prompts、screenshots、docs、repo-local skill。
-
-90点へ必要な外部成果物と次工程は docs/90_POINT_BLOCKERS.md を参照。
+詳細は `docs/90_POINT_BLOCKERS.md` と `docs/QA_EVIDENCE_90.md`。

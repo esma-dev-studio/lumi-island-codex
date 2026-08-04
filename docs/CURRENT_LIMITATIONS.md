@@ -1,17 +1,18 @@
 # Current limitations
 
-Phase 2.3時点の既知の制約です。
+90点版Release Candidate時点の既知の制約です。
 
-- キャラクターGLBは、スキン・ジョイント・アニメーションクリップの統合確認用に生成した仮素材です。高品質な本番キャラクターではありません。
-- 現行GLBにはUV0と画像テクスチャがなく、複数関節ウェイト頂点は0、Khronos errorがあります。`assetStatus`は`integration-placeholder`で、`artifacts/character-gate-phase2-3.json`の本番受入ゲートは`failed`です。
-- 島の環境はプロジェクト内のプロシージャル形状です。外部の高品質環境アセットは使っていません。
-- ログイン、クラウドセーブ、課金、マルチプレイ、オンラインランキング、バックエンド同期はありません。
-- セーブはブラウザのlocalStorageのみです。端末やブラウザをまたいだ移行はできません。
-- PC ChromeとPlaywright Chromiumを主な検証対象としています。タッチ入力ロジックは自動テスト済みですが、iPad / Android実機の網羅的な操作感確認は今後の課題です。
-- Babylon.jsのdeep importで最大クライアントJSを5,471,685 bytesから1,026,065 bytesへ削減しましたが、500KB警告は残ります。クリーンmanifest内JSは3,458,150 bytes、GameCanvas初期staticは1,867,012 bytesです。
-- CPU低速化・通信制限条件の初回HTML、操作可能時間、総転送量、平均/最低FPS、メモリ傾向は、同一条件で再現できる自動測定が未整備です。目視値や推測値を性能合格として報告しません。
-- 効果音はCC0 OGGです。BGM、環境音、音声読み上げはありません。
-- 継続進行は、初期依頼後の日替わり、図鑑節目、複数の島解放、ノラの3段階親密度までです。クラウド運営や長期イベントはありません。
-- Phase 2.3の完全E2EはPC ChromiumのソフトウェアWebGLで約4分8秒かかります。GPU・端末差による開始時間の揺れを考慮した待機を使っています。
+- Quaternius CC0の4キャラクターGLBは技術ゲートと目視reviewを通過。ただし表情モーフとFish/Mine/Craft/Talk/Celebrate専用clipはなく、既存clipへの意味対応を使います。
+- Kenney CC0環境GLBを8点・10配置しましたが、家と一部landmarkは引き続きprimitive主体です。
+- 4zoneはtexture、色、landmark、ambientで区別されますが、heightmapによる大きな高低差や完全に不規則な海岸線はありません。
+- ログイン、cloud save、課金、multiplayer、online ranking、backend syncはありません。
+- saveはbrowser localStorageのみ。端末やbrowserをまたいだ移行はできません。
+- PC Chromiumとtablet相当touch emulationを検証。物理iPad / Android実機の網羅的な操作感確認は未実施です。
+- desktop平均59FPS、tablet相当平均54FPS。tablet初期load時に最低10FPSを記録しました。
+- clean buildの最大client chunkは886,761 bytesで、500kB warningが残ります。
+- CPU 4倍、低速回線、15分memory delta、物理tabletの性能は未測定です。
+- 通常速度E2Eは初回6.6分ループを完走。港、図鑑50/75%、夜の庭、親密度3までの30〜45分normal journeyは未完です。
+- BGMと音声読み上げはありません。効果音はCC0、4zone ambientはproject original Web Audio synthesisです。
+- required screenshotのうちsunset、修復前後の一部、橋横断途中、親密度2/3、workshop、25%、daily、low-performanceの専用frameが不足します。
 
-本番GLBの条件と差し替え手順は`CHARACTER_ASSET_REQUIREMENTS.md`と`CHARACTER_PRODUCTION_BRIEF.md`を参照してください。経済・性能・テストの実測は`ECONOMY_BALANCE.md`、`PHASE2_3_REPORT.md`、`artifacts/phase2-3-metrics.json`を正本とします。
+最新の厳格判定は `RELEASE_CANDIDATE_90_REPORT.md`、残課題は `90_POINT_BLOCKERS.md`、性能は `PERFORMANCE_FINAL.md` を正本とします。

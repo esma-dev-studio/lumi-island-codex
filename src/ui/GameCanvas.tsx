@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   createIslandScene,
   type InteractionHint,
@@ -14,6 +14,11 @@ import type {
 } from "@/src/placement/PlacementController";
 import type { ActivityRequest } from "@/src/ui/minigames/ActivityOverlayPhase21";
 import type { ActivityResult } from "@/src/activities/ActivityResult";
+import {
+  configureZoneAmbientAudio,
+  disposeZoneAmbientAudio,
+  setAmbientZone,
+} from "@/src/audio/ZoneAmbientAudioSystem";
 
 interface GameCanvasProps {
   state: GameState;
@@ -56,6 +61,10 @@ export function GameCanvas({
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const controllerRef = useRef<IslandController | null>(null);
+  const [zone, setZone] = useState({
+    name: "ひかりの広場",
+    reading: "ひかりの ひろば",
+  });
   const callbackRef = useRef({
     onHint,
     onActivity,
@@ -125,17 +134,26 @@ export function GameCanvas({
         onPlayerMove: (position) =>
           callbackRef.current.onPlayerMove(position),
         onFps: (fps) => callbackRef.current.onFps(fps),
+        onZoneChange: ({ id, name, reading }) => {
+          setZone({ name, reading });
+          setAmbientZone(id);
+        },
       },
     );
     controllerRef.current = controller;
     return () => {
       controller.dispose();
       controllerRef.current = null;
+      disposeZoneAmbientAudio();
     };
     // The scene owns the initial values. Live values are synchronized below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+
+  useEffect(() => {
+    configureZoneAmbientAudio(state.audioSettings);
+  }, [state.audioSettings]);
   useEffect(() => {
     controllerRef.current?.setPaused(paused);
   }, [paused]);
@@ -185,7 +203,8 @@ export function GameCanvas({
   }, [cameraResetToken]);
 
   return (
-    <canvas
+    <>
+      <canvas
       ref={canvasRef}
       className="game-canvas"
       aria-label="Lumi Islandの3Dゲーム画面"
@@ -199,5 +218,11 @@ export function GameCanvas({
       }
       tabIndex={0}
     />
+      <div className="zone-badge" aria-live="polite">
+        <small>いま いるところ</small>
+        <strong>{zone.name}</strong>
+        <span>{zone.reading}</span>
+      </div>
+    </>
   );
 }

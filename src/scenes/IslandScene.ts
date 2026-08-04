@@ -50,6 +50,12 @@ import {
 } from "@/src/world/EnvironmentBuilder";
 import type { ActivityRequest } from "@/src/ui/minigames/ActivityOverlayPhase21";
 import {
+  createWorldZones,
+  worldZoneAt,
+  type WorldZoneDefinition,
+} from "@/src/world/WorldZones";
+import { createProductionEnvironmentAssets } from "@/src/world/ProductionEnvironmentAssets";
+import {
   rotatedFootprint,
   validateFurniturePlacement,
 } from "@/src/placement/PlacementValidator";
@@ -108,6 +114,7 @@ export interface IslandSceneCallbacks {
   onPlacementRemove: (id: string) => void;
   onPlayerMove: (position: { x: number; z: number }) => void;
   onFps: (fps: number) => void;
+  onZoneChange: (zone: WorldZoneDefinition) => void;
 }
 
 export interface IslandController {
@@ -178,7 +185,7 @@ function createIslandBase(scene: Scene): void {
   const ocean = setMaterial(
     MeshBuilder.CreateCylinder(
       "ocean",
-      { height: 0.18, diameter: 92, tessellation: 96 },
+      { height: 0.18, diameter: 112, tessellation: 96 },
       scene,
     ),
     oceanMat,
@@ -190,37 +197,37 @@ function createIslandBase(scene: Scene): void {
   const shallows = setMaterial(
     MeshBuilder.CreateCylinder(
       "shallows",
-      { height: 0.22, diameter: 49, tessellation: 96 },
+      { height: 0.22, diameter: 70, tessellation: 96 },
       scene,
     ),
     shallowMat,
   );
   shallows.position.y = -0.56;
-  shallows.scaling.z = 0.82;
+  shallows.scaling.z = 0.72;
 
   const sandMat = makeMaterial(scene, "island-sand", palette.sand);
   const sand = setMaterial(
     MeshBuilder.CreateCylinder(
       "island-sand",
-      { height: 0.72, diameter: 43, tessellation: 96 },
+      { height: 0.72, diameter: 62, tessellation: 96 },
       scene,
     ),
     sandMat,
   );
   sand.position.y = -0.35;
-  sand.scaling.z = 0.78;
+  sand.scaling.z = 0.72;
 
   const grassMat = makeMaterial(scene, "island-grass", palette.grass);
   const grass = setMaterial(
     MeshBuilder.CreateCylinder(
       "island-grass",
-      { height: 0.75, diameter: 37.5, tessellation: 96 },
+      { height: 0.75, diameter: 55, tessellation: 96 },
       scene,
     ),
     grassMat,
   );
   grass.position.y = 0;
-  grass.scaling.z = 0.74;
+  grass.scaling.z = 0.73;
 
   const soilMat = makeMaterial(scene, "path-soil", palette.soil);
   const pathPoints = [
@@ -501,6 +508,7 @@ export function createIslandScene(
   scene.clearColor = Color4.FromHexString("#b8d4cf00");
   scene.ambientColor = Color3.FromHexString("#51685f");
   scene.skipPointerMovePicking = true;
+  let disposalStarted = false;
 
   const initialCameraTarget = thirdPersonCameraTarget({
     x: startPosition.x,
@@ -560,6 +568,17 @@ export function createIslandScene(
   };
 
   createIslandBase(scene);
+  createWorldZones(scene);
+  const productionEnvironment = createProductionEnvironmentAssets(scene, shadows);
+  void productionEnvironment.ready.then(() => {
+    if (disposalStarted) return;
+    const report = scene.metadata?.productionEnvironment as
+      | { loaded: number; requested: number }
+      | undefined;
+    if (report) {
+      canvas.dataset.productionEnvironment = `${report.loaded}/${report.requested}`;
+    }
+  });
   const progressionLandmarks = createProgressionLandmarks(scene, mats);
   const occluderNodes: TransformNode[] = HOUSE_LAYOUT.map((house) =>
     createHouse(
@@ -690,10 +709,13 @@ export function createIslandScene(
   );
   visiblePlayerAvatar.sync(player.root.position, player.root.rotation.y);
   visiblePlayerAvatar.update("idle", 0);
-  void player.ready.then(() => {
-    player.getMeshes().forEach((mesh) => mesh.setEnabled(false));
+  void player.ready.then((loaded) => {
+    if (disposalStarted) return;
+    if (!loaded) return;
+    visiblePlayerAvatar.setEnabled(false);
+    canvas.dataset.playerAvatar = "production-glb";
   });
-  canvas.dataset.playerAvatar = "visible-chibi";
+  canvas.dataset.playerAvatar = "loading-production-glb";
   const playerMotion = new CharacterController();
   playerMotion.setFacing(Math.PI);
   const playerMarkerMaterial = makeMaterial(
@@ -746,6 +768,11 @@ export function createIslandScene(
       actionUntil: 0,
     };
   });
+  const pendingAssetLoads: Promise<unknown>[] = [
+    productionEnvironment.ready,
+    player.ready,
+    ...npcs.map((npc) => npc.rig.ready),
+  ];
 
   const glow = new GlowLayer("island-glow", scene, { blurKernelSize: 22 });
   glow.intensity = 0.42;
@@ -807,6 +834,7 @@ export function createIslandScene(
   } | null = null;
   let lastFpsUpdate = 0;
   let lastPositionUpdate = 0;
+  const performanceSamples: number[] = [];
   let currentDayMinute = 8 * 60;
   let currentProgression: WorldProgressionSnapshot = INITIAL_WORLD_PROGRESSION;
   let footstepTimer = 0;
@@ -1209,6 +1237,14 @@ export function createIslandScene(
     playerMarker.position.x = player.root.position.x;
     playerMarker.position.z = player.root.position.z;
     visiblePlayerAvatar.sync(player.root.position, player.root.rotation.y);
+    const nextZone = worldZoneAt({
+      x: player.root.position.x,
+      z: player.root.position.z,
+    });
+    if (canvas.dataset.zone !== nextZone.id) {
+      canvas.dataset.zone = nextZone.id;
+      callbacks.onZoneChange(nextZone);
+    }
     visiblePlayerAvatar.update(motion.animation, delta);
 
     const desiredCameraTarget = thirdPersonCameraTarget({
@@ -1462,9 +1498,30 @@ export function createIslandScene(
     if (lastFpsUpdate >= 1) {
       lastFpsUpdate = 0;
       const fps = Math.round(engine.getFps());
-      if (process.env.NODE_ENV !== "production") {
-        canvas.dataset.debugFps = String(fps);
-      }
+      performanceSamples.push(fps);
+      if (performanceSamples.length > 60) performanceSamples.shift();
+      const averageFps = Math.round(
+        performanceSamples.reduce((sum, value) => sum + value, 0) /
+          performanceSamples.length,
+      );
+      const minimumFps = Math.min(...performanceSamples);
+      const frameTimes = performanceSamples
+        .map((value) => 1000 / Math.max(1, value))
+        .sort((a, b) => a - b);
+      const p95FrameMs = frameTimes[Math.floor((frameTimes.length - 1) * 0.95)];
+      canvas.dataset.debugFps = String(fps);
+      canvas.dataset.performanceSnapshot = JSON.stringify({
+        sampleSeconds: performanceSamples.length,
+        averageFps,
+        minimumFps,
+        p95FrameMs: Number(p95FrameMs.toFixed(2)),
+        meshes: scene.meshes.length,
+        activeMeshes: scene.getActiveMeshes().length,
+        materials: scene.materials.length,
+        textures: scene.textures.length,
+        animationGroups: scene.animationGroups.length,
+        detailLevel: detail.level,
+      });
       callbacks.onFps(fps);
     }
     const pulse = 1 + Math.sin(animationElapsedTime * 2) * 0.07;
@@ -1519,15 +1576,22 @@ export function createIslandScene(
     resetCamera,
     dispose: () => {
       visiblePlayerAvatar.dispose();
+      if (disposalStarted) return;
+      disposalStarted = true;
+      engine.stopRenderLoop();
+      player.dispose();
+      npcs.forEach((npc) => npc.rig.dispose());
       placementGhost?.dispose(false, false);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
       canvas.removeEventListener("lumi-test-travel", onTestTravel);
       window.removeEventListener("resize", resize);
-      scene.dispose();
-      resourceVisuals.forEach((controller) => controller.dispose());
-      engine.dispose();
+      void Promise.allSettled(pendingAssetLoads).then(() => {
+        resourceVisuals.forEach((controller) => controller.dispose());
+        scene.dispose();
+        engine.dispose();
+      });
     },
   };
 }

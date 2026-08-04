@@ -58,7 +58,7 @@ export async function loadCharacterAsset(
       result.animationGroups.map((group) => group.name),
     );
     const missing = Object.values(config.animationMappings).filter(
-      (name) => !animationNames.has(name),
+      (name) => name && !animationNames.has(name),
     );
     if (missing.length) {
       result.animationGroups.forEach((group) => group.dispose());

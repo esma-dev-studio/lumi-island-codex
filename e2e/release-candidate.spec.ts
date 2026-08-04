@@ -371,6 +371,7 @@ test("empty save reaches 100%, unlocks real places, and reloads", async ({ page 
   await walkTo(page, { x: Number(nolla[1]), z: Number(nolla[2]) }, 1.05);
   await canvas.click();
   await page.keyboard.press("KeyE");
+  await page.getByRole("button", { name: "つぎ" }).click();
   await page.getByRole("button", { name: "またね" }).click();
   await expect(page.getByTestId("tutorial-coach")).toHaveCount(0);
   await page.screenshot({ path: "screenshots/rc-tutorial-complete.png", fullPage: true });
@@ -473,7 +474,7 @@ test("tablet landscape keeps the four-item menu and controls separate", async ({
 test("touch direction pad releases on up and cancel", async ({ browser }) => {
   test.setTimeout(180_000);
   const context = await browser.newContext({
-    baseURL: "http://localhost:3000",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
     viewport: { width: 1024, height: 640 },
     hasTouch: true,
     isMobile: true,

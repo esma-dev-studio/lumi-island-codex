@@ -121,7 +121,7 @@ test("fresh save completes the real tutorial, opens an upgrade, and reloads it",
 
   await walkTo(page, { x: -7.7, z: 7.6 }, 2.2);
   const coach = page.getByTestId("tutorial-coach");
-  await expect(coach).toContainText("えだを集めよう", { timeout: 15_000 });
+  await expect(coach).toContainText("ひかる 木で「しらべる」を おそう", { timeout: 15_000 });
   await expect(page.locator(".interaction-hint")).toContainText("えだを集める");
   await page.keyboard.press("KeyE");
 
@@ -136,11 +136,11 @@ test("fresh save completes the real tutorial, opens an upgrade, and reloads it",
   await expect(canvas).toHaveAttribute("data-debug-action-state", "free", { timeout: 15_000 });
 
   await page.keyboard.press("KeyI");
-  await expect(coach).toContainText("小えだのいすを つくろう");
+  await expect(coach).toContainText("こえだの いすを つくろう");
   await page.keyboard.press("KeyC");
   const stoolRecipe = page.locator(".recipe-list article").filter({ hasText: "小えだのいす" });
   await stoolRecipe.getByRole("button", { name: /つくる/ }).click();
-  await expect(coach).toContainText("小えだのいすを おこう");
+  await expect(coach).toContainText("こえだの いすを おこう");
 
   await page.keyboard.press("KeyI");
   await page.locator(".furniture-list article").filter({ hasText: "小えだのいす" })
@@ -161,7 +161,7 @@ test("fresh save completes the real tutorial, opens an upgrade, and reloads it",
   }
   await expect(confirm).toBeEnabled();
   await confirm.click();
-  await expect(coach).toContainText("ノラに はなしかけよう");
+  await expect(coach).toContainText("ノラと はなそう");
 
   await walk(page, "ArrowDown", 1_400);
   const npcPositions = await canvas.getAttribute("data-debug-npc-positions");
@@ -172,6 +172,7 @@ test("fresh save completes the real tutorial, opens an upgrade, and reloads it",
   await canvas.click();
   await page.keyboard.press("KeyE");
   await expect(page.locator(".resident-dialog")).toBeVisible({ timeout: 12_000 });
+  await page.getByRole("button", { name: "つぎ" }).click();
   await page.getByRole("button", { name: "またね" }).click();
   await expect(coach).toHaveCount(0);
 

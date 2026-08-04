@@ -202,7 +202,10 @@ export function LumiIslandApp() {
   useEffect(() => {
     if (screen !== "game") return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (activity !== null || pendingActivityResult !== null) return;
+      // The reward animation may still be settling after the activity overlay closes.
+      // Keep menu shortcuts available during that non-interactive animation, matching
+      // the always-visible touch buttons. Only the activity overlay itself owns input.
+      if (activity !== null) return;
       if (event.code === "Tab" || event.code === "KeyI") {
         event.preventDefault();
         setPlacementMode(null);
@@ -238,7 +241,7 @@ export function LumiIslandApp() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activity, notify, pendingActivityResult, placementMode, screen]);
+  }, [activity, notify, placementMode, screen]);
 
   const startNewGame = () => {
     clearSave();

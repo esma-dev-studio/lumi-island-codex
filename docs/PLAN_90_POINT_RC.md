@@ -2,31 +2,28 @@
 
 ## 完了
 
-- [x] tools/skills/CLI監査
-- [x] 進行・UX/QA・world/performanceの独立監査
-- [x] 旧saveの図鑑milestone復元
-- [x] 実会話とdaily talkの接続
-- [x] 重複/到達不能ヒントの課金防止
-- [x] 保存済み新規ゲームの確認画面
-- [x] easy modeを新規プレイヤー既定に変更
-- [x] 100%後の目的表示を有限化
-- [x] 共有Material破棄の修正
-- [x] Visual Master 4点生成、prompt/manifest/provenance記録
-- [x] world mapのWebP最適化とタイトル統合
-- [x] 83 unit、typecheck、lint、build
-- [x] current browser QAとscreenshot manifest
-- [x] repo-local review skill
+- [x] tools/skills/CLI監査と3系統の独立監査
+- [x] 旧save milestone復元、hint課金防止、daily talk、100%後objective
+- [x] save保護、easy mode既定、44px touch、1目的HUD
+- [x] ImageGen Visual Masterと4zone texture atlas、prompt/provenance
+- [x] 中央広場・森・港・月しずくの庭の4zone、2.45倍以上のbounds
+- [x] zone badge、4 ambient profile、landmark、tab非表示音停止
+- [x] Quaternius CC0 production characters 4体とCharacter Gate pass
+- [x] Kenney CC0 environment GLB 8点・10配置
+- [x] normal-speed first loopをteleport/倍率/state injectionなしで完走
+- [x] desktop/tablet相当FPS・p95・scene count測定
+- [x] 88 unit、typecheck、lint、build、visual/touch E2E
+- [x] stale dist cleanupで公開成果物59.67%削減
+- [x] 4zone、normal loop、iPad相当screenshot更新
 
-## 次の実装phase
+## 90点へ残る工程
 
-1. 既存島を中央集落として維持し、Forest/Harbor/Isletを別terrain chunkへ拡張。
-2. ZoneRegistry、WorldBuilder、LightingControllerを IslandScene.ts から抽出。
-3. zone固有ambient loopと到着名表示、2〜4秒以内のcamera cueを追加。
-4. ImageGen masterを基に、権利確認済みenvironment GLB/textureを制作・導入。
-5. 制作会社またはモデラーからproduction character/NPC GLBを受領しCharacter Gateを通す。
-6. teleport/3x speed/10x timeを使わない連続Journeyを追加。
-7. 実iPad/低性能端末でFPS、p95 frame、memoryを15分測定。
+1. 現行rigへ表情差分とFish/Mine/Craft/Talk/Celebrate専用clipを追加。
+2. 30〜45分のnormal journeyを複数の連続suiteへ分割し、港、図鑑50/75%、夜の庭、親密度3まで完走。
+3. 物理iPadで主要導線、15分memory、tab復帰、最低FPSを測定。
+4. missing screenshotを専用state、日時、操作手順付きで取得。
+5. largest client chunkを500kB未満へ段階分割し、IslandScene責務を追加分離。
 
 ## release判定
 
-現在は「82点・条件付きRC」。90点releaseへ昇格する条件は 90_POINT_BLOCKERS.md の全項目解消。
+現在は厳格89/100。旧blockerの大半は解消したが、添付基準が「animation、normal play E2E、performance evidenceのいずれか不足なら90点以上禁止」と定めるため、未達を丸めない。詳細は `90_POINT_BLOCKERS.md`。

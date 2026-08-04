@@ -84,14 +84,18 @@ export class CharacterAnimationController {
     this.blinkTimer -= deltaSeconds;
     if (this.blinkTimer > 0) return;
     this.blinkTimer = 3.2 + Math.random() * 2.4;
-    const blink = this.groups.get(this.config.expressionMappings.blinkAnimation);
+    const blinkName = this.config.expressionMappings.blinkAnimation;
+    if (!blinkName) return;
+    const blink = this.groups.get(blinkName);
     if (!blink) return;
     blink.stop();
     blink.start(false, 1);
   }
 
   playBlink(): void {
-    const blink = this.groups.get(this.config.expressionMappings.blinkAnimation);
+    const blinkName = this.config.expressionMappings.blinkAnimation;
+    if (!blinkName) return;
+    const blink = this.groups.get(blinkName);
     if (!blink) return;
     blink.stop();
     blink.start(false, 1);

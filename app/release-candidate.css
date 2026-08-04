@@ -481,3 +481,64 @@
     min-height: 72vh;
   }
 }
+
+/* Production world pass: a compact, child-readable location marker. */
+.zone-badge {
+  position: absolute;
+  z-index: 8;
+  top: 0.78rem;
+  left: 13.55rem;
+  display: grid;
+  min-width: 174px;
+  min-height: 48px;
+  padding: 0.35rem 0.9rem 0.32rem;
+  border: 1px solid rgba(255, 249, 224, 0.46);
+  border-radius: 12px;
+  color: #fff8e7;
+  background:
+    linear-gradient(135deg, rgba(36, 73, 68, 0.92), rgba(35, 57, 70, 0.88));
+  box-shadow: 0 12px 28px rgba(13, 36, 38, 0.24);
+  text-align: center;
+  pointer-events: none;
+  backdrop-filter: blur(12px);
+  animation: zone-arrival 360ms ease-out;
+}
+
+.zone-badge::before {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  width: 9px;
+  aspect-ratio: 1;
+  border: 2px solid #ffe39b;
+  transform: translateY(-50%) rotate(45deg);
+  background: #eebd5d;
+  box-shadow: 0 0 12px rgba(255, 218, 123, 0.72);
+  content: "";
+}
+
+.zone-badge small,
+.zone-badge strong,
+.zone-badge span {
+  display: block;
+}
+
+.zone-badge small,
+.zone-badge span {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  opacity: 0.74;
+}
+
+.zone-badge strong {
+  font-size: 0.95rem;
+}
+
+@media (max-width: 720px) {
+  .zone-badge {
+    top: 4.85rem;
+    left: 1rem;
+    min-width: 168px;
+  }
+}

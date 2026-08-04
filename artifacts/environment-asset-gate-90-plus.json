@@ -1,0 +1,25 @@
+{
+  "gate": "production-environment-assets",
+  "passed": true,
+  "source": {
+    "pack": "Nature Kit 2.1",
+    "author": "Kenney",
+    "url": "https://kenney.nl/assets/nature-kit",
+    "license": "CC0 1.0"
+  },
+  "requestedPlacements": 10,
+  "loadedPlacements": 10,
+  "runtimeEvidence": "canvas[data-production-environment=10/10]",
+  "files": [
+    "bridge_woodRound.glb",
+    "canoe.glb",
+    "cliff_steps_stone.glb",
+    "log_stackLarge.glb",
+    "rock_largeA.glb",
+    "tree_detailed.glb",
+    "tree_oak_dark.glb",
+    "tree_palmDetailedShort.glb"
+  ],
+  "zones": ["meadow", "forest", "harbor", "moon-garden"],
+  "consoleErrors": 0
+}
