@@ -385,7 +385,7 @@
   z-index: 0;
   position: absolute;
   inset: 0;
-  background-image: url("/assets/generated/island-map.webp");
+  background-image: none;
   background-position: 64% 50%;
   background-size: cover;
   background-repeat: no-repeat;

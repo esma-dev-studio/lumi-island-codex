@@ -39,4 +39,5 @@ if (!staticExportIsComplete) {
   throw new Error("Static export validation failed: dist/client/index.html is incomplete.");
 }
 
+await import("./rewrite_static_base_path.mjs");
 await import("./finalize_sites_build.mjs");

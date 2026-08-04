@@ -6,6 +6,7 @@ import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import type { Position2D } from "@/src/game/types";
+import { publicAsset } from "@/src/config/publicPath";
 
 export type WorldZoneId = "meadow" | "forest" | "harbor" | "moon-garden";
 
@@ -21,10 +22,10 @@ export interface WorldZoneDefinition {
 }
 
 export const WORLD_ZONES: readonly WorldZoneDefinition[] = [
-  { id: "meadow", name: "ひかりの広場", reading: "ひかりの ひろば", center: { x: 0, z: 3 }, radiusX: 10.5, radiusZ: 9, texturePath: "/assets/generated/zone-meadow.webp", tint: "#d4df86" },
-  { id: "forest", name: "こもれびの森", reading: "こもれびの もり", center: { x: -14.5, z: -1.5 }, radiusX: 10.5, radiusZ: 9.5, texturePath: "/assets/generated/zone-forest.webp", tint: "#4b8a67" },
-  { id: "harbor", name: "さんごの港", reading: "さんごの みなと", center: { x: 14.5, z: -1.5 }, radiusX: 10.5, radiusZ: 9.5, texturePath: "/assets/generated/zone-harbor.webp", tint: "#e7b46f" },
-  { id: "moon-garden", name: "月しずくの庭", reading: "つきしずくの にわ", center: { x: 0, z: -11.5 }, radiusX: 9.5, radiusZ: 7.5, texturePath: "/assets/generated/zone-moon-garden.webp", tint: "#687cb5" },
+  { id: "meadow", name: "ひかりの広場", reading: "ひかりの ひろば", center: { x: 0, z: 3 }, radiusX: 10.5, radiusZ: 9, texturePath: publicAsset("/assets/generated/zone-meadow.webp"), tint: "#d4df86" },
+  { id: "forest", name: "こもれびの森", reading: "こもれびの もり", center: { x: -14.5, z: -1.5 }, radiusX: 10.5, radiusZ: 9.5, texturePath: publicAsset("/assets/generated/zone-forest.webp"), tint: "#4b8a67" },
+  { id: "harbor", name: "さんごの港", reading: "さんごの みなと", center: { x: 14.5, z: -1.5 }, radiusX: 10.5, radiusZ: 9.5, texturePath: publicAsset("/assets/generated/zone-harbor.webp"), tint: "#e7b46f" },
+  { id: "moon-garden", name: "月しずくの庭", reading: "つきしずくの にわ", center: { x: 0, z: -11.5 }, radiusX: 9.5, radiusZ: 7.5, texturePath: publicAsset("/assets/generated/zone-moon-garden.webp"), tint: "#687cb5" },
 ] as const;
 
 export function worldZoneAt(position: Position2D): WorldZoneDefinition {

@@ -4,6 +4,7 @@ import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Scene } from "@babylonjs/core/scene";
 import type { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
+import { publicAsset } from "@/src/config/publicPath";
 
 export interface EnvironmentAssetPlacement {
   id: string;
@@ -26,7 +27,7 @@ export const PRODUCTION_ENVIRONMENT_PLACEMENTS: readonly EnvironmentAssetPlaceme
   { id: "moon-oak", file: "tree_oak_dark.glb", position: { x: -4.6, y: 0.42, z: -15.1 }, scale: 1.18, rotationY: 0.25 },
 ] as const;
 
-const ASSET_ROOT = "/assets/environment/kenney-nature-kit/";
+const ASSET_ROOT = publicAsset("/assets/environment/kenney-nature-kit/");
 
 async function loadPlacement(
   scene: Scene,

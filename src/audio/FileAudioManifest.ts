@@ -1,4 +1,5 @@
 import type { FileSoundName } from "@/src/audio/FileAudioSystem";
+import { publicAsset } from "@/src/config/publicPath";
 
 export interface AudioAssetDefinition {
   src: string;
@@ -6,7 +7,7 @@ export interface AudioAssetDefinition {
   category: "effects" | "ui";
 }
 
-const root = "/assets/audio/cc0-sfx-100-v2";
+const root = publicAsset("/assets/audio/cc0-sfx-100-v2");
 
 export const FILE_AUDIO_MANIFEST: Record<
   FileSoundName,

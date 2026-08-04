@@ -1,4 +1,5 @@
 import type { AnimationName } from "@/src/game/types";
+import { publicAsset } from "@/src/config/publicPath";
 
 export type CharacterId = "mira" | "nolla" | "kai" | "sera";
 
@@ -52,7 +53,7 @@ export const CHARACTER_CONFIGS: Record<CharacterId, CharacterConfig> = {
     id: "mira",
     name: "ミラ",
     role: "島にやってきた つくり手",
-    modelPath: "/assets/characters/models/mira.glb",
+    modelPath: publicAsset("/assets/characters/models/mira.glb"),
     scale: 1,
     yOffset: 0.04,
     rotationOffset: 0,
@@ -65,7 +66,7 @@ export const CHARACTER_CONFIGS: Record<CharacterId, CharacterConfig> = {
     id: "nolla",
     name: "ノラ",
     role: "木工がとくいな ヤギ",
-    modelPath: "/assets/characters/models/nolla.glb",
+    modelPath: publicAsset("/assets/characters/models/nolla.glb"),
     scale: 1,
     yOffset: 0.02,
     rotationOffset: 0,
@@ -78,7 +79,7 @@ export const CHARACTER_CONFIGS: Record<CharacterId, CharacterConfig> = {
     id: "kai",
     name: "カイ",
     role: "水べにくわしい カワウソ",
-    modelPath: "/assets/characters/models/kai.glb",
+    modelPath: publicAsset("/assets/characters/models/kai.glb"),
     scale: 0.98,
     yOffset: 0.03,
     rotationOffset: 0,
@@ -91,7 +92,7 @@ export const CHARACTER_CONFIGS: Record<CharacterId, CharacterConfig> = {
     id: "sera",
     name: "セラ",
     role: "植物をしらべる フクロウ",
-    modelPath: "/assets/characters/models/sera.glb",
+    modelPath: publicAsset("/assets/characters/models/sera.glb"),
     scale: 0.96,
     yOffset: 0.02,
     rotationOffset: 0,

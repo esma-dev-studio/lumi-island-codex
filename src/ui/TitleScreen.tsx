@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { publicAsset } from "@/src/config/publicPath";
 
 export function TitleScreen({
   canContinue,
@@ -21,7 +22,7 @@ export function TitleScreen({
     <main className="title-screen">
       <div className="title-sky" aria-hidden="true">
         <span className="cloud cloud--one" />
-        <span className="title-map-art" />
+        <span className="title-map-art" style={{ backgroundImage: `url(${publicAsset("/assets/generated/island-map.webp")})` }} />
         <span className="cloud cloud--two" />
         <span className="sun-disc" />
         <div className="title-island">
